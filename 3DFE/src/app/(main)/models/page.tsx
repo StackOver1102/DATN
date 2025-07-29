@@ -1,0 +1,166 @@
+import ClientSideModelsPage from "@/components/models/ClientSideModelsPage";
+
+// interface Model {
+//   id: string;
+//   title: string;
+//   price: number;
+//   image: string;
+//   format: string[];
+//   category: string;
+//   isPro: boolean;
+//   polygons: number;
+//   hasTextures: boolean;
+//   downloads: number;
+//   rating: number;
+// }
+
+// Interface for raw category data from API
+interface RawCategoryData {
+  title?: string;
+  items?: Array<{
+    name: string;
+    subcategories?: string[];
+    [key: string]: unknown;
+  }>;
+  [key: string]: unknown;
+}
+
+// Interface for Product data from API
+interface Product {
+  _id: string;
+  title?: string;
+  price: number;
+  images?: string;
+  format?: string[];
+  category?: string;
+  isPro?: boolean;
+  polygons?: number;
+  hasTextures?: boolean;
+  downloads?: number;
+  rating?: number;
+  [key: string]: unknown;
+}
+
+async function getProducts(
+  page = 1,
+  limit = 30,
+  category?: string,
+  item?: string
+) {
+  try {
+    // Build query parameters
+    const queryParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+
+    if (category) {
+      queryParams.append("categoryPath", category);
+    }
+
+    if (item) {
+      queryParams.append("categoryName", item);
+    }
+
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/products?${queryParams.toString()}`,
+      {
+        next: { revalidate: 60 }, // Revalidate every 60 seconds
+      }
+    );
+
+    if (!res.ok) {
+      console.log(res);
+      throw new Error("Failed to fetch products");
+    }
+
+    return res.json();
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    return {
+      data: {
+        items: [],
+        meta: { currentPage: 1, totalPages: 1, totalItems: 0 },
+      },
+    };
+  }
+}
+
+async function getCategories() {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/categories/grouped`,
+      {
+        next: { revalidate: 3600 }, // Revalidate every hour
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch categories");
+    }
+
+    const data = await res.json();
+
+    // Process categories data to ensure correct structure
+    if (data?.data && Array.isArray(data.data)) {
+      return data.data.map((category: RawCategoryData) => ({
+        title: category.title || "Uncategorized",
+        items: Array.isArray(category.items) ? category.items : [],
+      }));
+    }
+
+    return [];
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    return [];
+  }
+}
+
+interface ModelsPageProps {
+  searchParams: Promise<{
+    page?: string;
+    category?: string;
+    item?: string;
+  }>;
+}
+
+export default async function ModelsPage({ searchParams }: ModelsPageProps) {
+  // Get query parameters from URL
+  const categoryParam = (await searchParams).category;
+  const itemParam = (await searchParams).item;
+
+  const currentPage = Number((await searchParams).page) || 1;
+
+  // Fetch data in parallel
+  const [productsData, categoriesData] = await Promise.all([
+    getProducts(currentPage, 30, categoryParam, itemParam),
+    getCategories(),
+  ]);
+
+  // Process categories data
+  const categories = categoriesData || [];
+
+  // Extract products data
+  const products = productsData?.data?.items || [];
+  const totalItems = productsData?.data?.meta?.totalItems || 0;
+  const totalPages = productsData?.data?.meta?.totalPages || 1;
+
+  // Map the products to ensure they have the required 'name' property
+  const mappedProducts = products.map((product: Product) => ({
+    ...product,
+    name: product.title || "Unnamed Product", // Ensure name property exists
+  }));
+
+  // Pass all data to a client component that will handle the UI and interactions
+  return (
+    <ClientSideModelsPage
+      categories={categories}
+      initialModels={mappedProducts}
+      totalModels={totalItems}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      categoryParam={categoryParam}
+      itemParam={itemParam}
+    />
+  );
+}
