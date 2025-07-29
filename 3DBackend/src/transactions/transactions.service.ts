@@ -1,0 +1,493 @@
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
+import {
+  Transaction,
+  TransactionDocument,
+} from './entities/transaction.entity';
+import {
+  CreateOrderPaymentDto,
+  CreateTransactionDto,
+} from './dto/create-transaction.dto';
+import { UpdateTransactionDto } from './dto/update-transaction.dto';
+import { TransactionStatus, TransactionType } from 'src/enum/transactions.enum';
+import { UsersService } from 'src/users/users.service';
+import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
+
+@Injectable()
+export class TransactionsService {
+  private paypalBaseUrl: string;
+  private paypalClientId: string;
+  private paypalSecret: string;
+  private paypalWebhookId: string;
+
+  constructor(
+    @InjectModel(Transaction.name)
+    private transactionModel: Model<TransactionDocument>,
+    private readonly usersService: UsersService,
+    private configService: ConfigService,
+  ) {
+    // Khởi tạo các thông tin cấu hình PayPal
+    const isProd = configService.get<string>('NODE_ENV') === 'production';
+    this.paypalBaseUrl = isProd
+      ? 'https://api-m.paypal.com'
+      : 'https://api-m.sandbox.paypal.com';
+    this.paypalClientId = configService.get<string>('PAYPAL_CLIENT_ID') || '';
+    this.paypalSecret = configService.get<string>('PAYPAL_SECRET') || '';
+    this.paypalWebhookId = configService.get<string>('PAYPAL_WEBHOOK_ID') || '';
+  }
+
+  private async generateTransactionCode(): Promise<string> {
+    // Get the count of existing transactions to generate sequential number
+    const count = await this.transactionModel.countDocuments();
+    const nextNumber = (count + 1).toString().padStart(6, '0');
+    const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    return `TX${date}${nextNumber}`;
+  }
+
+  async create(
+    createTransactionDto: CreateTransactionDto,
+    userId: string,
+  ): Promise<TransactionDocument> {
+    // Generate transaction code if not provided
+    const transactionCode =
+      createTransactionDto.transactionCode ||
+      (await this.generateTransactionCode());
+
+    // Get user's current balance
+    const user = await this.usersService.findOne(userId);
+    if (!user) {
+      throw new NotFoundException(`Không tìm thấy người dùng với ID ${userId}`);
+    }
+
+    const balanceBefore = user.balance || 0;
+    let balanceAfter = balanceBefore;
+
+    // Calculate new balance based on transaction type
+    switch (createTransactionDto.type) {
+      case TransactionType.DEPOSIT:
+        balanceAfter = balanceBefore + createTransactionDto.amount;
+        break;
+      case TransactionType.WITHDRAWAL:
+      case TransactionType.PAYMENT:
+        if (balanceBefore < createTransactionDto.amount) {
+          throw new BadRequestException('Số dư không đủ');
+        }
+        balanceAfter = balanceBefore - createTransactionDto.amount;
+        break;
+      case TransactionType.REFUND:
+        balanceAfter = balanceBefore + createTransactionDto.amount;
+        break;
+    }
+
+    // Create transaction with balance information
+    const transaction = new this.transactionModel({
+      ...createTransactionDto,
+      userId: new Types.ObjectId(userId),
+      transactionCode,
+      balanceBefore,
+      balanceAfter,
+    });
+
+    // Save transaction
+    const savedTransaction = await transaction.save();
+
+    // Update user balance
+    await this.usersService.updateBalance(userId, balanceAfter);
+
+    return savedTransaction;
+  }
+
+  async createOrderPayment(
+    createOrderPaymentDto: CreateOrderPaymentDto,
+    userId: string,
+    orderAmount: number,
+  ): Promise<Transaction> {
+    // Create transaction DTO for order payment
+    const paymentDto: CreateTransactionDto = {
+      amount: orderAmount,
+      type: TransactionType.PAYMENT,
+      description: createOrderPaymentDto.description || 'Payment for order',
+      orderId: createOrderPaymentDto.orderId,
+    };
+
+    // Create the transaction
+    return this.create(paymentDto, userId);
+  }
+
+  async findAll(): Promise<Transaction[]> {
+    return this.transactionModel.find().exec();
+  }
+
+  async findByUserId(userId: string): Promise<Transaction[]> {
+    return this.transactionModel
+      .find({ userId: new Types.ObjectId(userId) })
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
+  async findOne(id: string): Promise<Transaction> {
+    const transaction = await this.transactionModel.findById(id).exec();
+    if (!transaction) {
+      throw new NotFoundException(`Không tìm thấy giao dịch với ID ${id}`);
+    }
+    return transaction;
+  }
+
+  async update(
+    id: string,
+    updateTransactionDto: UpdateTransactionDto,
+  ): Promise<Transaction> {
+    // Don't allow updating amounts or balance-affecting fields directly
+    const { ...updateData } = updateTransactionDto;
+
+    const updatedTransaction = await this.transactionModel
+      .findByIdAndUpdate(id, updateData, { new: true })
+      .exec();
+
+    if (!updatedTransaction) {
+      throw new NotFoundException(`Không tìm thấy giao dịch với ID ${id}`);
+    }
+
+    return updatedTransaction;
+  }
+
+  async updateStatus(
+    id: string,
+    status: TransactionStatus,
+  ): Promise<Transaction> {
+    const transaction = await this.findOne(id);
+
+    // If transaction is being marked as successful and wasn't before
+    if (
+      status === TransactionStatus.SUCCESS &&
+      transaction.status !== TransactionStatus.SUCCESS
+    ) {
+      // For deposits and refunds, add to user balance
+      if (
+        transaction.type === TransactionType.DEPOSIT ||
+        transaction.type === TransactionType.REFUND
+      ) {
+        await this.usersService.updateBalance(
+          transaction.userId.toString(),
+          transaction.balanceAfter || 0,
+        );
+      }
+      // For withdrawals and payments, subtract from user balance
+      else if (
+        transaction.type === TransactionType.WITHDRAWAL ||
+        transaction.type === TransactionType.PAYMENT
+      ) {
+        const user = await this.usersService.findOne(
+          transaction.userId.toString(),
+        );
+        if (user.balance && user.balance < transaction.amount) {
+          throw new BadRequestException('Số dư không đủ');
+        }
+        await this.usersService.updateBalance(
+          transaction.userId.toString(),
+          transaction.balanceBefore || 0,
+        );
+      }
+    }
+
+    // Update transaction status
+    const updatedTransaction = await this.transactionModel
+      .findByIdAndUpdate(id, { status }, { new: true })
+      .exec();
+
+    if (!updatedTransaction) {
+      throw new NotFoundException(`Không tìm thấy giao dịch với ID ${id}`);
+    }
+
+    return updatedTransaction;
+  }
+
+  async remove(id: string): Promise<Transaction> {
+    const deletedTransaction = await this.transactionModel
+      .findByIdAndDelete(id)
+      .exec();
+
+    if (!deletedTransaction) {
+      throw new NotFoundException(`Không tìm thấy giao dịch với ID ${id}`);
+    }
+
+    return deletedTransaction;
+  }
+
+  async findByTransactionCode(transactionCode: string): Promise<Transaction> {
+    const transaction = await this.transactionModel
+      .findOne({ transactionCode })
+      .exec();
+
+    if (!transaction) {
+      throw new NotFoundException(
+        `Không tìm thấy giao dịch với mã ${transactionCode}`,
+      );
+    }
+
+    return transaction;
+  }
+
+  /**
+   * Xử lý webhook từ PayPal
+   */
+  async processPayPalWebhook(
+    payload: Record<string, any>,
+    headers: Record<string, string>,
+  ): Promise<Record<string, any>> {
+    console.log('Received PayPal webhook:', payload.event_type);
+
+    // 1. Xác thực webhook từ PayPal (kiểm tra chữ ký)
+    try {
+      const isValid = await this.verifyPayPalWebhook(payload, headers);
+      if (!isValid) {
+        throw new UnauthorizedException('Invalid PayPal webhook signature');
+      }
+    } catch (error) {
+      console.error('Error verifying PayPal webhook:', error);
+      throw new UnauthorizedException('Failed to verify PayPal webhook');
+    }
+
+    // 2. Xử lý các loại sự kiện khác nhau từ PayPal
+    const eventType = payload.event_type as string;
+
+    try {
+      switch (eventType) {
+        case 'PAYMENT.CAPTURE.COMPLETED':
+          return await this.handlePaymentCompleted(payload);
+
+        case 'PAYMENT.CAPTURE.DENIED':
+          return await this.handlePaymentDenied(payload);
+
+        case 'PAYMENT.CAPTURE.PENDING':
+          return await this.handlePaymentPending(payload);
+
+        case 'CHECKOUT.ORDER.APPROVED':
+          return await this.handleOrderApproved(payload);
+
+        default:
+          // Log sự kiện không xử lý
+          console.log(`Unhandled PayPal webhook event: ${eventType}`);
+          return { status: 'ignored', eventType };
+      }
+    } catch (error) {
+      console.error(`Error processing PayPal webhook ${eventType}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Xác thực webhook từ PayPal
+   */
+  private async verifyPayPalWebhook(
+    payload: Record<string, any>,
+    headers: Record<string, string>,
+  ): Promise<boolean> {
+    try {
+      // Lấy các header cần thiết từ PayPal
+      const transmissionId = headers['paypal-transmission-id'];
+      const transmissionTime = headers['paypal-transmission-time'];
+      const certUrl = headers['paypal-cert-url'];
+      const authAlgo = headers['paypal-auth-algo'];
+      const transmissionSig = headers['paypal-transmission-sig'];
+
+      if (
+        !transmissionId ||
+        !transmissionTime ||
+        !certUrl ||
+        !authAlgo ||
+        !transmissionSig
+      ) {
+        console.error('Missing required PayPal headers');
+        return false;
+      }
+
+      // Lấy access token từ PayPal
+      const accessToken = await this.getPayPalAccessToken();
+
+      // Gọi API PayPal để xác thực webhook
+      const verificationResponse = await axios.post(
+        `${this.paypalBaseUrl}/v1/notifications/verify-webhook-signature`,
+        {
+          transmission_id: transmissionId,
+          transmission_time: transmissionTime,
+          cert_url: certUrl,
+          auth_algo: authAlgo,
+          transmission_sig: transmissionSig,
+          webhook_id: this.paypalWebhookId,
+          webhook_event: payload,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+
+      // Kiểm tra kết quả xác thực
+      return verificationResponse.data.verification_status === 'SUCCESS';
+    } catch (error) {
+      console.error('Error verifying PayPal webhook:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Lấy access token từ PayPal
+   */
+  private async getPayPalAccessToken(): Promise<string> {
+    try {
+      const auth = Buffer.from(
+        `${this.paypalClientId}:${this.paypalSecret}`,
+      ).toString('base64');
+
+      const response = await axios.post(
+        `${this.paypalBaseUrl}/v1/oauth2/token`,
+        'grant_type=client_credentials',
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Authorization: `Basic ${auth}`,
+          },
+        },
+      );
+
+      return response.data.access_token as string;
+    } catch (error) {
+      console.error('Error getting PayPal access token:', error);
+      throw new Error('Failed to get PayPal access token');
+    }
+  }
+
+  /**
+   * Xử lý sự kiện thanh toán hoàn tất
+   */
+  private async handlePaymentCompleted(
+    payload: Record<string, any>,
+  ): Promise<Record<string, any>> {
+    const resource = payload.resource as Record<string, any>;
+    const transactionId = (resource.custom_id || resource.invoice_id) as string;
+
+    if (!transactionId) {
+      console.warn('No transaction ID found in PayPal webhook');
+      return { status: 'ignored', reason: 'No transaction ID' };
+    }
+
+    // Tìm giao dịch trong hệ thống
+    const transaction = await this.transactionModel.findOne({
+      transactionCode: transactionId,
+    });
+
+    if (!transaction) {
+      console.warn(`Transaction ${transactionId} not found`);
+      return { status: 'ignored', reason: 'Transaction not found' };
+    }
+
+    // Cập nhật trạng thái giao dịch
+    transaction.status = TransactionStatus.SUCCESS;
+
+    // Lưu thông tin bổ sung từ PayPal
+    if (resource.amount) {
+      const amount = resource.amount as Record<string, any>;
+      const capturedAmount = parseFloat(amount.value as string);
+      if (!isNaN(capturedAmount)) {
+        // Đảm bảo số tiền khớp
+        if (Math.abs(capturedAmount - transaction.amount) > 0.01) {
+          console.warn(
+            `Amount mismatch for transaction ${transactionId}: expected ${transaction.amount}, got ${capturedAmount}`,
+          );
+        }
+      }
+    }
+
+    await transaction.save();
+
+    console.log(`Transaction ${transactionId} marked as completed`);
+    return { status: 'success', transactionId };
+  }
+
+  /**
+   * Xử lý sự kiện thanh toán bị từ chối
+   */
+  private async handlePaymentDenied(
+    payload: Record<string, any>,
+  ): Promise<Record<string, any>> {
+    const resource = payload.resource as Record<string, any>;
+    const transactionId = (resource.custom_id || resource.invoice_id) as string;
+
+    if (!transactionId) {
+      return { status: 'ignored', reason: 'No transaction ID' };
+    }
+
+    // Tìm giao dịch trong hệ thống
+    const transaction = await this.transactionModel.findOne({
+      transactionCode: transactionId,
+    });
+
+    if (!transaction) {
+      return { status: 'ignored', reason: 'Transaction not found' };
+    }
+
+    // Cập nhật trạng thái giao dịch
+    transaction.status = TransactionStatus.FAILED;
+    await transaction.save();
+
+    console.log(`Transaction ${transactionId} marked as failed`);
+    return { status: 'success', transactionId };
+  }
+
+  /**
+   * Xử lý sự kiện thanh toán đang chờ xử lý
+   */
+  private async handlePaymentPending(
+    payload: Record<string, any>,
+  ): Promise<Record<string, any>> {
+    const resource = payload.resource as Record<string, any>;
+    const transactionId = (resource.custom_id || resource.invoice_id) as string;
+
+    if (!transactionId) {
+      return { status: 'ignored', reason: 'No transaction ID' };
+    }
+
+    // Tìm giao dịch trong hệ thống
+    const transaction = await this.transactionModel.findOne({
+      transactionCode: transactionId,
+    });
+
+    if (!transaction) {
+      return { status: 'ignored', reason: 'Transaction not found' };
+    }
+
+    // Cập nhật trạng thái giao dịch
+    transaction.status = TransactionStatus.PENDING;
+    await transaction.save();
+
+    console.log(`Transaction ${transactionId} marked as pending`);
+    return { status: 'success', transactionId };
+  }
+
+  /**
+   * Xử lý sự kiện đơn hàng được chấp nhận
+   */
+  private async handleOrderApproved(
+    payload: Record<string, any>,
+  ): Promise<Record<string, any>> {
+    // Xử lý khi đơn hàng được chấp nhận nhưng chưa thanh toán
+    const resource = payload.resource as Record<string, any>;
+    const resourceId = resource?.id as string;
+    console.log('Order approved:', resourceId);
+
+    // Thêm một tác vụ bất đồng bộ để giải quyết lỗi
+    await Promise.resolve();
+
+    return { status: 'success', orderId: resourceId };
+  }
+}
