@@ -69,6 +69,16 @@ export class ProductsController {
     return this.productsService.findOne(id);
   }
 
+  @Public()
+  @Get(':id/similar')
+  @ApiOperation({ summary: 'Get similar products by category' })
+  findSimilar(
+    @Param('id') id: string,
+    @Query('limit') limit?: number,
+  ) {
+    return this.productsService.findSimilarByCategory(id, limit || 10);
+  }
+
   @Patch(':id')
   @ApiOperation({ summary: 'Update a product' })
   update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {

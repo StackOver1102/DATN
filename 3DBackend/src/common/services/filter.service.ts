@@ -84,7 +84,6 @@ export class FilterService {
       ? { [sortBy]: sortDirection === 'asc' ? 1 : -1 }
       : { createdAt: -1 };
 
-    console.log('query', query);
     // Execute queries
     const [items, totalItems] = await Promise.all([
       model.find(query).sort(sort).skip(skip).limit(limit).exec(),

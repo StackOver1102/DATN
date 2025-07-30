@@ -123,7 +123,74 @@ export const userApi = {
     apiRequest('users/profile', 'PUT', data, token)
 };
 
+/**
+ * Transaction-related API functions
+ */
+export interface CreatePayPalOrderParams {
+  amount: number;
+  currency?: string;
+  returnUrl?: string;
+  cancelUrl?: string;
+  description?: string;
+  [key: string]: unknown;
+}
+
+export interface PayPalOrderResponse {
+  paypalOrderId: string;
+  transactionId: string;
+  transactionCode: string;
+  status: string;
+  links: Array<{
+    href: string;
+    rel: string;
+    method: string;
+  }>;
+  approveUrl: string;
+}
+
+export const transactionApi = {
+  // Create PayPal order for deposit
+  createPayPalOrder: (token: string, params: CreatePayPalOrderParams) => 
+    apiRequest<PayPalOrderResponse>('transactions/paypal/create-order', 'POST', params, token),
+  
+  // Approve and process PayPal order after payment
+  approvePayPalOrder: (token: string, orderId: string) => 
+    apiRequest('transactions/paypal/approve-order', 'POST', { orderId }, token),
+  
+  // Get user transactions
+  getUserTransactions: (token: string) => 
+    apiRequest('transactions', 'GET', undefined, token),
+  
+  // Get transaction by ID
+  getTransactionById: (token: string, id: string) => 
+    apiRequest(`transactions/${id}`, 'GET', undefined, token),
+    
+  // Get transaction by code
+  getTransactionByCode: (token: string, code: string) => 
+    apiRequest(`transactions/code/${code}`, 'GET', undefined, token),
+};
+
 // Add more API function groups as needed for your application 
+
+/**
+ * Product-related API functions
+ */
+export const productApi = {
+  getAll: (params?: { page?: number; limit?: number; category?: string; search?: string }) => 
+    apiRequest('products', 'GET', params),
+  
+  getById: (id: string) => 
+    apiRequest(`products/${id}`, 'GET'),
+  
+  getSimilar: (id: string, limit: number = 10) => 
+    apiRequest(`products/${id}/similar?limit=${limit}`, 'GET'),
+  
+  getFeatured: (limit: number = 10) => 
+    apiRequest(`products/featured?limit=${limit}`, 'GET'),
+  
+  search: (query: string, params?: { page?: number; limit?: number; category?: string }) => 
+    apiRequest(`products/search?q=${encodeURIComponent(query)}`, 'GET', params),
+};
 
 /**
  * Category-related API functions

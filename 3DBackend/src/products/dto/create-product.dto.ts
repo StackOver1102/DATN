@@ -75,6 +75,10 @@ export class CreateProductDto {
   @IsOptional()
   @IsString()
   urlDownload?: string;
+
+  @IsOptional()
+  @IsNumber()
+  stt?: number;
 }
 
 export class CreateProductsDto {

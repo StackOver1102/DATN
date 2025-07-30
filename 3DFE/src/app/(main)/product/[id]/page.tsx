@@ -1,140 +1,195 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { Heart, Download, ChevronRight, CircleDollarSign } from "lucide-react";
 import SimilarProductsSlider from "@/components/SimilarProductsSlider";
+import { useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { Product } from "@/interface/product";
+import { useSession } from "next-auth/react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useCreateData, useFetchData, useApi } from "@/lib/hooks/useApi";
+import { useUserStore } from "@/lib/store/userStore";
+import { User } from "@/lib/types";
+import { toast } from "sonner";
 
-interface ProductDetailProps {
-  params: Promise<{
-    id: string;
-  }>;
+// Request type for creating an order
+interface CreateOrderRequest {
+  productId: string;
 }
 
-// Mock product data - in real app, this would come from an API
-const getProductData = (id: string) => {
-  return {
-    id: id,
-    name: "Hewlet bedside table",
-    category: "Furniture",
-    subcategory: "Sideboard & Chest of drawer",
-    price: 30,
-    currency: "Coin",
-    isPro: true,
-    views: 8,
-    likes: 0,
-    shares: 120,
-    image:
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600&h=600&fit=crop&crop=center",
-    description:
-      "Those who work in a V-Ray version lower than 3.1, be careful, in the materials in the BRDF section there is Microfaset GTR (GGX), if your version is older than 3.1, then the BRDF field will be empty. Choose Blinn, Phong or Ward - whichever is preferable for you. For Corona render, it is recommended to install version no lower than 1.5, since the glossiness of the materials is adjusted taking into account PBR.",
-    specifications: {
-      idProduct: "5781398.65311f68aad43",
-      platform: "3dsMax 2015 + obj",
-      render: "Vray + Corona",
-      size: "2 MB",
-      materials: "Wood",
-      colors: ["#8B7355"],
-    },
-    watermark: "3DSBLUE",
-    link: "https://cornerdesign.ru/shop/hewlet",
+// Response type from the API
+interface OrderResponse {
+  _id: string;
+  productId: string;
+  userId: string;
+  totalAmount: number;
+  status: string;
+  isPaid: boolean;
+  fileUrl?: string;
+  urlDownload?: string;
+}
+
+export default function ProductDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const api = useApi();
+  
+  // Use the Zustand store directly
+  const { profile, setProfile, setHasLoadedProfile } = useUserStore();
+  
+  // Use the useFetchData hook to fetch the product
+  const { 
+    data: product, 
+    isLoading: isLoadingProduct,
+    error: productError
+  } = useFetchData<Product>(
+    `products/${id}`, 
+    ['product', id],
+    {
+      enabled: !!id
+    }
+  );
+
+  // Use the useFetchData hook to fetch similar products
+  const {
+    data: similarProductsData,
+    isLoading: isLoadingSimilar
+  } = useFetchData<Product[]>(
+    `products/${id}/similar?limit=10`,
+    ['similar-products', id],
+    {
+      enabled: !!id && !!product
+    }
+  );
+
+  const orderMutation = useCreateData<OrderResponse, CreateOrderRequest>(
+    'orders',
+    ['order'],
+    {
+      onSuccess: (data) => {
+        toast.success("Order placed successfully!");
+        // If there's a download URL available, open it
+        const downloadUrl = data?.fileUrl || data?.urlDownload;
+        if (downloadUrl) {
+          window.open(downloadUrl, '_blank');
+        }
+        // Refresh profile after order
+        fetchProfile();
+      },
+      onError: (err) => {
+        toast.error(`Order failed: ${err.message}`);
+      }
+    }
+  );
+
+  // Function to fetch profile directly without using the hook
+  const fetchProfile = async () => {
+    try {
+      const response = await api.get<User>('users/profile');
+      if (response.success && response.data) {
+        setProfile(response.data);
+        setHasLoadedProfile(true);
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
   };
-};
 
-// Mock similar products data
-const getSimilarProducts = () => {
-  return [
-    {
-      id: "1",
-      name: "Tribù Amanu C-table Dia Side Table",
-      price: 30,
-      image:
-        "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop&crop=center",
-    },
-    {
-      id: "2",
-      name: "Bed BALI",
-      price: 30,
-      image:
-        "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400&h=400&fit=crop&crop=center",
-    },
-    {
-      id: "3",
-      name: "U-shaped sofa Miley",
-      price: 30,
-      image:
-        "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop&crop=center",
-    },
-    {
-      id: "4",
-      name: "Secolo Tateyama XL Sofa Fabric Sofa",
-      price: 30,
-      image:
-        "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=400&h=400&fit=crop&crop=center",
-    },
-    {
-      id: "5",
-      name: "Bumper Sofa System",
-      price: 30,
-      image:
-        "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop&crop=center",
-    },
-    {
-      id: "6",
-      name: "Table Poliform Kensington",
-      price: 30,
-      image:
-        "https://images.unsplash.com/photo-1549497538-303791108f95?w=400&h=400&fit=crop&crop=center",
-    },
-    {
-      id: "7",
-      name: "Fat Sofa Modular By Tom Dixon",
-      price: 30,
-      image:
-        "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop&crop=center",
-    },
-    {
-      id: "8",
-      name: "Corner Sofa Isla by Ditre Italia",
-      price: 30,
-      image:
-        "https://images.unsplash.com/photo-1493663284031-b7e3aab21900?w=400&h=400&fit=crop&crop=center",
-    },
-    {
-      id: "9",
-      name: "Modern Dining Chair Set",
-      price: 25,
-      image:
-        "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop&crop=center",
-    },
-    {
-      id: "10",
-      name: "Wooden Coffee Table",
-      price: 35,
-      image:
-        "https://images.unsplash.com/photo-1549497538-303791108f95?w=400&h=400&fit=crop&crop=center",
-    },
-    {
-      id: "11",
-      name: "Luxury Armchair",
-      price: 45,
-      image:
-        "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop&crop=center",
-    },
-    {
-      id: "12",
-      name: "Designer Bookshelf",
-      price: 40,
-      image:
-        "https://images.unsplash.com/photo-1549497538-303791108f95?w=400&h=400&fit=crop&crop=center",
-    },
-  ];
-};
+  // Fetch profile on mount if user is logged in
+  // useEffect(() => {
+  //   if (session?.user) {
+  //     fetchProfile();
+  //   }
+  // }, [session]);
 
-export default async function ProductDetailPage({
-  params,
-}: ProductDetailProps) {
-  const { id } = await params;
-  const product = getProductData(id);
-  const similarProducts = getSimilarProducts();
+  // Transform similar products to match the expected interface
+  const similarProducts = similarProductsData ? similarProductsData.map(item => ({
+    id: item._id || "",
+    name: item.name,
+    price: item.price,
+    image: item.images || "/placeholder-image.jpg"
+  })) : [];
+
+  const isLoading = isLoadingProduct || isLoadingSimilar;
+  const error = productError ? (productError instanceof Error ? productError.message : "Failed to load product") : null;
+
+  const handleBuyModal = async () => {
+    if (!session?.user) {
+      toast.error("Please login to buy this product");
+      router.push('/signin?redirect=' + encodeURIComponent(`/product/${id}`));
+      return;
+    }
+    
+    try {
+      // Get current profile from store
+      const currentProfile = useUserStore.getState().profile;
+      
+      // If no profile in store, fetch it
+      if (!currentProfile) {
+        toast.loading("Loading your profile...");
+        
+        try {
+          const response = await api.get<User>('users/profile');
+          
+          if (response.success && response.data) {
+            useUserStore.setState({ 
+              profile: response.data, 
+              hasLoadedProfile: true 
+            });
+          } else {
+            throw new Error(response.message || "Failed to load profile");
+          }
+          toast.dismiss();
+        } catch (error) {
+          toast.dismiss();
+          toast.error("Unable to load your profile. Please try again.");
+          return;
+        }
+      }
+      
+      // Get the latest profile state after potential update
+      const updatedProfile = useUserStore.getState().profile;
+      
+      // Check user balance
+      if (updatedProfile?.balance && product && updatedProfile.balance < product.price) {
+        toast.error("Insufficient balance. Please deposit more money.");
+        router.push('/deposit');
+        return;
+      }
+      
+      // Process order
+      toast.loading("Processing your order...");
+      
+      // Create order
+      if (product && product._id) {
+        const orderData: CreateOrderRequest = {
+          productId: product._id
+        };
+        
+        await orderMutation.mutateAsync(orderData);
+      } else {
+        throw new Error("Product information is missing");
+      }
+      
+      toast.dismiss();
+    } catch (error) {
+      toast.dismiss();
+      console.error("Error during buy process:", error);
+      toast.error("An error occurred. Please try again.");
+    }
+  }
+
+  if (isLoadingProduct || !product) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -142,23 +197,19 @@ export default async function ProductDetailPage({
       <div className="bg-gray-50 border-b px-4 py-3">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center text-sm text-gray-600">
-            <Link href="/" className="hover:text-blue-600">
+            <Link href="/" className="hover:text-blue-600 transition-colors hover:underline">
               Home
             </Link>
             <ChevronRight className="w-4 h-4 mx-2 text-gray-400" />
-            <Link href="/models" className="hover:text-blue-600">
+            <Link href="/models" className="hover:text-blue-600 transition-colors hover:underline">
               3D Models
             </Link>
             <ChevronRight className="w-4 h-4 mx-2 text-gray-400" />
-            <Link href="/furniture" className="hover:text-blue-600">
-              {product.category}
-            </Link>
+            <Link href={`/models?category=${product?.categoryPath}`} className="hover:text-blue-600 transition-colors hover:underline">{product?.categoryPath}</Link>
             <ChevronRight className="w-4 h-4 mx-2 text-gray-400" />
-            <Link href="/furniture/sideboard" className="hover:text-blue-600">
-              {product.subcategory}
-            </Link>
+            <Link href={`/models?category=${product?.categoryPath}&item=${product?.categoryName}`} className="hover:text-blue-600 transition-colors hover:underline">{product?.categoryName}</Link>
             <ChevronRight className="w-4 h-4 mx-2 text-gray-400" />
-            <span className="text-gray-900 font-medium">{product.name}</span>
+            <span className="text-gray-900 font-medium">{product?.name}</span>
           </div>
         </div>
       </div>
@@ -168,44 +219,23 @@ export default async function ProductDetailPage({
           {/* Left side - 3D Model Image */}
           <div className="lg:col-span-2 space-y-4 h-full">
             {/* Main Product Image */}
-            <div className="bg-gray-50 border rounded-lg p-3 relative">
-              <div className="relative aspect-square  rounded">
+            <div className="bg-gray-50 border rounded-lg p-3 relative transition-all hover:shadow-lg hover:border-gray-300">
+              <div className="relative aspect-square rounded">
                 <Image
-                  src={product.image}
-                  alt={product.name || "Product Image"}
+                  src={product?.images || "/placeholder-image.jpg"}
+                  alt={product?.name || "Product Image"}
                   fill
-                  className="object-contain p-4"
+                  className="object-contain p-4 transition-transform hover:scale-105"
                 />
               </div>
             </div>
-
-            {/* Product Stats */}
-            {/* <div className="flex items-center gap-6 text-sm text-gray-600 border-t pt-4">
-              <div className="flex items-center gap-1">
-                <Eye className="w-4 h-4" />
-                <span>{product.views} views</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Heart className="w-4 h-4" />
-                <span>{product.likes} likes</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Share2 className="w-4 h-4" />
-                <span>{product.shares} share</span>
-              </div>
-            </div> */}
           </div>
 
           {/* Right side - Product Info */}
-          <div className="space-y-6 h-full">
-            {/* Category Badge */}
-            <div className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-              {product.category}
-            </div>
-
+          <div className="space-y-6 h-full bg-gray-50 p-4 rounded-lg">
             {/* Product Title */}
             <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
-              {product.name}
+              {product?.name}
             </h1>
 
             {/* Price Section */}
@@ -214,11 +244,11 @@ export default async function ProductDetailPage({
                 <span className="text-sm text-gray-600">Price:</span>
                 <div className="flex items-center gap-2">
                   <span className="text-2xl font-bold text-blue-600">
-                    {product.price}
+                    {product?.price}
                   </span>
                   <CircleDollarSign className="w-5 h-5 text-yellow-500" />
                   <span className="text-gray-600">Coin</span>
-                  {product.isPro && (
+                  {product?.isPro && (
                     <span className="bg-black text-yellow-400 px-2 py-1 rounded text-xs font-bold">
                       PRO
                     </span>
@@ -226,104 +256,105 @@ export default async function ProductDetailPage({
                 </div>
               </div>
 
-              <div className="text-sm text-gray-600 mb-4">
-                Royalty Free License
+              <div className="text-sm text-gray-600 mb-4 first-letter:uppercase">
+                {product?.description}
               </div>
 
-              <hr className="my-4" />
+              {/* <hr className="my-4" /> */}
 
-              <div className="text-sm text-gray-600">
-                Balance: 0 accesses to PRO models
-              </div>
+
             </div>
 
             {/* Product Specifications */}
             <div className="space-y-3">
               <div className="grid grid-cols-1 gap-3 text-sm">
-                <div className="flex justify-between border-b pb-2">
+                <div className="flex justify-between border-b pb-2 hover:bg-gray-100 px-2 rounded transition-colors">
                   <span className="text-gray-600">ID Product:</span>
                   <span className="text-gray-900 font-mono text-xs">
-                    {product.specifications.idProduct}
+                    {product?._id}
                   </span>
                 </div>
 
-                <div className="flex justify-between border-b pb-2">
+                <div className="flex justify-between border-b pb-2 hover:bg-gray-100 px-2 rounded transition-colors">
                   <span className="text-gray-600">Platform:</span>
                   <span className="text-gray-900 font-medium">
-                    {product.specifications.platform}
+                    3dsMax 2015 + obj
                   </span>
                 </div>
 
-                <div className="flex justify-between border-b pb-2">
+                <div className="flex justify-between border-b pb-2 hover:bg-gray-100 px-2 rounded transition-colors">
                   <span className="text-gray-600">Render:</span>
-                  <span className="text-gray-900 font-medium">
-                    {product.specifications.render}
+                  <span className="text-gray-900 font-medium first-letter:uppercase">
+                    {product?.render || "-"}
                   </span>
                 </div>
 
-                <div className="flex justify-between border-b pb-2">
+                <div className="flex justify-between border-b pb-2 hover:bg-gray-100 px-2 rounded transition-colors">
                   <span className="text-gray-600">Size:</span>
                   <span className="text-gray-900 font-medium">
-                    {product.specifications.size}
+                    {product?.size ? `${product?.size} MB` : "-"}
                   </span>
                 </div>
 
-                <div className="flex justify-between border-b pb-2">
-                  <span className="text-gray-600">Polygons:</span>
-                  <span className="text-gray-900 font-medium">-</span>
-                </div>
-
-                <div className="flex justify-between border-b pb-2">
-                  <span className="text-gray-600">Colors:</span>
-                  <div className="flex items-center gap-2">
-                    {product.specifications.colors.map((color, index) => (
-                      <div
-                        key={index}
-                        className="w-5 h-5 rounded-full border border-gray-300"
-                        style={{ backgroundColor: color }}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex justify-between border-b pb-2">
-                  <span className="text-gray-600">Style:</span>
-                  <span className="text-gray-900 font-medium">-</span>
-                </div>
-
-                <div className="flex justify-between border-b pb-2">
+                <div className="flex justify-between border-b pb-2 hover:bg-gray-100 px-2 rounded transition-colors">
                   <span className="text-gray-600">Materials:</span>
-                  <span className="text-gray-900 font-medium">
-                    {product.specifications.materials}
+                  <span className="text-gray-900 font-medium first-letter:uppercase">
+                    {product?.materials || "-"}
                   </span>
                 </div>
 
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Formfactor:</span>
-                  <span className="text-gray-900 font-medium">-</span>
+                <div className="flex justify-between border-b pb-2 hover:bg-gray-100 px-2 rounded transition-colors">
+                  <span className="text-gray-600">Style:</span>
+                  <span className="text-gray-900 font-medium first-letter:uppercase">
+                    {product?.style || "-"}
+                  </span>
+                </div>
+
+                <div className="flex justify-between hover:bg-gray-100 px-2 rounded transition-colors">
+                  <span className="text-gray-600">Color:</span>
+                  {product?.color ? (
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-5 h-5 rounded-full border border-gray-300 hover:scale-125 transition-transform"
+                        style={{ backgroundColor: product.color }}
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-gray-900 font-medium">-</span>
+                  )}
                 </div>
               </div>
             </div>
 
             {/* Buy Button and Favorite */}
             <div className="flex gap-3">
-              <button className="flex-1 bg-black text-yellow-400 font-bold py-3 px-6 rounded flex items-center justify-center gap-2 transition-colors">
+              <button onClick={handleBuyModal} className="flex-1 bg-black text-yellow-400 font-bold py-3 px-6 rounded flex items-center justify-center gap-2 transition-all hover:bg-gray-800 hover:scale-105 hover:shadow-md">
                 <Download className="w-5 h-5" />
                 Buy Model
               </button>
-              <button className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 p-3 rounded transition-colors">
+              <button className="bg-white border border-gray-300 hover:bg-gray-100 hover:text-red-500 hover:border-red-300 text-gray-700 p-3 rounded transition-all hover:scale-110 hover:shadow-sm">
                 <Heart className="w-5 h-5" />
               </button>
             </div>
           </div>
         </div>
 
+        {/* Product Description */}
+        {product?.description && (
+          <div className="mt-10">
+            <h2 className="text-xl font-bold mb-4 text-gray-900">Description</h2>
+            <div className="bg-gray-50 border rounded-lg p-6 transition-all hover:shadow-md hover:border-gray-300">
+              <p className="text-gray-700 whitespace-pre-line first-letter:uppercase">{product.description}</p>
+            </div>
+          </div>
+        )}
+
         {/* Comments Section */}
-        <div className=" pt-6">
-          <div className="border rounded-lg">
+        <div className="mt-10">
+          <div className="border rounded-lg transition-all hover:shadow-md">
             <div className="border-b">
               <div className="flex">
-                <button className="px-4 py-3 text-sm font-medium border-b-2 border-blue-500 text-blue-600">
+                <button className="px-4 py-3 text-sm font-medium border-b-2 border-blue-500 text-blue-600 hover:bg-blue-50 transition-colors">
                   Comments
                 </button>
               </div>
@@ -337,12 +368,23 @@ export default async function ProductDetailPage({
         </div>
 
         {/* Similar Products Section - Swiper Slider */}
-        <div className="mt-16 border-t pt-8">
-          <h2 className="text-2xl font-bold mb-8 text-gray-900">
-            Similar 3D Models
-          </h2>
-          <SimilarProductsSlider products={similarProducts} />
-        </div>
+        {isLoadingSimilar ? (
+          <div className="mt-16 border-t pt-8">
+            <h2 className="text-2xl font-bold mb-8 text-gray-900 hover:text-blue-600 transition-colors inline-block">
+              Similar 3D Models
+            </h2>
+            <div className="flex items-center justify-center py-10">
+              <LoadingSpinner size="md" />
+            </div>
+          </div>
+        ) : similarProducts.length > 0 ? (
+          <div className="mt-16 border-t pt-8">
+            <h2 className="text-2xl font-bold mb-8 text-gray-900 hover:text-blue-600 transition-colors inline-block">
+              Similar 3D Models
+            </h2>
+            <SimilarProductsSlider products={similarProducts} />
+          </div>
+        ) : null}
       </div>
     </div>
   );

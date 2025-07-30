@@ -11,6 +11,8 @@ import { Order, OrderDocument } from './entities/order.entity';
 import { UsersService } from 'src/users/users.service';
 import { TransactionsService } from 'src/transactions/transactions.service';
 import { TransactionType } from 'src/enum/transactions.enum';
+import { ProductsService } from 'src/products/products.service';
+import { GoogleDriveService } from 'src/drive/google-drive.service';
 
 @Injectable()
 export class OrdersService {
@@ -18,13 +20,27 @@ export class OrdersService {
     @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
     private usersService: UsersService,
     private transactionsService: TransactionsService,
+    private productsService: ProductsService,
+    private driveService: GoogleDriveService, 
   ) {}
 
-  async create(createOrderDto: CreateOrderDto, userId: string): Promise<Order> {
+  async create(createOrderDto: CreateOrderDto, userId: string): Promise<{urlDownload: string}> {
     const user = await this.usersService.findOne(userId);
 
+    const { email} = user
+
     const { balance } = user;
-    const { totalAmount } = createOrderDto;
+    const { productId } = createOrderDto;
+
+    const product = await this.productsService.findById(productId);
+    
+    console.log("product", product)
+    if(!product){
+      throw new NotFoundException('Product not found');
+    }
+
+    const {discount, urlDownload, price} = product
+    const totalAmount = discount ? price - (price * discount / 100) : price;
 
     if (balance < totalAmount) {
       throw new BadRequestException('Bạn không đủ tiền để thanh toán');
@@ -36,6 +52,7 @@ export class OrdersService {
         type: TransactionType.PAYMENT,
         balanceBefore: balance,
         balanceAfter: balance - totalAmount,
+        // method: 
       },
       userId,
     );
@@ -44,12 +61,20 @@ export class OrdersService {
       throw new BadRequestException('Thanh toán thất bại');
     }
 
+    
+    const fileId = await this.driveService.getIdByUrl(urlDownload!);
+
     const createdOrder = new this.orderModel({
       ...createOrderDto,
       userId,
       transactionId: transaction._id,
+      fileId,
+      totalAmount
     });
-    return createdOrder.save();
+
+    await createdOrder.save();
+    await this.driveService.addDrivePermission(fileId, email);
+    return {urlDownload: urlDownload!}
   }
 
   async findAll(): Promise<Order[]> {

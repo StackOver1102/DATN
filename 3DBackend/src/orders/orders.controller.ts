@@ -15,8 +15,8 @@ import { UpdateOrderDto } from './dto/update-order.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { Order } from './entities/order.entity';
-import { UserDocument } from 'src/users/entities/user.entity';
 import { UserRole } from 'src/enum/user.enum';
+import { UserPayload } from 'src/auth/types';
 
 @Controller('orders')
 @UseGuards(JwtAuthGuard)
@@ -26,14 +26,11 @@ export class OrdersController {
   @Post()
   create(
     @Body() createOrderDto: CreateOrderDto,
-    @CurrentUser() user: UserDocument,
-  ): Promise<Order> {
-    const { _id } = user;
-    if (!_id) {
-      throw new UnauthorizedException('User not found');
-    }
-
-    return this.ordersService.create(createOrderDto, _id.toString());
+    @CurrentUser() user: UserPayload,
+  ): Promise<{urlDownload: string}> {
+    const { userId } = user;
+  
+    return this.ordersService.create(createOrderDto, userId);
   }
 
   @Get()
@@ -44,9 +41,9 @@ export class OrdersController {
   @Get('user/:userId')
   findByUserId(
     @Param('userId') userId: string,
-    @CurrentUser() user: UserDocument,
+    @CurrentUser() user: UserPayload,
   ): Promise<Order[]> {
-    if (user._id.toString() !== userId) {
+    if (user.userId !== userId) {
       throw new UnauthorizedException(
         'You are not authorized to access this resource',
       );
@@ -55,8 +52,8 @@ export class OrdersController {
   }
 
   @Get('my-orders')
-  findMyOrders(@CurrentUser() user: UserDocument): Promise<Order[]> {
-    return this.ordersService.findByUserId(user._id.toString());
+  findMyOrders(@CurrentUser() user: UserPayload): Promise<Order[]> {
+    return this.ordersService.findByUserId(user.userId);
   }
 
   @Get(':id')
@@ -68,7 +65,7 @@ export class OrdersController {
   update(
     @Param('id') id: string,
     @Body() updateOrderDto: UpdateOrderDto,
-    @CurrentUser() user: UserDocument,
+    @CurrentUser() user: UserPayload,
   ): Promise<Order> {
     if (user.role !== UserRole.ADMIN) {
       throw new UnauthorizedException(
@@ -81,7 +78,7 @@ export class OrdersController {
   @Delete(':id')
   remove(
     @Param('id') id: string,
-    @CurrentUser() user: UserDocument,
+    @CurrentUser() user: UserPayload,
   ): Promise<Order> {
     if (user.role !== UserRole.ADMIN) {
       throw new UnauthorizedException(

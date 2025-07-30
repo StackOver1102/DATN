@@ -19,7 +19,7 @@ export class Product {
   @Prop({ default: 0 })
   discount: number;
 
-  @Prop({ type: String })
+  @Prop({ type: String, select: false })
   folderId?: string;
 
   @Prop({ type: String, default: '' })
@@ -73,7 +73,7 @@ export class Product {
   @Prop({ type: String })
   color?: string;
 
-  @Prop({ type: String })
+  @Prop({ type: String , select: false})
   urlDownload?: string;
 }
 

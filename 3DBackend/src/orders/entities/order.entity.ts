@@ -30,9 +30,6 @@ export class Order {
   @Prop({ type: Types.ObjectId, ref: 'Transaction' })
   transactionId: Types.ObjectId;
 
-  @Prop()
-  notes: string;
-
   @Prop({ default: false })
   isPaid: boolean;
 
@@ -44,6 +41,9 @@ export class Order {
 
   @Prop()
   updatedAt: Date;
+
+  @Prop({ type: String })
+  fileId: string;
 }
 
 export type OrderDocument = HydratedDocument<Order>;

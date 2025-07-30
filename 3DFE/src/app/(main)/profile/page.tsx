@@ -21,12 +21,13 @@ import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useUserProfile } from "@/lib/hooks/useAuth";
 import { useApi, useFetchData, useUpdateData } from "@/lib/hooks/useApi";
 import { Loading } from "@/components/ui/loading";
 import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
+import { useUserStore } from "@/lib/store/userStore";
+import { User } from "@/lib/types";
 
 type TabType = "info" | "password" | "purchases" | "payments";
 
@@ -86,10 +87,12 @@ type UserProfileFormValues = z.infer<typeof userProfileSchema>;
 type PasswordFormValues = z.infer<typeof passwordSchema>;
 
 export default function ProfilePage() {
-  const { data: session } = useSession();
+  const { data: session, update: updateSession, status } = useSession();
   const searchParams = useSearchParams();
   const tabParam = searchParams?.get("tab");
+  const paymentSuccess = searchParams?.get("payment_success");
   const router = useRouter();
+  const api = useApi();
 
   // Set active tab based on URL parameter if available
   const [activeTab, setActiveTab] = useState<TabType>(
@@ -100,6 +103,75 @@ export default function ProfilePage() {
       : "info"
   );
 
+  // Use Zustand store directly
+  const { 
+    profile,
+    setProfile,
+    setLoading,
+    setError,
+    setHasLoadedProfile,
+    isLoading: isLoadingStore
+  } = useUserStore();
+  
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+
+  // Function to fetch profile directly
+  const fetchProfile = async () => {
+    // If we already have the profile data and it's not a forced refresh, just return it
+    if (profile && !isLoadingProfile) return profile;
+    
+    try {
+      setIsLoadingProfile(true);
+      setLoading(true);
+      const response = await api.get<User>('users/profile');
+      if (response.success && response.data) {
+        setProfile(response.data);
+        setHasLoadedProfile(true);
+      } else {
+        setError(response.message || "Failed to load profile");
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      setError(error instanceof Error ? error.message : "Unknown error");
+    } finally {
+      setIsLoadingProfile(false);
+      setLoading(false);
+    }
+  };
+
+  // Tải thông tin profile khi vào trang profile
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (status === 'authenticated' && session) {
+        // Trang profile luôn cần tải lại thông tin mới nhất
+        await fetchProfile();
+      }
+    };
+    
+    loadProfile();
+  }, [status, session]);
+
+  // Force refresh user profile data when coming from payment success
+  useEffect(() => {
+    const refreshData = async () => {
+      if (paymentSuccess === "true") {
+        // Update the session to get the latest balance
+        await updateSession();
+        
+        // Refetch user profile data
+        await fetchProfile();
+        
+        // Show success message
+        toast.success("Thanh toán thành công! Số dư đã được cập nhật.");
+        
+        // Remove the query parameter to prevent showing the message again on refresh
+        router.replace("/profile", { scroll: false });
+      }
+    };
+    
+    refreshData();
+  }, [paymentSuccess, updateSession, router]);
+
   const [isEditing, setIsEditing] = useState(false);
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -109,14 +181,6 @@ export default function ProfilePage() {
     null
   );
   const [refundReason, setRefundReason] = useState("");
-
-  const token = session?.accessToken;
-
-  const {
-    data: userProfile,
-    isLoading: isLoadingUserProfile,
-    // error: userProfileError,
-  } = useUserProfile(token);
 
   const { data: purchases, isLoading: isLoadingPurchases } = useFetchData<
     Purchase[]
@@ -131,42 +195,6 @@ export default function ProfilePage() {
   });
 
   const { post } = useApi();
-
-  // Sử dụng hook useUpdateData để cập nhật thông tin người dùng
-  const updateProfileMutation = useUpdateData<
-    UserProfileFormValues,
-    UserProfileFormValues
-  >(`users/${session?.user?.id}`, "userProfile", {
-    onSuccess: (updatedData) => {
-      // Cập nhật userData khi API trả về kết quả thành công
-      setUserData({
-        ...userData,
-        fullName: updatedData.fullName,
-        email: updatedData.email,
-        phone: updatedData.phone || "",
-        address: updatedData.address || "",
-      });
-      setIsEditing(false);
-      toast.success("Thông tin đã được cập nhật thành công!");
-    },
-    onError: (error) => {
-      toast.error(`Có lỗi xảy ra khi cập nhật thông tin: ${error.message}`);
-    },
-  });
-
-  // Sử dụng hook useUpdateData để đổi mật khẩu
-  const changePasswordMutation = useUpdateData<
-    { message: string },
-    { oldPassword: string; newPassword: string }
-  >(`users/change-password`, "changePassword", {
-    onSuccess: () => {
-      resetPassword();
-      toast.success("Mật khẩu đã được thay đổi thành công!");
-    },
-    onError: (error) => {
-      toast.error(`${error.message}`);
-    },
-  });
 
   // User profile form
   const {
@@ -213,59 +241,31 @@ export default function ProfilePage() {
     totalDownloads: 0,
   });
 
-  // Update userData and form values when userProfile changes
+  // Update userData and form values when profile changes
   useEffect(() => {
-    if (userProfile) {
+    if (profile) {
       setUserData({
-        fullName: userProfile.fullName || "",
-        email: userProfile.email || "",
-        phone: userProfile.phone || "",
-        address: userProfile.address || "",
+        fullName: profile.fullName || "",
+        email: profile.email || "",
+        phone: profile.phone || "",
+        address: profile.address || "",
         avatar:
-          userProfile.avatar ||
+          profile.avatar ||
           "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-        joinDate: userProfile.createdAt
-          ? new Date(userProfile.createdAt).toISOString().split("T")[0]
+        joinDate: profile.createdAt
+          ? new Date(profile.createdAt).toISOString().split("T")[0]
           : new Date().toISOString().split("T")[0],
-        balance: userProfile.balance || 0,
-        totalDownloads: userProfile.totalDownloads || 0,
+        balance: profile.balance || 0,
+        totalDownloads: profile.totalDownloads || 0,
       });
 
       // Update form values
-      setProfileValue("fullName", userProfile.fullName || "");
-      setProfileValue("email", userProfile.email || "");
-      setProfileValue("phone", userProfile.phone || "");
-      setProfileValue("address", userProfile.address || "");
+      setProfileValue("fullName", profile.fullName || "");
+      setProfileValue("email", profile.email || "");
+      setProfileValue("phone", profile.phone || "");
+      setProfileValue("address", profile.address || "");
     }
-  }, [userProfile, setProfileValue]);
-
-  // Mock payment history
-  // const payments: Payment[] = [
-  //   {
-  //     id: "PAY001",
-  //     amount: 500000,
-  //     method: "Bank Transfer",
-  //     date: "2024-01-20",
-  //     status: "completed",
-  //     description: "Account top-up",
-  //   },
-  //   {
-  //     id: "PAY002",
-  //     amount: 350000,
-  //     method: "Credit Card",
-  //     date: "2024-01-15",
-  //     status: "completed",
-  //     description: "Purchase: Modern Living Room Set",
-  //   },
-  //   {
-  //     id: "PAY003",
-  //     amount: 1000000,
-  //     method: "Bank Transfer",
-  //     date: "2024-01-01",
-  //     status: "completed",
-  //     description: "Account top-up",
-  //   },
-  // ];
+  }, [profile, setProfileValue]);
 
   const tabs = [
     { id: "info" as TabType, label: "Thông tin cá nhân", icon: UserIcon },
@@ -278,28 +278,59 @@ export default function ProfilePage() {
     { id: "payments" as TabType, label: "Lịch sử nạp tiền", icon: CreditCard },
   ];
 
+  // Update profile mutation
+  const updateProfileMutation = useUpdateData<User, Partial<User> & { userId: string }>(
+    'users',
+    ['userProfile'],
+    {
+      onSuccess: (updatedData) => {
+        // Update the store with the new data
+        setProfile(updatedData);
+      },
+      onError: (err) => {
+        setError(err.message);
+      }
+    }
+  );
+
+  // Change password mutation
+  const changePasswordMutation = useUpdateData<{ message: string }, { oldPassword: string; newPassword: string }>(
+    'users/change-password',
+    ['userPassword'],
+    {
+      onError: (err) => {
+        setError(err.message);
+      }
+    }
+  );
+
   // Handle profile form submission
   const onSubmitProfile = async (data: UserProfileFormValues) => {
     try {
       if (session?.user?.id) {
-        updateProfileMutation.mutate(data);
+        await updateProfileMutation.mutateAsync({
+          userId: session.user.id,
+          ...data
+        });
+        setIsEditing(false);
+        toast.success("Thông tin đã được cập nhật thành công!");
       }
     } catch (error) {
-      console.error("Error updating profile:", error);
+      toast.error(`Có lỗi xảy ra khi cập nhật thông tin: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
   // Handle password form submission
   const onSubmitPassword = async (data: PasswordFormValues) => {
     try {
-      if (session?.user?.id) {
-        changePasswordMutation.mutate({
-          oldPassword: data.oldPassword,
-          newPassword: data.newPassword,
-        });
-      }
+      await changePasswordMutation.mutateAsync({
+        oldPassword: data.oldPassword,
+        newPassword: data.newPassword
+      });
+      resetPassword();
+      toast.success("Mật khẩu đã được thay đổi thành công!");
     } catch (error) {
-      console.error("Error changing password:", error);
+      toast.error(`${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -376,7 +407,7 @@ export default function ProfilePage() {
     return new Date(dateString).toLocaleDateString("vi-VN");
   };
 
-  if (isLoadingUserProfile || isLoadingPurchases || isLoadingPayments) {
+  if (isLoadingProfile || isLoadingPurchases || isLoadingPayments || isLoadingStore) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Loading variant="spinner" size="lg" text="Đang tải thông tin..." />
@@ -795,9 +826,9 @@ export default function ProfilePage() {
 
                   <div className="space-y-4">
                     {payments?.length ? (
-                      payments.map((payment) => (
+                      payments.map((payment,index) => (
                         <div
-                          key={payment.id}
+                          key={index}
                           className="bg-gray-50 rounded-lg p-4 flex items-center justify-between"
                         >
                           <div className="flex items-center gap-4">

@@ -13,7 +13,7 @@ export class Transaction {
   @Prop({ required: true, ref: 'User' })
   userId: Types.ObjectId;
 
-  @Prop({ required: true })
+  @Prop()
   method: TransactionMethod;
 
   @Prop({ required: true })

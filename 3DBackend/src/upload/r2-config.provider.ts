@@ -32,7 +32,6 @@ export const r2ConfigFactory = {
     const endpoint = configService.get<string>('R2_ENDPOINT') || '';
     const bucketName = configService.get<string>('R2_BUCKET') || 'my-bucket';
     const publicUrl = configService.get<string>('R2_PUBLIC_URL') || '';
-    console.log('Public URL js.35', publicUrl);
     if (!accessKeyId || !secretAccessKey || !endpoint) {
       console.warn('Cloudflare R2 credentials not configured properly');
       return null;
@@ -94,7 +93,6 @@ export const r2StorageProvider: Provider = {
     const endpoint = configService.get<string>('R2_ENDPOINT') || '';
     const bucketName = configService.get<string>('R2_BUCKET') || 'my-bucket';
     const publicUrl = configService.get<string>('R2_PUBLIC_URL') || '';
-    console.log('Public URL', publicUrl);
     if (!accessKeyId || !secretAccessKey || !endpoint) {
       console.warn('Cloudflare R2 credentials not configured properly');
       return null;

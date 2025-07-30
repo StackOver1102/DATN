@@ -78,4 +78,9 @@ export interface Product {
   urlDownload?: string;
   createdAt?: string;
   updatedAt?: string;
+
+  categoryId?:string
+  categoryName?:string;
+  rootCategoryId?:string;
+  categoryPath?:string;
 }

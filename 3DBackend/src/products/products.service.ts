@@ -33,9 +33,9 @@ export class ProductsService {
   async createProductAndAddURL(
     createProductDto: CreateProductDto,
   ): Promise<Product> {
-    const { name, folderId } = createProductDto;
+    const { name, folderId, stt } = createProductDto;
 
-    if (!name) {
+    if (!name ) {
       throw new BadRequestException('Name is required');
     }
 
@@ -43,9 +43,13 @@ export class ProductsService {
       throw new BadRequestException('Folder ID is required');
     }
 
+    if (!stt) {
+      throw new BadRequestException('STT is required');
+    }
+
     const folderInfo = await this.googleDriveService.getFolderInfo(
       folderId,
-      name,
+      `${stt}. ${name}`,
     );
 
     const productData = {
@@ -53,6 +57,7 @@ export class ProductsService {
       urlDownload: folderInfo?.rar?.id
         ? `https://drive.google.com/uc?id=${folderInfo.rar.id}`
         : createProductDto.urlDownload || '',
+      size: folderInfo?.rar?.size_mb || 0,
     };
 
     const createdProduct = new this.productModel(productData);
@@ -72,7 +77,6 @@ export class ProductsService {
       throw new BadRequestException('Image file is required');
     }
 
-    console.log(file);
     // Ưu tiên sử dụng URL từ Cloudflare R2
     const imageUrl = file.key
       ? this.uploadService.getFileUrl(file.key)
@@ -93,7 +97,6 @@ export class ProductsService {
   async findAllWithFilters(
     filterDto: FilterDto,
   ): Promise<PaginatedResult<ProductDocument>> {
-    console.log(filterDto);
     return this.filterService.applyFilters(this.productModel, filterDto, {}, [
       'name',
       'description',
@@ -104,6 +107,98 @@ export class ProductsService {
 
   async findOne(id: string): Promise<Product | null> {
     return this.productModel.findById(id).exec();
+  }
+
+  async findSimilarByCategory(id: string, limit: number = 10): Promise<Product[]> {
+    // Find the current product
+    const product = await this.productModel.findById(id).exec();
+    
+    if (!product) {
+      throw new NotFoundException(`Product with ID ${id} not found`);
+    }
+    
+    // Build a query to find similar products
+    const query: Record<string, any> = {
+      _id: { $ne: id }, // Exclude current product
+      isActive: true, // Only include active products
+    };
+
+    // Match criteria based on available product attributes
+    const matchCriteria: Record<string, any>[] = [];
+
+    // Primary match: same category
+    if (product.categoryId) {
+      matchCriteria.push({ categoryId: product.categoryId });
+    }
+
+    // Secondary matches: similar attributes
+    const secondaryMatches: Record<string, any>[] = [];
+    
+    if (product.materials) {
+      secondaryMatches.push({ materials: product.materials });
+    }
+    
+    if (product.style) {
+      secondaryMatches.push({ style: product.style });
+    }
+    
+    if (product.render) {
+      secondaryMatches.push({ render: product.render });
+    }
+
+    // Price range (products within 30% of the original price)
+    if (product.price) {
+      const minPrice = product.price * 0.7;
+      const maxPrice = product.price * 1.3;
+      secondaryMatches.push({ price: { $gte: minPrice, $lte: maxPrice } });
+    }
+
+    // If we have secondary matches, add them to the query
+    if (secondaryMatches.length > 0) {
+      if (matchCriteria.length > 0) {
+        // If we have primary category match, use that plus at least one secondary match
+        query.$and = [
+          { $or: matchCriteria },
+          { $or: secondaryMatches }
+        ];
+      } else {
+        // If no category, just use secondary matches
+        query.$or = secondaryMatches;
+      }
+    } else if (matchCriteria.length > 0) {
+      // If only category matches are available
+      query.$or = matchCriteria;
+    }
+      
+    // Find similar products
+    const similarProducts = await this.productModel
+      .find(query)
+      .limit(limit)
+      .sort({ createdAt: -1 }) // Get the newest products first
+      .exec();
+    
+    // If we don't have enough products, get more without strict matching
+    if (similarProducts.length < limit) {
+      const remainingLimit = limit - similarProducts.length;
+      const existingIds = similarProducts.map(p => p._id);
+      
+      // Broader query to find more products
+      const additionalProducts = await this.productModel
+        .find({
+          _id: { 
+            $ne: id, 
+            $nin: existingIds 
+          },
+          isActive: true
+        })
+        .limit(remainingLimit)
+        .sort({ createdAt: -1 })
+        .exec();
+      
+      return [...similarProducts, ...additionalProducts];
+    }
+      
+    return similarProducts;
   }
 
   async update(
@@ -130,5 +225,9 @@ export class ProductsService {
     }
 
     return this.productModel.findByIdAndDelete(id).exec();
+  }
+
+  async findById(id: string): Promise<Product | null> {
+    return this.productModel.findById(id).select("urlDownload price discount");
   }
 }

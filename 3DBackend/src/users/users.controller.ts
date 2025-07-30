@@ -52,7 +52,6 @@ export class UsersController {
     @Body() changePasswordDto: ChangePasswordDto,
     @CurrentUser() user: UserPayload,
   ) {
-    console.log(user);
     return this.usersService.changePassword(
       changePasswordDto.oldPassword,
       changePasswordDto.newPassword,

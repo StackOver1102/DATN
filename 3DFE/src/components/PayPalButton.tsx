@@ -2,33 +2,45 @@
 
 import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
 import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { transactionApi } from "@/lib/api";
+import { toast } from "sonner";
+import { LoadingSpinner } from "./ui/loading-spinner";
 
 interface PayPalButtonProps {
   amount: number;
   onSuccess: (details: Record<string, unknown>) => void;
   onError: (err: Error | unknown) => void;
+  currency?: string;
+  description?: string;
+  returnUrl?: string;
+  cancelUrl?: string;
 }
 
 export default function PayPalButton({
   amount,
   onSuccess,
   onError,
+  currency = "USD",
+  description = "Deposit to account",
+  returnUrl,
+  cancelUrl,
 }: PayPalButtonProps) {
   const [isPending, setIsPending] = useState(false);
+  const { data: session, update: updateSession } = useSession();
+  const [paypalOrderId, setPaypalOrderId] = useState<string | null>(null);
+  const [approveUrl, setApproveUrl] = useState<string | null>(null);
 
   const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
   if (!clientId) {
-    return;
+    return <div>PayPal configuration missing</div>;
   }
+  
   const initialOptions = {
     clientId: clientId,
-    currency: "USD",
+    currency: currency,
     intent: "capture",
   };
-
-  // Convert VND to USD (approximate rate: 1 USD = 24,000 VND)
-  // Ensure minimum amount is $0.01
-  const usdAmount = Math.max(amount / 24000, 0.01).toFixed(2);
 
   // Don't render if amount is 0 or negative
   if (amount <= 0) {
@@ -39,9 +51,133 @@ export default function PayPalButton({
     );
   }
 
+  // Get the base URL for return and cancel URLs
+  const getBaseUrl = () => {
+    if (typeof window !== 'undefined') {
+      return window.location.origin;
+    }
+    return 'http://localhost:3000';
+  };
+
+  // Create PayPal order through our backend
+  const createPayPalOrder = async () => {
+    if (!session?.accessToken) {
+      toast.error("Vui lòng đăng nhập để tiếp tục");
+      
+      // Try to refresh the session
+      try {
+        await updateSession();
+        
+        // If still no session after update, redirect to login
+        if (!session?.accessToken) {
+          if (typeof window !== 'undefined') {
+            window.location.href = `/signin?callbackUrl=${encodeURIComponent(window.location.href)}`;
+          }
+          return null;
+        }
+      } catch (error) {
+        console.error("Error updating session:", error);
+        if (typeof window !== 'undefined') {
+          window.location.href = `/signin?callbackUrl=${encodeURIComponent(window.location.href)}`;
+        }
+        return null;
+      }
+    }
+
+    try {
+      setIsPending(true);
+      
+      // Set default return and cancel URLs if not provided
+      const baseUrl = getBaseUrl();
+      const defaultReturnUrl = `${baseUrl}/deposit/success`;
+      const defaultCancelUrl = `${baseUrl}/deposit/cancel`;
+      
+      const response = await transactionApi.createPayPalOrder(
+        session.accessToken,
+        {
+          amount: amount,
+          currency: currency,
+          description: description,
+          returnUrl: returnUrl || defaultReturnUrl,
+          cancelUrl: cancelUrl || defaultCancelUrl,
+        }
+      );
+
+      if (!response.success || !response.data) {
+        throw new Error(response.message || "Failed to create PayPal order");
+      }
+
+      setPaypalOrderId(response.data.paypalOrderId);
+      setApproveUrl(response.data.approveUrl);
+      
+      return response.data.paypalOrderId;
+    } catch (error) {
+      console.error("Error creating PayPal order:", error);
+      toast.error("Không thể tạo đơn hàng PayPal. Vui lòng thử lại sau.");
+      onError(error);
+      setIsPending(false);
+      return null;
+    }
+  };
+
+  // Process the approved PayPal order through our backend
+  const processApprovedOrder = async (orderId: string) => {
+    if (!session?.accessToken) {
+      toast.error("Vui lòng đăng nhập để tiếp tục");
+      
+      // Try to refresh the session
+      try {
+        await updateSession();
+        
+        // If still no session after update, redirect to login
+        if (!session?.accessToken) {
+          if (typeof window !== 'undefined') {
+            window.location.href = `/signin?callbackUrl=${encodeURIComponent(window.location.href)}`;
+          }
+          return false;
+        }
+      } catch (error) {
+        console.error("Error updating session:", error);
+        if (typeof window !== 'undefined') {
+          window.location.href = `/signin?callbackUrl=${encodeURIComponent(window.location.href)}`;
+        }
+        return false;
+      }
+    }
+
+    try {
+      // Call our backend to verify and process the payment
+      const response = await transactionApi.approvePayPalOrder(
+        session.accessToken,
+        orderId
+      );
+
+      if (!response.success) {
+        throw new Error(response.message || "Failed to process payment");
+      }
+
+      // Payment successfully processed
+      toast.success("Thanh toán thành công! Kim cương đã được nạp vào tài khoản.");
+      
+      // Return success
+      return true;
+    } catch (error) {
+      console.error("Error processing PayPal order:", error);
+      toast.error("Có lỗi xảy ra khi xử lý thanh toán. Vui lòng liên hệ hỗ trợ.");
+      return false;
+    }
+  };
+
   return (
     <PayPalScriptProvider options={initialOptions}>
       <div className="paypal-container">
+        {isPending && (
+          <div className="flex justify-center items-center py-4">
+            <LoadingSpinner size="md" />
+            <span className="ml-2">Đang xử lý...</span>
+          </div>
+        )}
+        
         <PayPalButtons
           style={{
             layout: "vertical",
@@ -50,28 +186,52 @@ export default function PayPalButton({
             label: "paypal",
           }}
           disabled={isPending}
-          createOrder={(data, actions) => {
-            setIsPending(true);
-            return actions.order.create({
-              intent: "CAPTURE",
-              purchase_units: [
-                {
-                  amount: {
-                    value: usdAmount,
-                    currency_code: "USD",
-                  },
-                  description: `3DS Blue - Diamond Purchase (${amount.toLocaleString(
-                    "vi-VN"
-                  )} VND)`,
-                },
-              ],
-            });
+          forceReRender={[amount, currency, description]}
+          createOrder={async () => {
+            const orderId = await createPayPalOrder();
+            if (!orderId) {
+              throw new Error("Failed to create order");
+            }
+            return orderId;
           }}
           onApprove={async (data, actions) => {
             try {
-              const details = await actions.order!.capture();
+              console.log("data", data);
+              setIsPending(true);
+              
+              // If we have returnUrl, redirect to it instead of processing here
+              // if (returnUrl) {
+              //   onSuccess({
+              //     orderID: data.orderID,
+              //     paypalOrderId: data.orderID,
+              //     status: "APPROVED",
+              //   });
+              //   return;
+              // }
+              
+              // Process the payment through our backend
+              const success = await processApprovedOrder(data.orderID);
+              
               setIsPending(false);
-              onSuccess(details);
+              
+              if (success) {
+                // Pass the transaction details to the parent component
+                onSuccess({
+                  orderID: data.orderID,
+                  paypalOrderId: data.orderID,
+                  status: "COMPLETED",
+                });
+                
+                // If we're in the browser, redirect to profile page with success parameter
+                if (typeof window !== 'undefined') {
+                  // Wait a moment before redirecting to allow the success callback to complete
+                  setTimeout(() => {
+                    window.location.href = "/profile?payment_success=true";
+                  }, 1500);
+                }
+              } else {
+                throw new Error("Payment processing failed");
+              }
             } catch (err) {
               setIsPending(false);
               onError(err);
@@ -80,9 +240,16 @@ export default function PayPalButton({
           onError={(err) => {
             setIsPending(false);
             onError(err);
+            toast.error("Có lỗi xảy ra trong quá trình thanh toán.");
           }}
           onCancel={() => {
             setIsPending(false);
+            toast.info("Thanh toán đã bị hủy.");
+            
+            // If we have cancelUrl, redirect to it
+            if (cancelUrl && typeof window !== 'undefined') {
+              window.location.href = cancelUrl;
+            }
           }}
         />
       </div>

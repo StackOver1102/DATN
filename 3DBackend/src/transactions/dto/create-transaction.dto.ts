@@ -90,3 +90,44 @@ export class CreateOrderPaymentDto {
   @IsString()
   description?: string;
 }
+
+export class CreatePayPalOrderDto {
+  @ApiProperty({ description: 'Amount to deposit' })
+  @IsNumber()
+  @IsPositive()
+  @IsNotEmpty()
+  amount: number;
+
+  @ApiProperty({
+    description: 'Currency code (default: USD)',
+    required: false,
+    default: 'USD',
+  })
+  @IsOptional()
+  @IsString()
+  currency?: string = 'USD';
+
+  @ApiProperty({
+    description: 'Return URL after successful payment',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  returnUrl?: string;
+
+  @ApiProperty({
+    description: 'Cancel URL if payment is cancelled',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  cancelUrl?: string;
+
+  @ApiProperty({
+    description: 'Description of the transaction',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  description?: string = 'Deposit to account';
+}

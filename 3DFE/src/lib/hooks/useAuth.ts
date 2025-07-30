@@ -1,8 +1,11 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { signIn, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { User } from '../types';
-import { apiRequest } from '../api';
+import { useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useUserStore } from '../store/userStore';
+import { useApi } from './useApi';
 
 interface LoginCredentials {
   email: string;
@@ -89,27 +92,65 @@ export function useLogout() {
 }
 
 /**
- * Hook for fetching user profile
+ * Simple hook for accessing user profile data
+ * This hook will fetch the profile only once when needed
+ * and won't cause continuous API calls
  */
-export function useUserProfile(token?: string) {
-  return useQuery({
-    queryKey: ['userProfile', token],
-    queryFn: async () => {
-      if (!token) return null;
-      try {
-        const response = await apiRequest<User>('users/profile', 'GET', undefined, token);
-        if (!response.success) {
-          throw new Error(response.message || 'Failed to fetch user profile');
-        }
+export function useUserProfile() {
+  const { data: session, status } = useSession();
+  const api = useApi();
+  const { 
+    profile, 
+    isLoading, 
+    setProfile, 
+    setLoading, 
+    setError, 
+    setHasLoadedProfile,
+    hasLoadedProfile 
+  } = useUserStore();
+
+  // Function to fetch profile directly without causing re-renders
+  const fetchProfile = async () => {
+    // If we already have the profile data, just return it without API call
+    if (profile) return profile;
+    
+    // If we've already marked it as loaded but don't have data, something's wrong
+    if (hasLoadedProfile && !profile) {
+      setHasLoadedProfile(false); // Reset the flag to try loading again
+    }
+    
+    try {
+      setLoading(true);
+      const response = await api.get<User>('users/profile');
+      if (response.success && response.data) {
+        setProfile(response.data);
+        setHasLoadedProfile(true);
         return response.data;
-      } catch (error) {
-        console.error('Error fetching user profile:', error);
-        throw error;
+      } else {
+        setError(response.message || "Failed to load profile");
+        return null;
       }
-    },
-    enabled: !!token,
-    retry: 1,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      setError(error instanceof Error ? error.message : "Unknown error");
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load profile once if authenticated and not already loaded
+  useEffect(() => {
+    if (status === 'authenticated' && !hasLoadedProfile && !profile) {
+      fetchProfile();
+    }
+  }, [status, hasLoadedProfile, profile]);
+
+  return {
+    profile,
+    isLoading,
+    fetchProfile,
+    isAuthenticated: status === 'authenticated',
+    session
+  };
 }
- 

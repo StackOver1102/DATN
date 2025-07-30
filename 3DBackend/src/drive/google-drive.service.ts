@@ -177,4 +177,26 @@ export class GoogleDriveService {
       sendNotificationEmail: true,
     });
   }
+
+  async getIdByUrl(url: string): Promise<string> {
+    // Extract ID from URL like https://drive.google.com/uc?id=1RaRoIhSHk4JJgZ2m_rAx8QesKTPSZkEx
+    try {
+      const urlObj = new URL(url);
+      if (urlObj.searchParams.has('id')) {
+        const id = urlObj.searchParams.get('id');
+        if (id) return id;
+      }
+      
+      // Handle other URL formats like /file/d/ID/view
+      const pathParts = urlObj.pathname.split('/');
+      const idIndex = pathParts.indexOf('d');
+      if (idIndex !== -1 && idIndex + 1 < pathParts.length) {
+        return pathParts[idIndex + 1];
+      }
+      
+      throw new Error('Could not extract ID from URL');
+    } catch (error) {
+      throw new Error(`Invalid Google Drive URL: ${url}`);
+    }
+  }
 }
