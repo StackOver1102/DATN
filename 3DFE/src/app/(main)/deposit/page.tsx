@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import PayPalButton from "@/components/PayPalButton";
@@ -9,100 +9,92 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
-import { useUserStore } from "@/lib/store/userStore";
-import { useApi } from "@/lib/hooks/useApi";
-import { User } from "@/lib/types";
+import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
+import { fetchUserProfile } from "@/lib/store/userSlice";
 
 export default function DepositPage() {
   const { data: session, update: updateSession } = useSession();
   const router = useRouter();
-  const api = useApi();
+
   const [diamondAmount, setDiamondAmount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [returnUrl, setReturnUrl] = useState<string>('');
-  const [cancelUrl, setCancelUrl] = useState<string>('');
+  const [returnUrl, setReturnUrl] = useState<string>("");
+  const [cancelUrl, setCancelUrl] = useState<string>("");
 
   // Payment methods
   const [paymentMethod, setPaymentMethod] = useState<string>("paypal");
 
-  // Use Zustand store directly
-  const { 
-    profile, 
-    setProfile, 
-    isLoading: isLoadingStore,
-    setHasLoadedProfile
-  } = useUserStore();
+  // Use Redux store
+  const dispatch = useAppDispatch();
+  const { profile, isLoading: isLoadingStore } = useAppSelector(
+    (state) => state.user
+  );
 
-  // Function to fetch profile directly
-  const fetchProfile = async () => {
+  // Function to fetch profile directly using Redux
+  const fetchProfile = useCallback(async () => {
     // If we already have the profile data, just return it without API call
     if (profile) return profile;
-    
+
     try {
-      const response = await api.get<User>('users/profile');
-      if (response.success && response.data) {
-        setProfile(response.data);
-        setHasLoadedProfile(true);
-        return response.data;
-      }
+      const token = session?.accessToken as string | undefined;
+      const result = await dispatch(fetchUserProfile(token)).unwrap();
+      return result;
     } catch (error) {
       console.error("Error fetching profile:", error);
     }
     return null;
-  };
+  }, [profile, session, dispatch]);
 
   // User info
   const username = profile?.fullName || session?.user?.name || "Guest";
   const userBalance = profile?.balance || 0;
 
   useEffect(() => {
-    console.log(session);
-    
     // Check if we have a session
     if (!session) {
       // Wait a moment and try to get the session again (in case it's still loading)
       const timer = setTimeout(async () => {
         await updateSession();
-        
+
         // If we still don't have a session after update, redirect to login
         if (!session) {
           toast.error("Vui lòng đăng nhập để nạp tiền");
           router.push("/signin?callbackUrl=" + encodeURIComponent("/deposit"));
         }
       }, 1500);
-      
+
       return () => clearTimeout(timer);
     }
-    
+
     // Fetch user profile to get the latest balance
     fetchProfile();
-    
+
     // Set the return and cancel URLs
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       setReturnUrl(`${window.location.origin}/deposit/success`);
       setCancelUrl(`${window.location.origin}/deposit/cancel`);
     }
-  }, [session, router, updateSession]);
+  }, [session, router, updateSession, fetchProfile]);
 
   // Handle payment success
-  const handlePaymentSuccess = async (details: Record<string, unknown>) => {
+  const handlePaymentSuccess = async () => {
     try {
       setIsLoading(true);
-      
+
       // Update the session to get the new balance
       await updateSession();
-      
+
       // Fetch user profile to get the latest balance
       await fetchProfile();
-      
+
       toast.success(
         "Thanh toán thành công! Kim cương đã được nạp vào tài khoản."
       );
-      
+
       // Reset form
       setDiamondAmount(0);
       setIsLoading(false);
-      
+
       // Redirect to profile page after successful payment
       setTimeout(() => {
         router.push("/profile");
@@ -150,7 +142,9 @@ export default function DepositPage() {
                   {isLoadingStore ? (
                     <span className="inline-block w-16 h-4 bg-gray-200 animate-pulse rounded"></span>
                   ) : (
-                    <span className="text-gray-800">{userBalance.toLocaleString()} Kim cương</span>
+                    <span className="text-gray-800">
+                      {userBalance.toLocaleString()} Kim cương
+                    </span>
                   )}
                 </p>
               </div>
@@ -203,11 +197,15 @@ export default function DepositPage() {
             </div>
 
             <div className="border-t border-gray-200 pt-6">
-              <h3 className="font-medium text-gray-800 mb-4">Lựa chọn của bạn:</h3>
+              <h3 className="font-medium text-gray-800 mb-4">
+                Lựa chọn của bạn:
+              </h3>
 
               <div className="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg border border-yellow-200 p-6 shadow-sm">
                 <div className="flex flex-col items-center justify-center">
-                  <div className="text-sm font-medium text-gray-600 mb-2">Bạn sẽ nhận được</div>
+                  <div className="text-sm font-medium text-gray-600 mb-2">
+                    Bạn sẽ nhận được
+                  </div>
                   <div className="text-5xl font-bold flex items-center text-amber-600 mb-2">
                     {diamondAmount.toLocaleString()}{" "}
                     <Image
@@ -219,22 +217,37 @@ export default function DepositPage() {
                     />
                   </div>
                   <div className="text-sm text-gray-500">
-                    Tương đương <span className="font-semibold text-blue-600">${getUsdAmount()}</span>
+                    Tương đương{" "}
+                    <span className="font-semibold text-blue-600">
+                      ${getUsdAmount()}
+                    </span>
                   </div>
                 </div>
               </div>
-              
+
               {/* Quick Selection Options */}
               <div className="mt-6">
-                <h4 className="text-sm font-medium text-gray-700 mb-3">Chọn nhanh gói Kim cương:</h4>
+                <h4 className="text-sm font-medium text-gray-700 mb-3">
+                  Chọn nhanh gói Kim cương:
+                </h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {[
                     { amount: 1000, price: 10, name: "Gói Cơ Bản" },
                     { amount: 2000, price: 20, name: "Gói Tiêu Chuẩn" },
                     { amount: 5000, price: 50, name: "Gói Nâng Cao" },
                     { amount: 10000, price: 100, name: "Gói VIP" },
-                    { amount: 20000, price: 180, name: "Gói Super VIP", discount: "10%" },
-                    { amount: 50000, price: 400, name: "Gói Pro", discount: "20%" },
+                    {
+                      amount: 20000,
+                      price: 180,
+                      name: "Gói Super VIP",
+                      discount: "10%",
+                    },
+                    {
+                      amount: 50000,
+                      price: 400,
+                      name: "Gói Pro",
+                      discount: "20%",
+                    },
                   ].map((option) => (
                     <button
                       key={option.amount}
@@ -250,7 +263,9 @@ export default function DepositPage() {
                           -{option.discount}
                         </div>
                       )}
-                      <div className="text-sm font-medium text-gray-600 mb-1">{option.name}</div>
+                      <div className="text-sm font-medium text-gray-600 mb-1">
+                        {option.name}
+                      </div>
                       <div className="flex items-center gap-1 font-bold text-lg">
                         {option.amount.toLocaleString()}
                         <Image
@@ -260,15 +275,19 @@ export default function DepositPage() {
                           height={16}
                         />
                       </div>
-                      <div className="text-blue-600 font-medium mt-1">${option.price}</div>
+                      <div className="text-blue-600 font-medium mt-1">
+                        ${option.price}
+                      </div>
                     </button>
                   ))}
                 </div>
               </div>
-              
+
               {/* Custom Amount */}
               <div className="mt-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Hoặc nhập số lượng tùy chỉnh:</h4>
+                <h4 className="text-sm font-medium text-gray-700 mb-2">
+                  Hoặc nhập số lượng tùy chỉnh:
+                </h4>
                 <div className="flex flex-col md:flex-row items-center gap-3">
                   <div className="relative flex-1 w-full">
                     <Input
@@ -293,8 +312,15 @@ export default function DepositPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 w-full md:w-auto">
-                    <Button 
-                      onClick={() => setDiamondAmount(Math.max(1000, Math.round(diamondAmount / 1000) * 1000))}
+                    <Button
+                      onClick={() =>
+                        setDiamondAmount(
+                          Math.max(
+                            1000,
+                            Math.round(diamondAmount / 1000) * 1000
+                          )
+                        )
+                      }
                       variant="outline"
                       className="whitespace-nowrap flex-1 md:flex-none"
                     >
@@ -402,7 +428,9 @@ export default function DepositPage() {
 
             {/* Amount to Pay */}
             <div className="border-t border-gray-200 pt-6">
-              <h3 className="font-medium text-gray-800 mb-4">Số tiền thanh toán:</h3>
+              <h3 className="font-medium text-gray-800 mb-4">
+                Số tiền thanh toán:
+              </h3>
 
               <div className="text-5xl font-bold text-teal-600 text-center">
                 {getUsdAmount()}$
@@ -422,7 +450,7 @@ export default function DepositPage() {
               {paymentMethod === "paypal" && (
                 <div className="mt-4">
                   {diamondAmount < 1000 ? (
-                    <Button 
+                    <Button
                       className="w-full bg-gray-400 text-white py-3 text-lg font-medium cursor-not-allowed"
                       disabled={true}
                     >
@@ -431,7 +459,7 @@ export default function DepositPage() {
                   ) : (
                     <PayPalButton
                       amount={getUsdAmount()}
-                      onSuccess={handlePaymentSuccess}
+                      onSuccess={() => handlePaymentSuccess()}
                       onError={handlePaymentError}
                       description={`Nạp ${diamondAmount.toLocaleString()} Kim cương`}
                       currency="USD"
@@ -444,11 +472,13 @@ export default function DepositPage() {
 
               {paymentMethod !== "paypal" && (
                 <div className="mt-4">
-                  <Button 
+                  <Button
                     className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 text-lg font-medium"
                     disabled={isLoading || diamondAmount < 1000}
                   >
-                    {diamondAmount < 1000 ? 'Số lượng tối thiểu là 1,000 Kim cương' : 'THANH TOÁN NGAY'}
+                    {diamondAmount < 1000
+                      ? "Số lượng tối thiểu là 1,000 Kim cương"
+                      : "THANH TOÁN NGAY"}
                   </Button>
                 </div>
               )}
@@ -479,7 +509,8 @@ export default function DepositPage() {
 
               <div>
                 <p className="text-gray-700 mb-1">
-                  3. Sau khi xác nhận thanh toán, kim cương sẽ được nạp ngay vào tài khoản của bạn.
+                  3. Sau khi xác nhận thanh toán, kim cương sẽ được nạp ngay vào
+                  tài khoản của bạn.
                 </p>
               </div>
 

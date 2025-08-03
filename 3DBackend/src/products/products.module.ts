@@ -11,7 +11,7 @@ import { DriveModule } from 'src/drive/drive.module';
   imports: [
     MongooseModule.forFeature([{ name: Product.name, schema: ProductSchema }]),
     UploadModule,
-    DriveModule
+    DriveModule,
   ],
   controllers: [ProductsController],
   providers: [ProductsService, FilterService],

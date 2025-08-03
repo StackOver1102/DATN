@@ -11,7 +11,6 @@ import {
   Save,
   Eye,
   EyeOff,
-  Calendar,
   DollarSign,
   AlertTriangle,
   X,
@@ -26,8 +25,12 @@ import { Loading } from "@/components/ui/loading";
 import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
-import { useUserStore } from "@/lib/store/userStore";
+import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
+import { setProfile, setHasLoadedProfile } from "@/lib/store/userSlice";
 import { User } from "@/lib/types";
+import { Product } from "@/interface/product";
+import Pagination from "@/components/Pagination";
+import { PaginatedResult } from "@/interface/pagination";
 
 type TabType = "info" | "password" | "purchases" | "payments";
 
@@ -43,22 +46,27 @@ interface UserInfo {
 }
 
 interface Purchase {
-  id: string;
+  _id: string;
   modelName: string;
-  price: number;
-  date: string;
+  totalAmount: number;
+  createdAt: string;
   status: "completed" | "pending" | "refunded";
   downloadLink: string;
   image: string;
+  productId: Product;
 }
 
 interface Payment {
-  id: string;
+  _id: string;
   amount: number;
   method: string;
-  date: string;
+  createdAt: string;
   status: "completed" | "pending" | "failed";
   description: string;
+  type: "deposit" | "payment";
+  transactionCode: string;
+  balanceAfter?: number;
+  balanceBefore?: number;
 }
 
 // Schema validation for user profile form
@@ -87,12 +95,17 @@ type UserProfileFormValues = z.infer<typeof userProfileSchema>;
 type PasswordFormValues = z.infer<typeof passwordSchema>;
 
 export default function ProfilePage() {
-  const { data: session, update: updateSession, status } = useSession();
+  const { data: session } = useSession();
   const searchParams = useSearchParams();
   const tabParam = searchParams?.get("tab");
-  const paymentSuccess = searchParams?.get("payment_success");
+  // const paymentSuccess = searchParams?.get("payment_success");
   const router = useRouter();
-  const api = useApi();
+
+  // Use Redux hooks
+  const dispatch = useAppDispatch();
+  const { profile, isLoading: isLoadingStore } = useAppSelector(
+    (state) => state.user
+  );
 
   // Set active tab based on URL parameter if available
   const [activeTab, setActiveTab] = useState<TabType>(
@@ -102,75 +115,6 @@ export default function ProfilePage() {
       ? (tabParam as TabType)
       : "info"
   );
-
-  // Use Zustand store directly
-  const { 
-    profile,
-    setProfile,
-    setLoading,
-    setError,
-    setHasLoadedProfile,
-    isLoading: isLoadingStore
-  } = useUserStore();
-  
-  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
-
-  // Function to fetch profile directly
-  const fetchProfile = async () => {
-    // If we already have the profile data and it's not a forced refresh, just return it
-    if (profile && !isLoadingProfile) return profile;
-    
-    try {
-      setIsLoadingProfile(true);
-      setLoading(true);
-      const response = await api.get<User>('users/profile');
-      if (response.success && response.data) {
-        setProfile(response.data);
-        setHasLoadedProfile(true);
-      } else {
-        setError(response.message || "Failed to load profile");
-      }
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-      setError(error instanceof Error ? error.message : "Unknown error");
-    } finally {
-      setIsLoadingProfile(false);
-      setLoading(false);
-    }
-  };
-
-  // Tải thông tin profile khi vào trang profile
-  useEffect(() => {
-    const loadProfile = async () => {
-      if (status === 'authenticated' && session) {
-        // Trang profile luôn cần tải lại thông tin mới nhất
-        await fetchProfile();
-      }
-    };
-    
-    loadProfile();
-  }, [status, session]);
-
-  // Force refresh user profile data when coming from payment success
-  useEffect(() => {
-    const refreshData = async () => {
-      if (paymentSuccess === "true") {
-        // Update the session to get the latest balance
-        await updateSession();
-        
-        // Refetch user profile data
-        await fetchProfile();
-        
-        // Show success message
-        toast.success("Thanh toán thành công! Số dư đã được cập nhật.");
-        
-        // Remove the query parameter to prevent showing the message again on refresh
-        router.replace("/profile", { scroll: false });
-      }
-    };
-    
-    refreshData();
-  }, [paymentSuccess, updateSession, router]);
 
   const [isEditing, setIsEditing] = useState(false);
   const [showOldPassword, setShowOldPassword] = useState(false);
@@ -182,17 +126,37 @@ export default function ProfilePage() {
   );
   const [refundReason, setRefundReason] = useState("");
 
-  const { data: purchases, isLoading: isLoadingPurchases } = useFetchData<
-    Purchase[]
-  >(`orders`, "purchases", {
-    enabled: activeTab === "purchases",
-  });
+  // Pagination states
+  const [purchasesPage, setPurchasesPage] = useState(1);
+  const [paymentsPage, setPaymentsPage] = useState(1);
+  const itemsPerPage = 5;
 
-  const { data: payments, isLoading: isLoadingPayments } = useFetchData<
-    Payment[]
-  >(`transactions`, "transactions", {
-    enabled: activeTab === "payments",
-  });
+  const { data: purchasesData, isLoading: isLoadingPurchases } = useFetchData<
+    PaginatedResult<Purchase>
+  >(
+    `orders/my-orders?page=${purchasesPage}&limit=${itemsPerPage}`,
+    ["purchases", purchasesPage.toString()],
+    {
+      enabled: activeTab === "purchases",
+    }
+  );
+
+  const { data: paymentsData, isLoading: isLoadingPayments } = useFetchData<
+    PaginatedResult<Payment>
+  >(
+    `transactions/my-transactions?page=${paymentsPage}&limit=${itemsPerPage}`,
+    ["transactions", paymentsPage.toString()],
+    {
+      enabled: activeTab === "payments",
+    }
+  );
+
+  // Extract data from paginated responses
+  const purchases = purchasesData?.items || [];
+  const purchasesTotalPages = purchasesData?.meta.totalPages || 1;
+
+  const payments = paymentsData?.items || [];
+  const paymentsTotalPages = paymentsData?.meta.totalPages || 1;
 
   const { post } = useApi();
 
@@ -279,30 +243,29 @@ export default function ProfilePage() {
   ];
 
   // Update profile mutation
-  const updateProfileMutation = useUpdateData<User, Partial<User> & { userId: string }>(
-    'users',
-    ['userProfile'],
-    {
-      onSuccess: (updatedData) => {
-        // Update the store with the new data
-        setProfile(updatedData);
-      },
-      onError: (err) => {
-        setError(err.message);
-      }
-    }
-  );
+  const updateProfileMutation = useUpdateData<
+    User,
+    Partial<User> & { userId: string }
+  >("users", ["userProfile"], {
+    onSuccess: (updatedData) => {
+      // Update the Redux store with the new data
+      dispatch(setProfile(updatedData));
+      dispatch(setHasLoadedProfile(true));
+    },
+    onError: (err) => {
+      toast.error(err.message);
+    },
+  });
 
   // Change password mutation
-  const changePasswordMutation = useUpdateData<{ message: string }, { oldPassword: string; newPassword: string }>(
-    'users/change-password',
-    ['userPassword'],
-    {
-      onError: (err) => {
-        setError(err.message);
-      }
-    }
-  );
+  const changePasswordMutation = useUpdateData<
+    { message: string },
+    { oldPassword: string; newPassword: string }
+  >("users/change-password", ["userPassword"], {
+    onError: (err) => {
+      toast.error(err.message);
+    },
+  });
 
   // Handle profile form submission
   const onSubmitProfile = async (data: UserProfileFormValues) => {
@@ -310,13 +273,17 @@ export default function ProfilePage() {
       if (session?.user?.id) {
         await updateProfileMutation.mutateAsync({
           userId: session.user.id,
-          ...data
+          ...data,
         });
         setIsEditing(false);
         toast.success("Thông tin đã được cập nhật thành công!");
       }
     } catch (error) {
-      toast.error(`Có lỗi xảy ra khi cập nhật thông tin: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(
+        `Có lỗi xảy ra khi cập nhật thông tin: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   };
 
@@ -325,16 +292,19 @@ export default function ProfilePage() {
     try {
       await changePasswordMutation.mutateAsync({
         oldPassword: data.oldPassword,
-        newPassword: data.newPassword
+        newPassword: data.newPassword,
       });
       resetPassword();
       toast.success("Mật khẩu đã được thay đổi thành công!");
     } catch (error) {
-      toast.error(`${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(
+        `${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
   };
 
   const handleRefundRequest = (purchase: Purchase) => {
+    console.log(purchase);
     setSelectedPurchase(purchase);
     setShowRefundModal(true);
   };
@@ -347,8 +317,9 @@ export default function ProfilePage() {
 
     try {
       // Handle refund request submission
-      const response = await post(`/purchases/${selectedPurchase?.id}/refund`, {
-        reason: refundReason,
+      const response = await post(`refund`, {
+        description: refundReason,
+        orderId: selectedPurchase?._id,
       });
 
       if (response.success) {
@@ -356,19 +327,20 @@ export default function ProfilePage() {
         setShowRefundModal(false);
         setSelectedPurchase(null);
         setRefundReason("");
-        alert(
+        toast.success(
           "Yêu cầu hoàn hàng đã được gửi! Chúng tôi sẽ xử lý trong vòng 24-48 giờ."
         );
       }
     } catch (error) {
       console.error("Error submitting refund request:", error);
-      alert("Có lỗi xảy ra khi gửi yêu cầu hoàn hàng!");
+      toast.error("Có lỗi xảy ra khi gửi yêu cầu hoàn hàng!");
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed":
+      case "success":
         return "text-green-600 bg-green-100";
       case "pending":
         return "text-yellow-600 bg-yellow-100";
@@ -384,6 +356,7 @@ export default function ProfilePage() {
   const getStatusText = (status: string) => {
     switch (status) {
       case "completed":
+      case "success":
         return "Hoàn thành";
       case "pending":
         return "Đang xử lý";
@@ -407,7 +380,7 @@ export default function ProfilePage() {
     return new Date(dateString).toLocaleDateString("vi-VN");
   };
 
-  if (isLoadingProfile || isLoadingPurchases || isLoadingPayments || isLoadingStore) {
+  if (isLoadingPurchases || isLoadingPayments || isLoadingStore) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Loading variant="spinner" size="lg" text="Đang tải thông tin..." />
@@ -736,65 +709,83 @@ export default function ProfilePage() {
                   </h2>
 
                   <div className="space-y-4">
-                    {purchases?.length ? (
-                      purchases.map((purchase) => (
-                        <div
-                          key={purchase.id}
-                          className="bg-gray-50 rounded-lg p-4 flex items-center justify-between"
-                        >
-                          <div className="flex items-center gap-4">
-                            <Image
-                              src={purchase.image}
-                              alt={purchase.modelName}
-                              width={60}
-                              height={60}
-                              className="rounded-lg object-cover"
-                            />
-                            <div>
-                              <h3 className="font-semibold text-gray-900">
-                                {purchase.modelName}
-                              </h3>
-                              <p className="text-sm text-gray-600">
-                                #{purchase.id} • {formatDate(purchase.date)}
-                              </p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="font-bold text-blue-600">
-                                  {formatCurrency(purchase.price)}
-                                </span>
-                                <span
-                                  className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                                    purchase.status
-                                  )}`}
-                                >
-                                  {getStatusText(purchase.status)}
-                                </span>
+                    {isLoadingPurchases ? (
+                      <div className="flex justify-center py-10">
+                        <Loading />
+                      </div>
+                    ) : purchases?.length ? (
+                      <>
+                        {purchases.map((purchase, index) => (
+                          <div
+                            key={index}
+                            className="bg-gray-50 rounded-lg p-4 flex items-center justify-between"
+                          >
+                            <div className="flex items-center gap-4">
+                              <Image
+                                src={purchase.productId.images}
+                                alt={purchase.productId.name}
+                                width={60}
+                                height={60}
+                                className="rounded-lg object-cover"
+                              />
+                              <div>
+                                <h3 className="font-semibold text-gray-900">
+                                  {purchase.productId.name}
+                                </h3>
+                                <p className="text-sm text-gray-600">
+                                  #{purchase._id} •{" "}
+                                  {formatDate(purchase.createdAt)}
+                                </p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="font-bold text-blue-600">
+                                    {formatCurrency(purchase.totalAmount)}
+                                  </span>
+                                  <span
+                                    className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                                      purchase.status
+                                    )}`}
+                                  >
+                                    {getStatusText(purchase.status)}
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          <div className="flex gap-2">
-                            {purchase.status === "completed" && (
-                              <>
-                                {/* <Button
-                                size="sm"
-                                className="flex items-center gap-2"
-                              >
-                                <Download className="w-4 h-4" />
-                                Tải về
-                              </Button> */}
-                                <Button
-                                  variant="outline"
+                            <div className="flex gap-2">
+                              {purchase.status === "completed" && (
+                                <>
+                                  {/* <Button
                                   size="sm"
-                                  onClick={() => handleRefundRequest(purchase)}
-                                  className="flex items-center gap-2 text-yellow-400 bg-black"
+                                  className="flex items-center gap-2"
                                 >
-                                  <AlertTriangle className="w-4 h-4" />
-                                  Báo cáo
-                                </Button>
-                              </>
-                            )}
+                                  <Download className="w-4 h-4" />
+                                  Tải về
+                                </Button> */}
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleRefundRequest(purchase)
+                                    }
+                                    className="flex items-center gap-2 text-yellow-400 bg-black"
+                                  >
+                                    <AlertTriangle className="w-4 h-4" />
+                                    Báo cáo
+                                  </Button>
+                                </>
+                              )}
+                            </div>
                           </div>
+                        ))}
+
+                        {/* Pagination for purchases */}
+                        <div className="mt-6 flex justify-center">
+                          <Pagination
+                            currentPage={purchasesPage}
+                            totalPages={purchasesTotalPages}
+                            onPageChange={(page) => setPurchasesPage(page)}
+                          />
                         </div>
-                      ))
+                      </>
                     ) : (
                       <div className="text-center py-10">
                         <div className="mb-4">
@@ -825,60 +816,116 @@ export default function ProfilePage() {
                   </h2>
 
                   <div className="space-y-4">
-                    {payments?.length ? (
-                      payments.map((payment,index) => (
-                        <div
-                          key={index}
-                          className="bg-gray-50 rounded-lg p-4 flex items-center justify-between"
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                              <DollarSign className="w-6 h-6 text-green-600" />
-                            </div>
-                            <div>
-                              <h3 className="font-semibold text-gray-900">
-                                {payment.description}
-                              </h3>
-                              <p className="text-sm text-gray-600">
-                                #{payment.id} • {payment.method} •{" "}
-                                {formatDate(payment.date)}
-                              </p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="font-bold text-green-600">
-                                  +{formatCurrency(payment.amount)}
-                                </span>
-                                <span
-                                  className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                                    payment.status
-                                  )}`}
-                                >
-                                  {getStatusText(payment.status)}
-                                </span>
+                    {isLoadingPayments ? (
+                      <div className="flex justify-center py-10">
+                        <Loading />
+                      </div>
+                    ) : payments?.length ? (
+                      <>
+                        {payments.map((payment, index) => (
+                          <div
+                            key={index}
+                            className="bg-gray-50 rounded-lg p-4 flex items-center justify-between"
+                          >
+                            <div className="flex items-center gap-4">
+                              <div
+                                className={`w-12 h-12 ${
+                                  payment.type === "payment"
+                                    ? "bg-red-100"
+                                    : "bg-green-100"
+                                } rounded-lg flex items-center justify-center`}
+                              >
+                                {payment.type === "payment" ? (
+                                  <ShoppingBag className="w-6 h-6 text-red-600" />
+                                ) : (
+                                  <DollarSign className="w-6 h-6 text-green-600" />
+                                )}
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-gray-900">
+                                  {payment.type === "payment"
+                                    ? "Thanh toán đơn hàng"
+                                    : payment.description}
+                                </h3>
+                                <p className="text-sm text-gray-600">
+                                  #{payment.transactionCode} •{" "}
+                                  {formatDate(payment.createdAt)}
+                                </p>
+                                {payment.balanceAfter &&
+                                  payment.balanceBefore && (
+                                    <div>
+                                      <p className="text-xs text-gray-500">
+                                        Số dư trước giao dịch:{" "}
+                                        {formatCurrency(payment.balanceBefore)}
+                                      </p>
+
+                                      <p className="text-xs text-gray-500">
+                                        Số dư sau giao dịch:{" "}
+                                        {formatCurrency(payment.balanceAfter)}
+                                      </p>
+                                    </div>
+                                  )}
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span
+                                    className={
+                                      payment.type === "payment"
+                                        ? "font-bold text-red-600"
+                                        : "font-bold text-green-600"
+                                    }
+                                  >
+                                    {payment.type === "payment" ? "-" : "+"}
+                                    {formatCurrency(payment.amount)}
+                                  </span>
+                                  <span
+                                    className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                                      payment.status
+                                    )}`}
+                                  >
+                                    {getStatusText(payment.status)}
+                                  </span>
+                                </div>
                               </div>
                             </div>
+                            {/* <div className="text-right">
+                              <Calendar className="w-5 h-5 text-gray-400 ml-auto" />
+                            </div> */}
                           </div>
-                          <div className="text-right">
-                            <Calendar className="w-5 h-5 text-gray-400 ml-auto" />
-                          </div>
+                        ))}
+
+                        {/* Pagination for payments */}
+                        <div className="mt-6 flex justify-center">
+                          <Pagination
+                            currentPage={paymentsPage}
+                            totalPages={paymentsTotalPages}
+                            onPageChange={(page) => setPaymentsPage(page)}
+                          />
                         </div>
-                      ))
+                      </>
                     ) : (
                       <div className="text-center py-10">
                         <div className="mb-4">
                           <CreditCard className="w-12 h-12 mx-auto text-gray-400" />
                         </div>
                         <h3 className="text-lg font-medium text-gray-900">
-                          Chưa có lịch sử nạp tiền
+                          Chưa có lịch sử giao dịch
                         </h3>
                         <p className="text-gray-500 mt-2">
-                          Bạn chưa thực hiện giao dịch nạp tiền nào.
+                          Bạn chưa thực hiện giao dịch nào.
                         </p>
-                        <Button
-                          className="mt-4 text-yellow-400"
-                          onClick={() => router.push("/deposit")}
-                        >
-                          Nạp tiền ngay
-                        </Button>
+                        <div className="flex gap-3 justify-center mt-4">
+                          <Button
+                            className="text-yellow-400"
+                            onClick={() => router.push("/deposit")}
+                          >
+                            Nạp tiền
+                          </Button>
+                          <Button
+                            className="text-yellow-400"
+                            onClick={() => router.push("/models")}
+                          >
+                            Mua sắm
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -904,7 +951,7 @@ export default function ProfilePage() {
                     Yêu cầu hoàn hàng
                   </h3>
                   <p className="text-sm text-gray-500">
-                    #{selectedPurchase.id}
+                    #{selectedPurchase._id}
                   </p>
                 </div>
               </div>
@@ -926,21 +973,21 @@ export default function ProfilePage() {
             <div className="bg-gray-50 rounded-lg p-4 mb-4">
               <div className="flex items-center gap-3">
                 <Image
-                  src={selectedPurchase.image}
-                  alt={selectedPurchase.modelName}
+                  src={selectedPurchase.productId.images}
+                  alt={selectedPurchase.productId.name}
                   width={50}
                   height={50}
                   className="rounded-lg object-cover"
                 />
                 <div>
                   <h4 className="font-medium text-gray-900">
-                    {selectedPurchase.modelName}
+                    {selectedPurchase.productId.name}
                   </h4>
                   <p className="text-sm text-gray-600">
-                    {formatCurrency(selectedPurchase.price)}
+                    {formatCurrency(selectedPurchase.totalAmount)}
                   </p>
                   <p className="text-xs text-gray-500">
-                    Mua ngày: {formatDate(selectedPurchase.date)}
+                    Mua ngày: {formatDate(selectedPurchase.createdAt)}
                   </p>
                 </div>
               </div>

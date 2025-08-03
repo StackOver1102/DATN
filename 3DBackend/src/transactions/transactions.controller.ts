@@ -9,22 +9,28 @@ import {
   Post,
   Headers,
   UseGuards,
-  UnauthorizedException,
+  Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBody,
+} from '@nestjs/swagger';
 import { TransactionsService } from './transactions.service';
 import { CreatePayPalOrderDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { Public } from '../auth/decorators/public.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { UserDocument } from '../users/entities/user.entity';
 import { UserPayload } from 'src/auth/types';
+import { FilterDto } from 'src/common/dto/filter.dto';
 
 @ApiTags('transactions')
 @Controller('transactions')
 export class TransactionsController {
-  constructor(private readonly transactionsService: TransactionsService) { }
+  constructor(private readonly transactionsService: TransactionsService) {}
 
   // @Post()
   // @ApiOperation({ summary: 'Create a new transaction' })
@@ -40,13 +46,15 @@ export class TransactionsController {
   // @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Create a PayPal order for deposit' })
   @ApiBody({ type: CreatePayPalOrderDto })
-  @ApiResponse({ status: 201, description: 'PayPal order created successfully' })
+  @ApiResponse({
+    status: 201,
+    description: 'PayPal order created successfully',
+  })
   @ApiResponse({ status: 400, description: 'Bad request' })
   createPayPalOrder(
     @Body() createPayPalOrderDto: CreatePayPalOrderDto,
     @CurrentUser() user: UserPayload,
   ) {
-  
     return this.transactionsService.createPayPalOrder(
       createPayPalOrderDto,
       user.userId,
@@ -56,8 +64,14 @@ export class TransactionsController {
   @Post('paypal/approve-order')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Verify and approve PayPal order after payment' })
-  @ApiResponse({ status: 200, description: 'Order verified and processed successfully' })
-  @ApiResponse({ status: 400, description: 'Bad request or verification failed' })
+  @ApiResponse({
+    status: 200,
+    description: 'Order verified and processed successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request or verification failed',
+  })
   approvePayPalOrder(
     @Body() body: { orderId: string },
     @CurrentUser() user: UserPayload,
@@ -66,6 +80,16 @@ export class TransactionsController {
       body.orderId,
       user.userId,
     );
+  }
+
+  @Get('my-transactions')
+  @ApiOperation({ summary: 'Get all transactions for the current user' })
+  @ApiResponse({ status: 200, description: 'List of transactions' })
+  async findMyTransactions(
+    @Query() filterDto: FilterDto,
+    @CurrentUser() user: UserPayload,
+  ) {
+    return this.transactionsService.findByUserId(user.userId, filterDto);
   }
 
   @Get()

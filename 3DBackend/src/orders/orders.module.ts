@@ -7,6 +7,8 @@ import { TransactionsModule } from 'src/transactions/transactions.module';
 import { UsersModule } from 'src/users/users.module';
 import { DriveModule } from 'src/drive/drive.module';
 import { ProductsModule } from 'src/products/products.module';
+import { CommonModule } from 'src/common/common.module';
+import { FilterModule } from 'src/common/filters/filter.module';
 
 @Module({
   imports: [
@@ -14,7 +16,9 @@ import { ProductsModule } from 'src/products/products.module';
     TransactionsModule,
     UsersModule,
     DriveModule,
-    ProductsModule
+    ProductsModule,
+    CommonModule,
+    FilterModule,
   ],
   controllers: [OrdersController],
   providers: [OrdersService],

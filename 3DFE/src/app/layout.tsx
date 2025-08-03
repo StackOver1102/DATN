@@ -5,6 +5,7 @@ import ReactQueryProvider from "@/components/providers/ReactQueryProvider";
 import SessionProvider from "@/components/providers/SessionProvider";
 import { Toaster } from "sonner";
 import { StoreInitializer } from "@/components/StoreInitializer";
+import ReduxProvider from "@/components/providers/ReduxProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -23,15 +24,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${inter.variable} antialiased`}
-      >
-        <SessionProvider>
-          <ReactQueryProvider>
-            <StoreInitializer />
-            {children}
-          </ReactQueryProvider>
-        </SessionProvider>
+      <body className={`${inter.variable} antialiased`}>
+        <ReduxProvider>
+          <SessionProvider>
+            <ReactQueryProvider>
+              <StoreInitializer />
+              {children}
+            </ReactQueryProvider>
+          </SessionProvider>
+        </ReduxProvider>
         <Toaster position="top-right" richColors />
       </body>
     </html>

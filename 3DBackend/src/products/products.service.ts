@@ -35,7 +35,7 @@ export class ProductsService {
   ): Promise<Product> {
     const { name, folderId, stt } = createProductDto;
 
-    if (!name ) {
+    if (!name) {
       throw new BadRequestException('Name is required');
     }
 
@@ -90,6 +90,125 @@ export class ProductsService {
     return this.createProductAndAddURL(productData);
   }
 
+  // Lấy URL hình ảnh từ file đã được tải lên
+  getImageUrl(file: {
+    imageUrl?: string;
+    location?: string;
+    filename?: string;
+    key?: string;
+  }): string {
+    if (!file) {
+      return 'default.jpg';
+    }
+
+    // Ưu tiên sử dụng URL từ Cloudflare R2
+    return file.key
+      ? this.uploadService.getFileUrl(file.key)
+      : file.location || file.imageUrl || 'default.jpg';
+  }
+
+  async createBatchWithImages(
+    products: CreateProductDto[],
+    files: Express.Multer.File[],
+  ): Promise<{
+    success: boolean;
+    message: string;
+    data?: Product[];
+    errors?: any[];
+  }> {
+    try {
+      if (!products || !Array.isArray(products) || products.length === 0) {
+        return {
+          success: false,
+          message: 'No products provided or invalid format',
+        };
+      }
+
+      if (!files || files.length === 0) {
+        return {
+          success: false,
+          message: 'No files uploaded',
+        };
+      }
+
+      // Create a map of files by their field name (e.g., "file-0", "file-1")
+      const fileMap = new Map<string, Express.Multer.File>();
+      files.forEach((file) => {
+        fileMap.set(file.fieldname, file);
+      });
+
+      // Process each product with its corresponding image
+      const productsWithImages: CreateProductDto[] = [];
+      const errors: string[] = [];
+
+      for (let i = 0; i < products.length; i++) {
+        const product = products[i];
+        const file = fileMap.get(`file-${i}`);
+
+        if (!file) {
+          errors.push(`No image found for product at index ${i}`);
+          continue;
+        }
+
+        // Upload image to storage
+        try {
+          // Use Buffer.from to convert file buffer to Buffer
+          const buffer = Buffer.from(file.buffer);
+          const uploadedFile = await this.uploadService.uploadFile(
+            buffer,
+            'products',
+            file.originalname,
+          );
+          const imageUrl = this.uploadService.getFileUrl(uploadedFile.key);
+
+          // Add image URL to product data
+          const productWithImage = {
+            ...product,
+          };
+          // Add image URL using interface with optional images property
+          interface ProductWithImage extends CreateProductDto {
+            images?: string;
+          }
+          (productWithImage as ProductWithImage).images = imageUrl;
+          productsWithImages.push(productWithImage);
+        } catch (error: unknown) {
+          const errorMessage =
+            error instanceof Error ? error.message : 'Unknown error';
+          errors.push(
+            `Failed to upload image for product at index ${i}: ${errorMessage}`,
+          );
+        }
+      }
+
+      if (productsWithImages.length === 0) {
+        return {
+          success: false,
+          message: 'Failed to process any products',
+          errors,
+        };
+      }
+
+      // Create all products in the database
+      const createdProducts =
+        await this.productModel.insertMany(productsWithImages);
+
+      return {
+        success: true,
+        message: `Successfully created ${createdProducts.length} products`,
+        data: createdProducts as unknown as Product[],
+        errors: errors.length > 0 ? errors : undefined,
+      };
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      return {
+        success: false,
+        message: 'Failed to create products',
+        errors: [errorMessage],
+      };
+    }
+  }
+
   async findAll(): Promise<Product[]> {
     return this.productModel.find().exec();
   }
@@ -109,14 +228,17 @@ export class ProductsService {
     return this.productModel.findById(id).exec();
   }
 
-  async findSimilarByCategory(id: string, limit: number = 10): Promise<Product[]> {
+  async findSimilarByCategory(
+    id: string,
+    limit: number = 10,
+  ): Promise<Product[]> {
     // Find the current product
     const product = await this.productModel.findById(id).exec();
-    
+
     if (!product) {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
-    
+
     // Build a query to find similar products
     const query: Record<string, any> = {
       _id: { $ne: id }, // Exclude current product
@@ -133,15 +255,15 @@ export class ProductsService {
 
     // Secondary matches: similar attributes
     const secondaryMatches: Record<string, any>[] = [];
-    
+
     if (product.materials) {
       secondaryMatches.push({ materials: product.materials });
     }
-    
+
     if (product.style) {
       secondaryMatches.push({ style: product.style });
     }
-    
+
     if (product.render) {
       secondaryMatches.push({ render: product.render });
     }
@@ -157,10 +279,7 @@ export class ProductsService {
     if (secondaryMatches.length > 0) {
       if (matchCriteria.length > 0) {
         // If we have primary category match, use that plus at least one secondary match
-        query.$and = [
-          { $or: matchCriteria },
-          { $or: secondaryMatches }
-        ];
+        query.$and = [{ $or: matchCriteria }, { $or: secondaryMatches }];
       } else {
         // If no category, just use secondary matches
         query.$or = secondaryMatches;
@@ -169,35 +288,35 @@ export class ProductsService {
       // If only category matches are available
       query.$or = matchCriteria;
     }
-      
+
     // Find similar products
     const similarProducts = await this.productModel
       .find(query)
       .limit(limit)
       .sort({ createdAt: -1 }) // Get the newest products first
       .exec();
-    
+
     // If we don't have enough products, get more without strict matching
     if (similarProducts.length < limit) {
       const remainingLimit = limit - similarProducts.length;
-      const existingIds = similarProducts.map(p => p._id);
-      
+      const existingIds = similarProducts.map((p) => p._id);
+
       // Broader query to find more products
       const additionalProducts = await this.productModel
         .find({
-          _id: { 
-            $ne: id, 
-            $nin: existingIds 
+          _id: {
+            $ne: id,
+            $nin: existingIds,
           },
-          isActive: true
+          isActive: true,
         })
         .limit(remainingLimit)
         .sort({ createdAt: -1 })
         .exec();
-      
+
       return [...similarProducts, ...additionalProducts];
     }
-      
+
     return similarProducts;
   }
 
@@ -228,6 +347,6 @@ export class ProductsService {
   }
 
   async findById(id: string): Promise<Product | null> {
-    return this.productModel.findById(id).select("urlDownload price discount");
+    return this.productModel.findById(id).select('urlDownload price discount');
   }
 }

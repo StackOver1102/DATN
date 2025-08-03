@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 import { UserRole } from 'src/enum/user.enum';
 
 export type UserDocument = HydratedDocument<User>;
@@ -31,6 +31,9 @@ export class User {
 
   @Prop({ default: 0 })
   balance: number;
+
+  @Prop({ type: [Types.ObjectId], default: [] })
+  productLike: Types.ObjectId[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

@@ -67,7 +67,6 @@ export function useUserStoreWithAPI() {
   
   // Dùng hook useFetchData để lấy thông tin profile
   const { 
-    data, 
     isLoading: isLoadingProfile, 
     error: profileError, 
     refetch: refetchProfileInternal 

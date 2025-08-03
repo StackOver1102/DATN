@@ -23,12 +23,11 @@ export default function DepositSuccessPage() {
   const paypalOrderId = searchParams.get("token");
 
   // Fetch user profile to get the latest balance
-  const token = session?.accessToken;
-  const { 
-    data: userProfile, 
+  const {
+    profile: userProfile,
     isLoading: isLoadingProfile,
-    refetch: refetchProfile 
-  } = useUserProfile(token);
+    fetchProfile: refetchProfile,
+  } = useUserProfile();
 
   useEffect(() => {
     const processPayment = async () => {
@@ -38,19 +37,25 @@ export default function DepositSuccessPage() {
         // Check if we have a session and token
         if (!session || !session.accessToken) {
           console.error("No session or access token available");
-          
+
           // Wait a moment and try to get the session again (in case it's still loading)
           setTimeout(async () => {
             await updateSession();
-            
+
             // If we still don't have a session after update, redirect to login
             if (!session || !session.accessToken) {
               toast.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại");
-              router.push("/signin?callbackUrl=" + encodeURIComponent(window.location.href));
+              router.push(
+                "/signin?callbackUrl=" +
+                  encodeURIComponent(window.location.href)
+              );
               return;
             } else {
               // If we now have a session, proceed with payment processing
-              processPaymentWithToken(session.accessToken, paypalOrderId as string);
+              processPaymentWithToken(
+                session.accessToken,
+                paypalOrderId as string
+              );
             }
           }, 1500);
           return;
@@ -58,10 +63,14 @@ export default function DepositSuccessPage() {
 
         // Process payment with the token
         processPaymentWithToken(session.accessToken, paypalOrderId as string);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Error processing payment:", error);
-        toast.error(error.message || "Có lỗi xảy ra khi xử lý thanh toán");
-        
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Có lỗi xảy ra khi xử lý thanh toán"
+        );
+
         // Redirect to deposit page after a delay
         setTimeout(() => {
           router.push("/deposit");
@@ -73,7 +82,10 @@ export default function DepositSuccessPage() {
     const processPaymentWithToken = async (token: string, orderId: string) => {
       try {
         // Call the API to verify and process the payment
-        const response = await transactionApi.approvePayPalOrder(token, orderId);
+        const response = await transactionApi.approvePayPalOrder(
+          token,
+          orderId
+        );
 
         if (!response.success) {
           throw new Error(response.message || "Xử lý thanh toán thất bại");
@@ -81,25 +93,22 @@ export default function DepositSuccessPage() {
 
         // Update session to get the new balance
         await updateSession();
-        
+
         // Refetch user profile to get the latest balance
         await refetchProfile();
-        
+
         // Set success state
         setIsSuccess(true);
-        
+
         // Store the new balance for display
-        if (response.data && typeof response.data === 'object' && 'balance' in response.data) {
+        if (
+          response.data &&
+          typeof response.data === "object" &&
+          "balance" in response.data
+        ) {
           setNewBalance(response.data.balance as number);
         }
-        
-        toast.success("Thanh toán thành công! Kim cương đã được nạp vào tài khoản.");
-
-        // Redirect to profile page after a delay with payment_success parameter
-        setTimeout(() => {
-          router.push("/profile?payment_success=true");
-        }, 3000);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Error in processPaymentWithToken:", error);
         throw error;
       } finally {
@@ -151,7 +160,8 @@ export default function DepositSuccessPage() {
               Thanh toán thành công!
             </h1>
             <p className="text-gray-600 text-center mb-6">
-              Cảm ơn bạn đã nạp tiền. Kim cương đã được thêm vào tài khoản của bạn.
+              Cảm ơn bạn đã nạp tiền. Kim cương đã được thêm vào tài khoản của
+              bạn.
             </p>
 
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 flex items-center justify-center w-full mb-8">
@@ -163,7 +173,9 @@ export default function DepositSuccessPage() {
                   <span className="inline-block w-24 h-8 bg-gray-200 animate-pulse rounded"></span>
                 ) : (
                   <span className="text-3xl font-bold text-yellow-600 flex items-center">
-                    {newBalance !== null ? newBalance.toLocaleString() : userProfile?.balance?.toLocaleString() || 0}
+                    {newBalance !== null
+                      ? newBalance.toLocaleString()
+                      : userProfile?.balance?.toLocaleString() || 0}
                     <Image
                       src="/icons/diamond.svg"
                       alt="Diamond"
@@ -209,7 +221,8 @@ export default function DepositSuccessPage() {
               Xử lý thanh toán thất bại
             </h1>
             <p className="text-gray-600 text-center mb-6">
-              Đã xảy ra lỗi khi xử lý thanh toán của bạn. Vui lòng thử lại hoặc liên hệ với bộ phận hỗ trợ.
+              Đã xảy ra lỗi khi xử lý thanh toán của bạn. Vui lòng thử lại hoặc
+              liên hệ với bộ phận hỗ trợ.
             </p>
             <Link href="/deposit">
               <Button className="bg-blue-500 hover:bg-blue-600 text-white">
@@ -221,4 +234,4 @@ export default function DepositSuccessPage() {
       </div>
     </div>
   );
-} 
+}

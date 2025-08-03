@@ -68,9 +68,12 @@ export class UsersController {
   @UseGuards(RolesGuard)
   // @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(id, updateUserDto);
+  @Patch()
+  update(
+    @Body() updateUserDto: UpdateUserDto,
+    @CurrentUser() user: UserPayload,
+  ) {
+    return this.usersService.update(user.userId, updateUserDto);
   }
 
   @UseGuards(RolesGuard)

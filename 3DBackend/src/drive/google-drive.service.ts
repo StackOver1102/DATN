@@ -178,7 +178,31 @@ export class GoogleDriveService {
     });
   }
 
-  async getIdByUrl(url: string): Promise<string> {
+  async removeDrivePermission(fileId: string, email: string) {
+    try {
+      // First, list permissions to find the permission ID for the email
+      const response = await this.drive.permissions.list({
+        fileId,
+        fields: 'permissions(id,emailAddress)',
+      });
+      const permissions = response.data.permissions || [];
+      const permission = permissions.find((p) => p.emailAddress === email);
+      if (permission && permission.id) {
+        // Delete the permission using its ID
+        await this.drive.permissions.delete({
+          fileId,
+          permissionId: permission.id,
+        });
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error removing drive permission:', error);
+      return false;
+    }
+  }
+
+  getIdByUrl(url: string): string {
     // Extract ID from URL like https://drive.google.com/uc?id=1RaRoIhSHk4JJgZ2m_rAx8QesKTPSZkEx
     try {
       const urlObj = new URL(url);
@@ -186,16 +210,16 @@ export class GoogleDriveService {
         const id = urlObj.searchParams.get('id');
         if (id) return id;
       }
-      
+
       // Handle other URL formats like /file/d/ID/view
       const pathParts = urlObj.pathname.split('/');
       const idIndex = pathParts.indexOf('d');
       if (idIndex !== -1 && idIndex + 1 < pathParts.length) {
         return pathParts[idIndex + 1];
       }
-      
+
       throw new Error('Could not extract ID from URL');
-    } catch (error) {
+    } catch {
       throw new Error(`Invalid Google Drive URL: ${url}`);
     }
   }

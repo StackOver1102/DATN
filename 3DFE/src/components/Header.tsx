@@ -17,7 +17,8 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Loading } from "./ui/loading";
-import { useUserProfile } from "@/lib/hooks/useAuth";
+
+import { useAppSelector } from "@/lib/store/hooks";
 
 export default function Header() {
   const { data: session, status } = useSession();
@@ -25,7 +26,12 @@ export default function Header() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: userProfile } = useUserProfile(session?.accessToken);
+  // Get user data from Redux store
+  const {
+    profile: userProfile,
+    hasLoadedProfile,
+    sessionLoaded,
+  } = useAppSelector((state) => state.user);
   // Xử lý đăng xuất
   const handleSignOut = async () => {
     setIsLoggingOut(true);
@@ -53,15 +59,6 @@ export default function Header() {
     return name.charAt(0).toUpperCase();
   };
 
-  // Hiển thị loading nhỏ khi đang kiểm tra phiên đăng nhập
-  // if (status === "loading") {
-  //   return (
-  //     <div className="flex justify-center items-center min-h-[80px]">
-  //       <Loading variant="spinner" size="sm" />
-  //     </div>
-  //   );
-  // }
-
   // Hiển thị loading toàn màn hình khi đang đăng xuất
   if (isLoggingOut) {
     return (
@@ -76,6 +73,22 @@ export default function Header() {
 
   // Kiểm tra xem người dùng đã đăng nhập hay chưa
   const isAuthenticated = status === "authenticated" && session?.user;
+
+  // Prevent flickering by showing consistent UI based on combined state
+  const showUserData =
+    isAuthenticated && sessionLoaded && (hasLoadedProfile || !!userProfile);
+
+  // // Show loading state only when session is truly loading (not on refresh)
+  // const isLoading = status === "loading" && !sessionLoaded;
+
+  // // Hiển thị loading nhỏ chỉ khi đang kiểm tra phiên đăng nhập lần đầu
+  // if (isLoading) {
+  //   return (
+  //     <div className="flex justify-center items-center min-h-[80px]">
+  //       <Loading variant="spinner" size="sm" />
+  //     </div>
+  //   );
+  // }
 
   return (
     <div>
@@ -151,22 +164,30 @@ export default function Header() {
               </Link>
               {/* Auth buttons mobile */}
               <div className="flex items-center space-x-2">
-                {isAuthenticated ? (
+                {showUserData ? (
                   <>
                     <div className="flex items-center bg-white text-[#3A5B22] px-2 py-0.5 rounded-full text-xs">
                       <span className="font-medium">
-                        ${session.user.balance || 0}
+                        ${userProfile?.balance || session.user.balance || 0}
                       </span>
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Avatar className="h-8 w-8 cursor-pointer border-2 border-[#3A5B22]">
                           <AvatarImage
-                            src={session.user.image || ""}
-                            alt={session.user.name || "User"}
+                            src={
+                              userProfile?.avatar || session.user.image || ""
+                            }
+                            alt={
+                              userProfile?.fullName ||
+                              session.user.name ||
+                              "User"
+                            }
                           />
                           <AvatarFallback className="bg-white text-[#3A5B22]">
-                            {getInitials(session.user.name)}
+                            {getInitials(
+                              userProfile?.fullName || session.user.name
+                            )}
                           </AvatarFallback>
                         </Avatar>
                       </DropdownMenuTrigger>
@@ -306,11 +327,11 @@ export default function Header() {
 
             {/* Auth buttons desktop */}
             <div className="hidden lg:flex items-center space-x-4">
-              {isAuthenticated ? (
+              {showUserData ? (
                 <>
                   <div className="flex items-center bg-white text-yellow-400 px-3 py-1 rounded-full">
                     <span className="font-medium">
-                      ${userProfile?.balance || 0}
+                      ${userProfile?.balance || session.user.balance || 0}
                     </span>
                   </div>
                   <DropdownMenu>
@@ -318,11 +339,19 @@ export default function Header() {
                       <div className="flex items-center cursor-pointer hover:opacity-80 transition-opacity">
                         <Avatar className="h-10 w-10 border-2 border-yellow-400">
                           <AvatarImage
-                            src={session.user.image || ""}
-                            alt={session.user.name || "User"}
+                            src={
+                              userProfile?.avatar || session.user.image || ""
+                            }
+                            alt={
+                              userProfile?.fullName ||
+                              session.user.name ||
+                              "User"
+                            }
                           />
                           <AvatarFallback className="bg-white text-[#3A5B22]">
-                            {getInitials(session.user.name)}
+                            {getInitials(
+                              userProfile?.fullName || session.user.name
+                            )}
                           </AvatarFallback>
                         </Avatar>
                       </div>

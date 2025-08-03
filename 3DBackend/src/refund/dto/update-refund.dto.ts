@@ -1,8 +1,7 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { IsEnum, IsMongoId, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { CreateRefundDto } from './create-refund.dto';
 import { RefundStatus } from '../entities/refund.entity';
-import { Types } from 'mongoose';
 
 export class UpdateRefundDto extends PartialType(CreateRefundDto) {
   @IsEnum(RefundStatus)
@@ -13,7 +12,7 @@ export class UpdateRefundDto extends PartialType(CreateRefundDto) {
   @IsOptional()
   adminNotes?: string;
 
-  @IsMongoId()
+  @IsString()
   @IsOptional()
-  processedBy?: Types.ObjectId;
+  processedBy?: string;
 }

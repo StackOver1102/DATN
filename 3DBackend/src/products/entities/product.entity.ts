@@ -73,7 +73,7 @@ export class Product {
   @Prop({ type: String })
   color?: string;
 
-  @Prop({ type: String , select: false})
+  @Prop({ type: String, select: false })
   urlDownload?: string;
 }
 

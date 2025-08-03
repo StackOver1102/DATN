@@ -1,25 +1,9 @@
-import {
-  IsMongoId,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsPositive,
-  IsString,
-  MaxLength,
-  Min,
-} from 'class-validator';
-import { Types } from 'mongoose';
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateRefundDto {
-  @IsMongoId()
+  @IsString()
   @IsNotEmpty()
-  orderId: Types.ObjectId;
-
-  @IsNumber()
-  @IsPositive()
-  @Min(1)
-  @IsNotEmpty()
-  amount: number;
+  orderId: string;
 
   @IsString()
   @IsNotEmpty()

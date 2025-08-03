@@ -16,24 +16,18 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { UserRole } from 'src/enum/user.enum';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
-import { Types } from 'mongoose';
-
-interface UserWithId {
-  _id: string | Types.ObjectId;
-  [key: string]: any;
-}
+import { UserPayload } from 'src/auth/types';
 
 @Controller('refund')
 export class RefundController {
   constructor(private readonly refundService: RefundService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard)
   create(
     @Body() createRefundDto: CreateRefundDto,
-    @CurrentUser() user: UserWithId,
+    @CurrentUser() user: UserPayload,
   ) {
-    return this.refundService.create(createRefundDto, user._id.toString());
+    return this.refundService.create(createRefundDto, user.userId);
   }
 
   @Get()
@@ -45,8 +39,8 @@ export class RefundController {
 
   @Get('my-refunds')
   @UseGuards(JwtAuthGuard)
-  findMyRefunds(@CurrentUser() user: UserWithId) {
-    return this.refundService.findByUserId(user._id.toString());
+  findMyRefunds(@CurrentUser() user: UserPayload) {
+    return this.refundService.findByUserId(user.userId);
   }
 
   @Get(':id')
@@ -61,11 +55,11 @@ export class RefundController {
   update(
     @Param('id') id: string,
     @Body() updateRefundDto: UpdateRefundDto,
-    @CurrentUser() user: UserWithId,
+    @CurrentUser() user: UserPayload,
   ) {
     // Add admin user ID as the processor
     if (updateRefundDto.status) {
-      updateRefundDto.processedBy = user._id as Types.ObjectId;
+      updateRefundDto.processedBy = user.userId;
     }
     return this.refundService.update(id, updateRefundDto);
   }

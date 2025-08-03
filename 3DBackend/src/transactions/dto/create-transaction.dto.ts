@@ -9,7 +9,11 @@ import {
   IsString,
 } from 'class-validator';
 import { Types } from 'mongoose';
-import { TransactionMethod, TransactionType } from 'src/enum/transactions.enum';
+import {
+  TransactionMethod,
+  TransactionStatus,
+  TransactionType,
+} from 'src/enum/transactions.enum';
 
 export class CreateTransactionDto {
   @ApiProperty({
@@ -74,6 +78,14 @@ export class CreateTransactionDto {
   @IsOptional()
   @IsNumber()
   balanceAfter?: number;
+
+  @ApiProperty({
+    description: 'Status of the transaction',
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(TransactionStatus)
+  status?: TransactionStatus;
 }
 
 export class CreateOrderPaymentDto {
@@ -89,6 +101,14 @@ export class CreateOrderPaymentDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @ApiProperty({
+    description: 'Status of the transaction',
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(TransactionStatus)
+  status?: TransactionStatus;
 }
 
 export class CreatePayPalOrderDto {

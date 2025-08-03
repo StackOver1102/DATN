@@ -16,10 +16,64 @@ import {
   CreateTransactionDto,
 } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
-import { TransactionMethod, TransactionStatus, TransactionType } from 'src/enum/transactions.enum';
+import {
+  TransactionMethod,
+  TransactionStatus,
+  TransactionType,
+} from 'src/enum/transactions.enum';
 import { UsersService } from 'src/users/users.service';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+import { FilterDto } from 'src/common/dto/filter.dto';
+import { PaginatedResult } from 'src/common/interfaces/pagination.interface';
+import { FilterService } from 'src/common/services/filter.service';
+
+// PayPal API response interfaces
+interface PayPalOrderResponse {
+  id: string;
+  status: string;
+  purchase_units: Array<{
+    reference_id: string;
+    amount: {
+      currency_code: string;
+      value: string;
+    };
+    payee?: {
+      email_address?: string;
+      merchant_id?: string;
+    };
+    custom_id?: string;
+    description?: string;
+    payments?: {
+      captures?: Array<{
+        id: string;
+        status: string;
+        amount: {
+          currency_code: string;
+          value: string;
+        };
+        final_capture: boolean;
+        create_time: string;
+        update_time: string;
+      }>;
+    };
+  }>;
+  payer?: {
+    name?: {
+      given_name: string;
+      surname: string;
+    };
+    email_address?: string;
+    payer_id?: string;
+  };
+  create_time: string;
+  update_time: string;
+  links: Array<{
+    href: string;
+    rel: string;
+    method: string;
+  }>;
+}
 
 @Injectable()
 export class TransactionsService {
@@ -33,6 +87,7 @@ export class TransactionsService {
     private transactionModel: Model<TransactionDocument>,
     private readonly usersService: UsersService,
     private configService: ConfigService,
+    private filterService: FilterService,
   ) {
     // Khởi tạo các thông tin cấu hình PayPal
     const isProd = configService.get<string>('NODE_ENV') === 'production';
@@ -128,14 +183,32 @@ export class TransactionsService {
   async createPayPalOrder(
     createPayPalOrderDto: CreatePayPalOrderDto,
     userId: string,
-  ): Promise<Record<string, any>> {
+  ): Promise<{
+    paypalOrderId: string;
+    transactionId: string;
+    transactionCode: string;
+    status: string;
+    links: Array<{
+      href: string;
+      rel: string;
+      method: string;
+    }>;
+    approveUrl?: string;
+  }> {
     try {
       // Tạo mã giao dịch
       const transactionCode = await this.generateTransactionCode();
-      
+
       // Lấy access token từ PayPal
       const accessToken = await this.getPayPalAccessToken();
-      
+
+      const user = await this.usersService.findOne(userId);
+      if (!user) {
+        throw new NotFoundException(
+          `Không tìm thấy người dùng với ID ${userId}`,
+        );
+      }
+
       // Chuẩn bị dữ liệu cho đơn hàng PayPal
       const orderData = {
         intent: 'CAPTURE',
@@ -145,7 +218,8 @@ export class TransactionsService {
               currency_code: createPayPalOrderDto.currency || 'USD',
               value: createPayPalOrderDto.amount.toString(),
             },
-            description: createPayPalOrderDto.description || 'Deposit to account',
+            description:
+              createPayPalOrderDto.description || 'Deposit to account',
             custom_id: transactionCode, // Sử dụng mã giao dịch để theo dõi
           },
         ],
@@ -153,13 +227,17 @@ export class TransactionsService {
           brand_name: '3D Models Platform',
           landing_page: 'NO_PREFERENCE',
           user_action: 'PAY_NOW',
-          return_url: createPayPalOrderDto.returnUrl || `${this.configService.get('FRONTEND_URL')}/deposit/success`,
-          cancel_url: createPayPalOrderDto.cancelUrl || `${this.configService.get('FRONTEND_URL')}/deposit/cancel`,
+          return_url:
+            createPayPalOrderDto.returnUrl ||
+            `${this.configService.get('FRONTEND_URL')}/deposit/success`,
+          cancel_url:
+            createPayPalOrderDto.cancelUrl ||
+            `${this.configService.get('FRONTEND_URL')}/deposit/cancel`,
         },
       };
 
       // Gọi API PayPal để tạo đơn hàng
-      const response = await axios.post(
+      const response = await axios.post<PayPalOrderResponse>(
         `${this.paypalBaseUrl}/v2/checkout/orders`,
         orderData,
         {
@@ -184,6 +262,7 @@ export class TransactionsService {
         ...transactionDto,
         userId: new Types.ObjectId(userId),
         status: TransactionStatus.PENDING,
+        balanceBefore: user.balance || 0,
       });
 
       await transaction.save();
@@ -191,17 +270,19 @@ export class TransactionsService {
       // Trả về thông tin đơn hàng PayPal và ID giao dịch trong hệ thống
       return {
         paypalOrderId: response.data.id,
-        transactionId: transaction._id,
+        transactionId: transaction._id.toString(),
         transactionCode: transactionCode,
         status: response.data.status,
         links: response.data.links,
         // Tìm và trả về link approve để chuyển hướng người dùng
-        approveUrl: response.data.links.find(link => link.rel === 'approve')?.href,
+        approveUrl: response.data.links.find((link) => link.rel === 'approve')
+          ?.href,
       };
-    } catch (error) {
-      console.error('Error creating PayPal order:', error.response?.data || error.message);
+    } catch (error: unknown) {
       throw new BadRequestException(
-        error.response?.data?.message || 'Failed to create PayPal order',
+        error instanceof Error
+          ? error.message
+          : 'Failed to create PayPal order',
       );
     }
   }
@@ -210,11 +291,17 @@ export class TransactionsService {
     return this.transactionModel.find().exec();
   }
 
-  async findByUserId(userId: string): Promise<Transaction[]> {
-    return this.transactionModel
-      .find({ userId: new Types.ObjectId(userId) })
-      .sort({ createdAt: -1 })
-      .exec();
+  async findByUserId(
+    userId: string,
+    filterDto: FilterDto,
+  ): Promise<PaginatedResult<TransactionDocument>> {
+    return this.filterService.applyFilters<TransactionDocument>(
+      this.transactionModel,
+      filterDto,
+      {
+        userId: new Types.ObjectId(userId),
+      },
+    );
   }
 
   async findOne(id: string): Promise<Transaction> {
@@ -418,7 +505,8 @@ export class TransactionsService {
       );
 
       // Kiểm tra kết quả xác thực
-      return verificationResponse.data.verification_status === 'SUCCESS';
+      const data = verificationResponse.data as { verification_status: string };
+      return data.verification_status === 'SUCCESS';
     } catch (error) {
       console.error('Error verifying PayPal webhook:', error);
       return false;
@@ -445,7 +533,8 @@ export class TransactionsService {
         },
       );
 
-      return response.data.access_token as string;
+      const data = response.data as { access_token: string };
+      return data.access_token;
     } catch (error) {
       console.error('Error getting PayPal access token:', error);
       throw new Error('Failed to get PayPal access token');
@@ -582,13 +671,19 @@ export class TransactionsService {
   async approvePayPalOrder(
     paypalOrderId: string,
     userId: string,
-  ): Promise<Record<string, any>> {
+  ): Promise<{
+    success: boolean;
+    message: string;
+    transaction?: TransactionDocument;
+    balance?: number;
+  }> {
     try {
       // Lấy access token từ PayPal
       const accessToken = await this.getPayPalAccessToken();
 
       // Kiểm tra trạng thái đơn hàng từ PayPal
-      const orderResponse = await axios.get(
+
+      const orderResponse = await axios.get<PayPalOrderResponse>(
         `${this.paypalBaseUrl}/v2/checkout/orders/${paypalOrderId}`,
         {
           headers: {
@@ -606,7 +701,7 @@ export class TransactionsService {
         // Nếu đơn hàng chưa hoàn tất, kiểm tra xem có thể capture không
         if (orderData.status === 'APPROVED') {
           // Thực hiện capture thanh toán
-          const captureResponse = await axios.post(
+          const captureResponse = await axios.post<PayPalOrderResponse>(
             `${this.paypalBaseUrl}/v2/checkout/orders/${paypalOrderId}/capture`,
             {},
             {
@@ -616,34 +711,42 @@ export class TransactionsService {
               },
             },
           );
-          
+
           // Cập nhật orderData sau khi capture
           orderData.status = captureResponse.data.status;
         } else {
-          throw new BadRequestException(`Đơn hàng PayPal chưa được thanh toán (${orderData.status})`);
+          throw new BadRequestException(
+            `Đơn hàng PayPal chưa được thanh toán (${orderData.status})`,
+          );
         }
       }
 
       // Tìm custom_id trong đơn hàng để xác định giao dịch trong hệ thống
       const purchaseUnit = orderData.purchase_units?.[0];
       const customId = purchaseUnit?.custom_id;
-      
+
       if (!customId) {
-        throw new BadRequestException('Không tìm thấy mã giao dịch trong đơn hàng PayPal');
+        throw new BadRequestException(
+          'Không tìm thấy mã giao dịch trong đơn hàng PayPal',
+        );
       }
 
       // Tìm giao dịch trong hệ thống
       const transaction = await this.transactionModel.findOne({
         transactionCode: customId,
       });
-      
+
       if (!transaction) {
-        throw new NotFoundException(`Không tìm thấy giao dịch với mã ${customId}`);
+        throw new NotFoundException(
+          `Không tìm thấy giao dịch với mã ${customId}`,
+        );
       }
 
       // Kiểm tra xem giao dịch thuộc về người dùng hiện tại không
       if (transaction.userId.toString() !== userId) {
-        throw new UnauthorizedException('Bạn không có quyền xử lý giao dịch này');
+        throw new UnauthorizedException(
+          'Bạn không có quyền xử lý giao dịch này',
+        );
       }
 
       // Kiểm tra xem giao dịch đã được xử lý chưa
@@ -665,12 +768,17 @@ export class TransactionsService {
 
       // Cập nhật trạng thái giao dịch thành công
       transaction.status = TransactionStatus.SUCCESS;
+      // transaction.balanceBefore = transaction.balanceBefore || 0;
+      transaction.balanceAfter =
+        (transaction.balanceBefore || 0) + transaction.amount;
       await transaction.save();
 
       // Cập nhật số dư người dùng
       const user = await this.usersService.findOne(userId);
       if (!user) {
-        throw new NotFoundException(`Không tìm thấy người dùng với ID ${userId}`);
+        throw new NotFoundException(
+          `Không tìm thấy người dùng với ID ${userId}`,
+        );
       }
 
       // Tính toán số dư mới
@@ -687,16 +795,18 @@ export class TransactionsService {
         balance: newBalance,
       };
     } catch (error) {
-      console.error('Error approving PayPal order:', error.response?.data || error.message);
-      
-      if (error instanceof BadRequestException || 
-          error instanceof NotFoundException || 
-          error instanceof UnauthorizedException) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException ||
+        error instanceof UnauthorizedException
+      ) {
         throw error;
       }
-      
+
       throw new BadRequestException(
-        error.response?.data?.message || 'Không thể xác minh đơn hàng PayPal',
+        error instanceof Error
+          ? error.message
+          : 'Không thể xác minh đơn hàng PayPal',
       );
     }
   }

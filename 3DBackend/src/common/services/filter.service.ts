@@ -1,7 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { FilterDto } from '../dto/filter.dto';
 import { PaginatedResult } from '../interfaces/pagination.interface';
-import { Model, Document, FilterQuery, SortOrder } from 'mongoose';
+import {
+  Model,
+  Document,
+  FilterQuery,
+  SortOrder,
+  PopulateOptions,
+} from 'mongoose';
 
 @Injectable()
 export class FilterService {
@@ -11,6 +17,7 @@ export class FilterService {
    * @param filterDto Filter and pagination parameters
    * @param baseQuery Base query to apply filters to
    * @param searchFields Fields to search in when search parameter is provided
+   * @param populateOptions Options for populating references in the query results
    * @returns Paginated result with items and metadata
    */
   async applyFilters<T extends Document>(
@@ -18,6 +25,7 @@ export class FilterService {
     filterDto: FilterDto,
     baseQuery: FilterQuery<T> = {},
     searchFields: string[] = [],
+    populateOptions?: PopulateOptions,
   ): Promise<PaginatedResult<T>> {
     const {
       page = 1,
@@ -85,8 +93,16 @@ export class FilterService {
       : { createdAt: -1 };
 
     // Execute queries
+    let findQuery = model.find(query).sort(sort).skip(skip).limit(limit);
+
+    // Apply populate if provided
+    if (populateOptions) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      findQuery = findQuery.populate(populateOptions);
+    }
+
     const [items, totalItems] = await Promise.all([
-      model.find(query).sort(sort).skip(skip).limit(limit).exec(),
+      findQuery.exec(),
       model.countDocuments(query),
     ]);
 

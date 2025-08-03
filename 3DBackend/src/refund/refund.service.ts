@@ -26,13 +26,11 @@ export class RefundService {
     userId: string,
   ): Promise<Refund> {
     // Check if order exists and belongs to the user
-    const order = await this.ordersService.findOne(
-      createRefundDto.orderId.toString(),
-    );
+    const order = await this.ordersService.findOne(createRefundDto.orderId);
 
     if (!order) {
       throw new NotFoundException(
-        `Không tìm thấy đơn hàng với ID ${createRefundDto.orderId.toString()}`,
+        `Không tìm thấy đơn hàng với ID ${createRefundDto.orderId}`,
       );
     }
 
@@ -51,18 +49,12 @@ export class RefundService {
       throw new BadRequestException('Đơn hàng đã hủy không thể hoàn tiền');
     }
 
-    // Check if refund amount is valid (not greater than order amount)
-    if (createRefundDto.amount > order.totalAmount) {
-      throw new BadRequestException(
-        'Số tiền hoàn không thể vượt quá tổng giá trị đơn hàng',
-      );
-    }
-
     // Create the refund request
     const refund = new this.refundModel({
       ...createRefundDto,
       userId: new Types.ObjectId(userId),
-      orderId: new Types.ObjectId(createRefundDto.orderId.toString()),
+      orderId: new Types.ObjectId(createRefundDto.orderId),
+      amount: order.totalAmount,
     });
 
     return refund.save();
