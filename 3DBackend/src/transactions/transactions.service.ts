@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -27,6 +28,9 @@ import axios from 'axios';
 import { FilterDto } from 'src/common/dto/filter.dto';
 import { PaginatedResult } from 'src/common/interfaces/pagination.interface';
 import { FilterService } from 'src/common/services/filter.service';
+import { UserRole } from 'src/enum/user.enum';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
 
 // PayPal API response interfaces
 interface PayPalOrderResponse {
@@ -287,8 +291,12 @@ export class TransactionsService {
     }
   }
 
-  async findAll(): Promise<Transaction[]> {
-    return this.transactionModel.find().exec();
+  @UseGuards(RolesGuard)   
+  @Roles(UserRole.ADMIN)
+  async findAll(type: string): Promise<Transaction[]> {
+    if (!type) return this.transactionModel.find({}).populate("userId", "fullName email").exec();
+    
+    return this.transactionModel.find({ type }).populate("userId", "fullName email").exec();
   }
 
   async findByUserId(
@@ -808,6 +816,110 @@ export class TransactionsService {
           ? error.message
           : 'Không thể xác minh đơn hàng PayPal',
       );
+    }
+  }
+
+  async handleApprove(id: string): Promise<Transaction> {
+    const transaction = await this.transactionModel.findById(id);
+    if (!transaction) {
+      throw new NotFoundException('Giao dịch không tồn tại');
+    }
+    transaction.status = TransactionStatus.SUCCESS;
+    const user = await this.usersService.findOne(transaction.userId.toString());
+    if (!user) {
+      throw new NotFoundException('Người dùng không tồn tại');
+    }
+
+    user.balance += transaction.amount;
+    await user.save();
+    
+    return transaction.save();
+  }
+
+  async getTransactionStats(period: string = '30d'): Promise<any> {
+    try {
+      // Calculate date range based on period
+      const endDate = new Date();
+      const startDate = new Date();
+      
+      if (period === '7d') {
+        startDate.setDate(endDate.getDate() - 7);
+      } else if (period === '30d') {
+        startDate.setDate(endDate.getDate() - 30);
+      } else if (period === '90d') {
+        startDate.setDate(endDate.getDate() - 90);
+      } else {
+        startDate.setDate(endDate.getDate() - 30); // Default to 30 days
+      }
+
+      // Get all transactions within the date range
+      const transactions = await this.transactionModel.find({
+        createdAt: { $gte: startDate, $lte: endDate },
+      }).exec();
+
+      // Group transactions by date and type
+      const transactionsByDate = new Map();
+
+      // Initialize all dates in the range with zero values
+      const dateRange: Date[] = [];
+      const currentDate = new Date(startDate);
+      while (currentDate <= endDate) {
+        dateRange.push(new Date(currentDate));
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      // Initialize the map with all dates in range
+      dateRange.forEach(date => {
+        const dateStr = date.toISOString().split('T')[0];
+        transactionsByDate.set(dateStr, {
+          deposit: 0,
+          payment: 0,
+          withdrawal: 0,
+          refund: 0,
+          total: 0
+        });
+      });
+
+      // Group transactions by date and type
+      transactions.forEach(transaction => {
+        const date = transaction.createdAt?.toISOString().split('T')[0];
+        const amount = Math.abs(transaction.amount);
+        
+        // Skip if outside our date range
+        if (!transactionsByDate.has(date)) return;
+        
+        const stats = transactionsByDate.get(date);
+        
+        if (transaction.type === TransactionType.DEPOSIT) {
+          stats.deposit += amount;
+          stats.total += amount;
+        } else if (transaction.type === TransactionType.PAYMENT) {
+          stats.payment += amount;
+          stats.total += amount;
+        } else if (transaction.type === TransactionType.WITHDRAWAL) {
+          stats.withdrawal += amount;
+          stats.total += amount;
+        } else if (transaction.type === TransactionType.REFUND) {
+          stats.refund += amount;
+          stats.total += amount;
+        }
+      });
+
+      // Convert map to array for response
+      const result = Array.from(transactionsByDate.entries())
+        .map(([date, stats]) => ({
+          date,
+          deposit: stats.deposit,
+          payment: stats.payment,
+          withdrawal: stats.withdrawal,
+          refund: stats.refund,
+          total: stats.total
+        }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      return { data: result };
+    } catch (error) {
+      throw error;
     }
   }
 }

@@ -49,4 +49,10 @@ export const api = {
     fetchWithAuth(endpoint, {
       method: "DELETE",
     }),
+  
+  patch: (endpoint: string, data: unknown) =>
+    fetchWithAuth(endpoint, {
+      method: "PATCH",
+      body: data instanceof FormData ? data : JSON.stringify(data),
+    }),
 };

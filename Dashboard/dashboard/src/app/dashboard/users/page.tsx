@@ -37,7 +37,7 @@ import { useState } from "react";
 import { userToasts } from "@/lib/toast";
 import { PageLoading, Loading } from "@/components/ui/loading";
 
-interface User {
+export interface User {
   _id: string;
   email: string;
   fullName: string;
@@ -176,16 +176,16 @@ export default function UsersPage() {
       },
     },
     {
-      accessorKey: "isActive",
+      accessorKey: "isDeleted",
       header: "Trạng thái",
       cell: ({ row }) => {
-        const status = row.getValue("isActive") as boolean;
+        const status = row.getValue("isDeleted") as boolean;
         return (
           <Badge
-            variant={status ? "default" : "secondary"}
-            className={status ? "bg-green-500" : "bg-gray-400"}
+            variant={status ? "destructive" : "secondary"}
+            className={status ? "bg-red-500" : "bg-green-500"}
           >
-            {status ? "Hoạt động" : "Không hoạt động"}
+            {status ? "Đã xóa" : "Hoạt động"}
           </Badge>
         );
       },
@@ -297,11 +297,11 @@ export default function UsersPage() {
                   ],
                 },
                 {
-                  columnId: "isActive",
+                  columnId: "isDeleted",
                   title: "Trạng thái",
                   options: [
-                    { label: "Hoạt động", value: "true" },
-                    { label: "Không hoạt động", value: "false" },
+                    { label: "Đã xóa", value: "true" },
+                    { label: "Hoạt động", value: "false" },
                   ],
                 },
               ]}

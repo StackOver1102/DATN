@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useApiQuery } from "@/lib/hooks/useApi";
+import { useMutation } from "@tanstack/react-query";
+import { api } from "@/lib/api";
+import CountUp from "react-countup";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DataTable } from "@/components/data-table";
-import { ChartAreaInteractive } from "@/components/chart-area-interactive";
+import { ChartTransactions } from "@/components/chart-transactions";
 import { PageLoading } from "@/components/ui/loading";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,17 +18,43 @@ import {
   IconCheck,
   IconX,
   IconHome,
+  IconEye,
+  IconEdit,
+  IconTrash,
+  IconDotsVertical,
+  IconCheck as IconApprove,
+  IconArrowsUpDown
 } from "@tabler/icons-react";
 import { format } from "date-fns";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink } from "@/components/ui/breadcrumb";
+import { formatMoney, formatNumber } from "@/lib/formatMoney";
+import { DataTable } from "@/components/ui/data-table";
+import { Column } from "@tanstack/react-table";
+import { User } from "../users/page";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-} from "@/components/ui/breadcrumb";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface Transaction {
   _id: string;
-  userId: string;
+  userId: User;
   userName?: string;
   type: "deposit" | "payment" | "withdrawal" | "refund";
   method?: string;
@@ -42,38 +70,116 @@ interface Transaction {
 }
 
 export default function TransactionsPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<string>("all");
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
 
-  const { data, isLoading, error } = useApiQuery<{ data: Transaction[] }>(
+  const { data, isLoading, error, refetch } = useApiQuery<{
+    data: Transaction[]
+  }>(
     ["transactions", activeTab],
     activeTab === "all" ? "/transactions" : `/transactions?type=${activeTab}`
   );
 
+  const deleteTransactionMutation = useMutation({
+    mutationFn: (id: string) => api.delete(`/transactions/${id}`),
+    onSuccess: () => {
+      toast.success('Giao dịch đã được xóa thành công');
+      refetch();
+      setIsDeleteDialogOpen(false);
+    },
+    onError: (error: any) => {
+      toast.error('Lỗi khi xóa giao dịch: ' + (error.message || 'Đã xảy ra lỗi'));
+    }
+  });
+
+  const approveTransactionMutation = useMutation({
+    mutationFn: (id: string) => api.patch(`/transactions/${id}/approve`, {}),
+    onSuccess: () => {
+      toast.success('Giao dịch đã được phê duyệt thành công');
+      refetch();
+      setIsApproveDialogOpen(false);
+    },
+    onError: (error: any) => {
+      toast.error('Lỗi khi phê duyệt giao dịch: ' + (error.message || 'Đã xảy ra lỗi'));
+    }
+  });
+
+  const handleDeleteClick = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleApproveClick = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setIsApproveDialogOpen(true);
+  };
+
   // Map transactions to include id field for DataTable
-  const transactions =
-    data?.data?.map((transaction) => ({
-      ...transaction,
-      id: transaction._id, // Map _id to id for DataTable
-    })) || [];
+  const transactions = data?.data?.map((transaction) => ({
+    ...transaction,
+    id: transaction._id, // Map _id to id for DataTable
+  })) || [];
 
   // Define columns for the data table
   const columns: any[] = [
     {
       accessorKey: "transactionCode",
-      header: "Mã giao dịch",
+      header: ({ column }: { column: Column<any, unknown> }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="p-0 hover:bg-transparent"
+          >
+            Mã giao dịch
+            <IconArrowsUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
       cell: ({ row }: { row: { original: Transaction } }) => (
         <div className="font-medium">{row.original.transactionCode}</div>
       ),
+      sortable: true,
     },
     {
       accessorKey: "userName",
-      header: "Người dùng",
-      cell: ({ row }: { row: { original: Transaction } }) =>
-        row.original.userName || "N/A",
+      header: ({ column }: { column: Column<any, unknown> }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="p-0 hover:bg-transparent"
+          >
+            Người dùng
+            <IconArrowsUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+      cell: ({ row }: { row: { original: Transaction } }) => (
+        <Link href={`/dashboard/users/${row.original.userId._id}`} className="text-blue-500 hover:underline">
+          {row.original.userId.fullName || row.original.userId.email}
+        </Link>
+      ),
+      sortable: true,
     },
     {
       accessorKey: "type",
-      header: "Loại",
+      header: ({ column }: { column: Column<any, unknown> }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="p-0 hover:bg-transparent"
+          >
+            Loại
+            <IconArrowsUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+      sortable: true,
       cell: ({ row }: { row: { original: Transaction } }) => {
         const type = row.original.type;
 
@@ -109,7 +215,19 @@ export default function TransactionsPage() {
     },
     {
       accessorKey: "amount",
-      header: "Số tiền",
+      header: ({ column }: { column: Column<any, unknown> }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="p-0 hover:bg-transparent"
+          >
+            Số tiền
+            <IconArrowsUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+      sortable: true,
       cell: ({ row }: { row: { original: Transaction } }) => {
         const amount = row.original.amount;
         const type = row.original.type;
@@ -125,20 +243,45 @@ export default function TransactionsPage() {
             }`}
           >
             {isPositive ? "+" : "-"}
-            {displayAmount} coin
+            {formatNumber(displayAmount)} coin
           </div>
         );
       },
     },
     {
       accessorKey: "method",
-      header: "Phương thức",
-      cell: ({ row }: { row: { original: Transaction } }) =>
-        row.original.method || "N/A",
+      header: ({ column }: { column: Column<any, unknown> }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="p-0 hover:bg-transparent"
+          >
+            Phương thức
+            <IconArrowsUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+      sortable: true,
+      cell: ({ row }: { row: { original: Transaction } }) => (
+        <div className="text-sm text-muted-foreground capitalize">{row.original.method || "Coin"}</div>
+      ),
     },
     {
       accessorKey: "status",
-      header: "Trạng thái",
+      header: ({ column }: { column: Column<any, unknown> }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="p-0 hover:bg-transparent"
+          >
+            Trạng thái
+            <IconArrowsUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+      sortable: true,
       cell: ({ row }: { row: { original: Transaction } }) => {
         const status = row.original.status;
 
@@ -168,9 +311,66 @@ export default function TransactionsPage() {
     },
     {
       accessorKey: "createdAt",
-      header: "Thời gian",
+      header: ({ column }: { column: Column<any, unknown> }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="p-0 hover:bg-transparent"
+          >
+            Thời gian
+            <IconArrowsUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+      sortable: true,
       cell: ({ row }: { row: { original: Transaction } }) => {
         return format(new Date(row.original.createdAt), "dd/MM/yyyy HH:mm:ss");
+      }
+    },
+    {
+      id: "actions",
+      header: "Thao tác",
+      cell: ({ row }: { row: { original: Transaction } }) => {
+        const transaction = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Mở menu</span>
+                <IconDotsVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Hành động</DropdownMenuLabel>
+              <DropdownMenuItem
+                onClick={() => router.push(`/dashboard/transactions/${transaction._id}/view`)}
+              >
+                <IconEye className="mr-2 h-4 w-4" />
+                Xem chi tiết
+              </DropdownMenuItem>
+              
+              {transaction.status === "pending" && (
+                <DropdownMenuItem
+                  onClick={() => handleApproveClick(transaction)}
+                  className="text-green-600"
+                >
+                  <IconApprove className="mr-2 h-4 w-4" />
+                  Phê duyệt
+                </DropdownMenuItem>
+              )}
+              
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-red-600"
+                onClick={() => handleDeleteClick(transaction)}
+              >
+                <IconTrash className="mr-2 h-4 w-4" />
+                Xóa
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
       },
     },
   ];
@@ -231,9 +431,11 @@ export default function TransactionsPage() {
               <IconCoin className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{summary.total}</div>
+              <div className="text-2xl font-bold">
+                <CountUp end={summary.total} duration={2} separator="," />
+              </div>
               <p className="text-xs text-muted-foreground">
-                Tổng số tiền: {summary.totalAmount} coin
+                Tổng số tiền: <CountUp end={summary.totalAmount} duration={2} separator="," decimals={0} /> coin
               </p>
             </CardContent>
           </Card>
@@ -243,9 +445,11 @@ export default function TransactionsPage() {
               <IconArrowUpRight className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{summary.deposit}</div>
+              <div className="text-2xl font-bold">
+                <CountUp end={summary.deposit} duration={2} separator="," />
+              </div>
               <p className="text-xs text-muted-foreground">
-                Tổng số tiền: {summary.depositAmount} coin
+                Tổng số tiền: <CountUp end={summary.depositAmount} duration={2} separator="," decimals={0} suffix=" đ" />
               </p>
             </CardContent>
           </Card>
@@ -255,9 +459,11 @@ export default function TransactionsPage() {
               <IconArrowDownRight className="h-4 w-4 text-red-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{summary.payment}</div>
+              <div className="text-2xl font-bold">
+                <CountUp end={summary.payment} duration={2} separator="," />
+              </div>
               <p className="text-xs text-muted-foreground">
-                Tổng số tiền: {summary.paymentAmount} coin
+                Tổng số tiền: <CountUp end={summary.paymentAmount} duration={2} separator="," decimals={0} /> coin
               </p>
             </CardContent>
           </Card>
@@ -268,7 +474,7 @@ export default function TransactionsPage() {
             <CardTitle>Biểu đồ giao dịch</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartAreaInteractive />
+            <ChartTransactions />
           </CardContent>
         </Card>
 
@@ -296,13 +502,122 @@ export default function TransactionsPage() {
                     Lỗi khi tải dữ liệu giao dịch
                   </div>
                 ) : (
-                  <DataTable data={transactions} />
+                  <DataTable 
+                    data={transactions} 
+                    columns={columns}
+                    searchKey="transactionCode"
+                    searchPlaceholder="Tìm kiếm giao dịch..."
+                    filters={[
+                      {
+                        columnId: "type",
+                        title: "Loại giao dịch",
+                        options: [
+                          { label: "Nạp tiền", value: "deposit" },
+                          { label: "Thanh toán", value: "payment" },
+                          { label: "Rút tiền", value: "withdrawal" },
+                          { label: "Hoàn tiền", value: "refund" },
+                        ],
+                      },
+                      {
+                        columnId: "status",
+                        title: "Trạng thái",
+                        options: [
+                          { label: "Đang xử lý", value: "pending" },
+                          { label: "Thành công", value: "success" },
+                          { label: "Thất bại", value: "failed" },
+                        ],
+                      },
+                    ]}
+                  />
                 )}
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Xác nhận xóa giao dịch</DialogTitle>
+            <DialogDescription>
+              Bạn có chắc chắn muốn xóa giao dịch này không? Hành động này không thể hoàn tác.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Hủy
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (selectedTransaction) {
+                  deleteTransactionMutation.mutate(selectedTransaction._id);
+                }
+              }}
+              disabled={deleteTransactionMutation.isPending}
+            >
+              {deleteTransactionMutation.isPending ? "Đang xóa..." : "Xóa"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Approve Transaction Dialog */}
+      <Dialog open={isApproveDialogOpen} onOpenChange={setIsApproveDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Xác nhận phê duyệt giao dịch</DialogTitle>
+            <DialogDescription>
+              Bạn có chắc chắn muốn phê duyệt giao dịch này không?
+            </DialogDescription>
+          </DialogHeader>
+          {selectedTransaction && (
+            <div className="space-y-2 py-2">
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">Mã giao dịch:</span>
+                <span className="text-sm">{selectedTransaction.transactionCode}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">Loại giao dịch:</span>
+                <span className="text-sm capitalize">{selectedTransaction.type}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">Số tiền:</span>
+                <span className="text-sm">{formatNumber(selectedTransaction.amount)} coin</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">Người dùng:</span>
+                <span className="text-sm">{selectedTransaction.userId.fullName || selectedTransaction.userId.email}</span>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsApproveDialogOpen(false)}
+            >
+              Hủy
+            </Button>
+            <Button
+              variant="default"
+              className="bg-green-600 hover:bg-green-700"
+              onClick={() => {
+                if (selectedTransaction) {
+                  approveTransactionMutation.mutate(selectedTransaction._id);
+                }
+              }}
+              disabled={approveTransactionMutation.isPending}
+            >
+              {approveTransactionMutation.isPending ? "Đang xử lý..." : "Phê duyệt"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

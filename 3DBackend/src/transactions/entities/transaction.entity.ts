@@ -39,6 +39,12 @@ export class Transaction {
 
   @Prop()
   balanceAfter?: number;
+
+  @Prop()
+  createdAt?: Date;
+
+  @Prop()
+  updatedAt?: Date;
 }
 
 export const TransactionSchema = SchemaFactory.createForClass(Transaction);
