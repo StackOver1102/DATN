@@ -6,11 +6,16 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
   const session = await getSession();
   const token = session?.user?.token;
 
-  const headers = {
-    "Content-Type": "application/json",
+  // Don't set Content-Type for FormData, let browser set it automatically
+  const headers: Record<string, string> = {
     ...(token && { Authorization: `Bearer ${token}` }),
-    ...options.headers,
+    ...(options.headers as Record<string, string>),
   };
+
+  // Only set Content-Type for JSON data
+  if (!(options.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
 
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
@@ -28,16 +33,16 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
 export const api = {
   get: (endpoint: string) => fetchWithAuth(endpoint),
   
-  post: (endpoint: string, data: any) =>
+  post: (endpoint: string, data: unknown) =>
     fetchWithAuth(endpoint, {
       method: "POST",
-      body: JSON.stringify(data),
+      body: data instanceof FormData ? data : JSON.stringify(data),
     }),
   
-  put: (endpoint: string, data: any) =>
+  put: (endpoint: string, data: unknown) =>
     fetchWithAuth(endpoint, {
       method: "PUT",
-      body: JSON.stringify(data),
+      body: data instanceof FormData ? data : JSON.stringify(data),
     }),
   
   delete: (endpoint: string) =>

@@ -12,7 +12,7 @@ export interface PaginatedResult<T> {
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
-  data: T;
+  data:  T;
   timestamp: number;
   statusCode: number;
 }

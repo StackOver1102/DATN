@@ -23,9 +23,13 @@ export default function CreateProductPage() {
             <IconHome className="h-4 w-4" />
           </BreadcrumbLink>
         </BreadcrumbItem>
+        <span className="mx-2 text-gray-400">&gt;</span>
+
         <BreadcrumbItem>
           <BreadcrumbLink href="/dashboard/products">Sản phẩm</BreadcrumbLink>
         </BreadcrumbItem>
+        <span className="mx-2 text-gray-400">&gt;</span>
+
         <BreadcrumbItem>
           <BreadcrumbLink>Thêm sản phẩm mới</BreadcrumbLink>
         </BreadcrumbItem>

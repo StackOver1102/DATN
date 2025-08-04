@@ -60,11 +60,11 @@ const data = {
       url: "/dashboard/orders",
       icon: IconFileDescription,
     },
-    {
-      title: "Categories",
-      url: "/dashboard/categories",
-      icon: IconListDetails,
-    },
+    // {
+    //   title: "Categories",
+    //   url: "/dashboard/categories",
+    //   icon: IconListDetails,
+    // },
     {
       title: "Transactions",
       url: "/dashboard/transactions",
@@ -141,21 +141,21 @@ const data = {
     },
   ],
   documents: [
-    {
-      name: "Refunds",
-      url: "/dashboard/refunds",
-      icon: IconReport,
-    },
-    {
-      name: "Comments",
-      url: "/dashboard/comments",
-      icon: IconFileWord,
-    },
-    {
-      name: "Media",
-      url: "/dashboard/media",
-      icon: IconCamera,
-    },
+    // {
+    //   name: "Refunds",
+    //   url: "/dashboard/refunds",
+    //   icon: IconReport,
+    // },
+    // {
+    //   name: "Comments",
+    //   url: "/dashboard/comments",
+    //   icon: IconFileWord,
+    // },
+    // {
+    //   name: "Media",
+    //   url: "/dashboard/media",
+    //   icon: IconCamera,
+    // },
   ],
 };
 
@@ -202,14 +202,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     });
 
     // Check documents
-    data.documents.forEach((item, index) => {
-      if (isPathActive(item.url, pathname)) {
-        const specificity = item.url.length;
-        if (specificity > bestMatch.specificity) {
-          bestMatch = { type: "documents", index, url: item.url, specificity };
-        }
-      }
-    });
+    // data.documents.forEach((item, index) => {
+    //   if (isPathActive(item.url, pathname)) {
+    //     const specificity = item.url.length;
+    //     if (specificity > bestMatch.specificity) {
+    //       bestMatch = { type: "documents", index, url: item.url, specificity };
+    //     }
+    //   }
+    // });
 
     // Check secondary navigation
     data.navSecondary.forEach((item, index) => {
@@ -236,10 +236,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // For now, we're using the flat navigation structure
 
   // Update documents items with isActive property
-  const documentsWithActive = data.documents.map((item, index) => ({
-    ...item,
-    isActive: bestMatch.type === "documents" && bestMatch.index === index,
-  }));
+  // const documentsWithActive = data.documents.map((item, index) => ({
+  //   ...item,
+  //   isActive: bestMatch.type === "documents" && bestMatch.index === index,
+  // }));
 
   // Update secondary nav items with isActive property
   const secondaryWithActive = data.navSecondary.map((item, index) => ({
@@ -266,7 +266,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navMainWithActive} />
-        <NavDocuments items={documentsWithActive} />
+        {/* <NavDocuments items={documentsWithActive} /> */}
         <NavSecondary items={secondaryWithActive} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>

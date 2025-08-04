@@ -10,20 +10,24 @@ import {
   UploadedFile,
   UploadedFiles,
   Query,
+  HttpStatus,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, AnyFilesInterceptor } from '@nestjs/platform-express';
 import { FilterDto } from 'src/common/dto/filter.dto';
 import { ApiOperation, ApiTags, ApiConsumes } from '@nestjs/swagger';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { Product } from './entities/product.entity';
+import { BaseController } from 'src/common/base/base.controller';
 
 @ApiTags('products')
 @Controller('products')
-export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+export class ProductsController extends BaseController {
+  constructor(private readonly productsService: ProductsService) {
+    super();
+  }
 
   @Post()
   @ApiOperation({ summary: 'Create multiple products' })
@@ -41,7 +45,7 @@ export class ProductsController {
   @Post('batch-with-images')
   @ApiOperation({ summary: 'Create multiple products with individual images' })
   @ApiConsumes('multipart/form-data')
-  @UseInterceptors(FilesInterceptor('files'))
+  @UseInterceptors(AnyFilesInterceptor())
   async createBatchWithImages(
     @Body() body: { products: string },
     @UploadedFiles() files: Express.Multer.File[],
@@ -51,21 +55,25 @@ export class ProductsController {
       const products = JSON.parse(body.products) as CreateProductDto[];
 
       if (!files || files.length === 0) {
-        return {
-          success: false,
-          message: 'No image files uploaded',
-          errors: ['At least one image file is required'],
-        };
+        return this.error('No image files uploaded', HttpStatus.BAD_REQUEST, [
+          'At least one image file is required',
+        ]);
       }
 
       // Check if we have enough files for all products
       if (files.length < products.length) {
-        return {
-          success: false,
-          message: `Not enough files uploaded. Expected ${products.length} files but got ${files.length}`,
-          errors: [`Expected ${products.length} files but got ${files.length}`],
-        };
+        return this.error(
+          `Not enough files uploaded. Expected ${products.length} files but got ${files.length}`,
+          HttpStatus.BAD_REQUEST,
+          [`Expected ${products.length} files but got ${files.length}`],
+        );
       }
+
+      // Create a map of files by their field name (e.g., "file-0", "file-1")
+      const fileMap = new Map<string, Express.Multer.File>();
+      files.forEach((file) => {
+        fileMap.set(file.fieldname, file);
+      });
 
       // Create products with the uploaded images
       const createdProducts: Product[] = [];
@@ -73,9 +81,8 @@ export class ProductsController {
 
       for (let i = 0; i < products.length; i++) {
         const product = products[i];
-        const file = i < files.length ? files[i] : null;
+        const file = fileMap.get(`file-${i}`);
 
-        console.log(file);
         if (!file) {
           errors.push(`No image found for product at index ${i}`);
           continue;
@@ -97,19 +104,17 @@ export class ProductsController {
       }
 
       if (createdProducts.length === 0) {
-        return {
-          success: false,
-          message: 'Failed to create any products',
+        return this.error(
+          'Failed to create any products',
+          HttpStatus.BAD_REQUEST,
           errors,
-        };
+        );
       }
 
-      return {
-        success: true,
-        message: `Successfully created ${createdProducts.length} products with images`,
-        data: createdProducts,
-        errors: errors.length > 0 ? errors : undefined,
-      };
+      return this.success(
+        createdProducts,
+        `Successfully created ${createdProducts.length} products with images`,
+      );
     } catch (error: any) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
@@ -135,8 +140,8 @@ export class ProductsController {
     @Body() createProductDto: CreateProductDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    console.log(file);
-    console.log(createProductDto);
+    console.log('file', file);
+    // console.log(createProductDto);
     return this.productsService.createProductWithImageUpload(
       createProductDto,
       file,

@@ -24,6 +24,7 @@ import {
   BreadcrumbLink,
 } from "@/components/ui/breadcrumb";
 import { IconHome } from "@tabler/icons-react";
+import { Loading } from "@/components/ui/loading";
 
 // Enums from the backend
 enum Material {
@@ -108,11 +109,29 @@ interface Category {
   path?: string;
 }
 
+interface CategoryItem {
+  _id: string;
+  name: string;
+  parentId?: string;
+}
+
+interface CategoryGroup {
+  _id: string;
+  title: string; // Tên danh mục cha
+  items: CategoryItem[]; // Danh sách danh mục con
+}
+
 export default function ProductDetailPage() {
   const router = useRouter();
   const { id } = useParams();
+  const [mounted, setMounted] = useState(false);
   const isCreating = id === "create";
   const pageTitle = isCreating ? "Thêm sản phẩm mới" : "Chỉnh sửa sản phẩm";
+
+  // Ensure component is mounted before rendering
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // State for form
   const [formData, setFormData] = useState<Partial<Product>>({
@@ -125,26 +144,33 @@ export default function ProductDetailPage() {
     size: 0,
     categoryId: "",
     images: "",
+    materials: undefined,
+    style: undefined,
+    render: undefined,
+    form: undefined,
+    color: "",
   });
 
-  // Create a custom hook for product data
-  const useProductData = () => {
-    // Always call the hook, but use the enabled option to conditionally fetch
-    return useApiQuery<{ data: Product }>(
-      ["product", id as string],
-      `/products/${id}`,
-      // @ts-expect-error - The useQuery hook accepts this option
-      { enabled: !isCreating && !!id }
-    );
-  };
-
   // Fetch product data if editing
-  const { data: productData, isLoading: isLoadingProduct } = useProductData();
+  const {
+    data: productData,
+    isLoading: isLoadingProduct,
+    error: productError,
+  } = useApiQuery<{ data: Product }>(
+    ["product", id as string],
+    `/products/${id}`,
+    // @ts-expect-error - The useQuery hook accepts this option
+    { enabled: !isCreating && !!id }
+  );
 
-  // Fetch categories for dropdown
-  const { data: categoriesData, isLoading: isLoadingCategories } = useApiQuery<{
-    data: Category[];
-  }>("categories", "/categories");
+  // Fetch categories for dropdown - using grouped categories like batch-create
+  const {
+    data: categoriesData,
+    isLoading: isLoadingCategories,
+    error: categoriesError,
+  } = useApiQuery<{
+    data: CategoryGroup[];
+  }>("categories", "/categories/grouped");
 
   // Update mutation
   const { mutate: updateProduct, isPending: isUpdating } = useApiMutation<
@@ -163,9 +189,31 @@ export default function ProductDetailPage() {
     }
   }, [productData, isCreating]);
 
-  // Handle form change
+  // Handle form change with proper type checking
   const handleChange = (field: keyof Product, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Handle category change specifically
+  const handleCategoryChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, categoryId: value }));
+  };
+
+  // Handle enum field changes
+  const handleMaterialsChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, materials: value as Material }));
+  };
+
+  const handleStyleChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, style: value as Style }));
+  };
+
+  const handleRenderChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, render: value as Render }));
+  };
+
+  const handleFormChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, form: value as Form }));
   };
 
   // Handle form submission
@@ -189,359 +237,416 @@ export default function ProductDetailPage() {
     });
   };
 
+  // Don't render anything until component is mounted
+  if (!mounted) {
+    return null;
+  }
+
   // Loading state
   if (!isCreating && isLoadingProduct) {
     return (
-      <div className="flex justify-center p-8">
-        Đang tải thông tin sản phẩm...
+      <div className="px-4 lg:px-6">
+        <div className="flex justify-center p-8">
+          <Loading size="sm" variant="spinner" />
+        </div>
+      </div>
+    );
+  }
+
+  // Error state for product loading
+  if (!isCreating && productError) {
+    return (
+      <div className="px-4 lg:px-6">
+        <div className="flex justify-center p-8">
+          Lỗi tải thông tin sản phẩm: {productError.message}
+        </div>
       </div>
     );
   }
 
   return (
-    <>
-      <div className="px-4 lg:px-6">
-        <Breadcrumb className="mb-6">
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/dashboard">
-              <IconHome className="h-4 w-4" />
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/dashboard/products">Sản phẩm</BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbItem>
-            <BreadcrumbLink>{pageTitle}</BreadcrumbLink>
-          </BreadcrumbItem>
-        </Breadcrumb>
+    <div className="px-4 lg:px-6">
+      <Breadcrumb className="mb-6">
+        <BreadcrumbItem>
+          <BreadcrumbLink href="/dashboard">
+            <IconHome className="h-4 w-4" />
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <span className="mx-2 text-gray-400">&gt;</span>
 
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">{pageTitle}</h1>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => router.push("/dashboard/products")}
-            >
-              Hủy
-            </Button>
-            <Button onClick={handleSubmit} disabled={isUpdating}>
-              {isUpdating ? "Đang lưu..." : "Lưu sản phẩm"}
-            </Button>
-          </div>
+        <BreadcrumbItem>
+          <BreadcrumbLink href="/dashboard/products">Sản phẩm</BreadcrumbLink>
+        </BreadcrumbItem>
+        <span className="mx-2 text-gray-400">&gt;</span>
+
+        <BreadcrumbItem>
+          <BreadcrumbLink>{pageTitle}</BreadcrumbLink>
+        </BreadcrumbItem>
+      </Breadcrumb>
+
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">{pageTitle}</h1>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => router.push("/dashboard/products")}
+          >
+            Hủy
+          </Button>
+          <Button onClick={handleSubmit} disabled={isUpdating}>
+            {isUpdating ? "Đang lưu..." : "Lưu sản phẩm"}
+          </Button>
         </div>
+      </div>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-6">
-          <Tabs defaultValue="basic" className="w-full">
-            <TabsList className="mb-4">
-              <TabsTrigger value="basic">Thông tin cơ bản</TabsTrigger>
-              <TabsTrigger value="details">Chi tiết</TabsTrigger>
-              <TabsTrigger value="media">Hình ảnh & Tải xuống</TabsTrigger>
-            </TabsList>
+      <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+        <Tabs defaultValue="basic" className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="basic">Thông tin cơ bản</TabsTrigger>
+            <TabsTrigger value="details">Chi tiết</TabsTrigger>
+            <TabsTrigger value="media">Hình ảnh & Tải xuống</TabsTrigger>
+          </TabsList>
 
-            <TabsContent value="basic" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Thông tin sản phẩm</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Tên sản phẩm</Label>
-                      <Input
-                        id="name"
-                        value={formData.name || ""}
-                        onChange={(e) => handleChange("name", e.target.value)}
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="categoryId">Danh mục</Label>
-                      <Select
-                        value={formData.categoryId || ""}
-                        onValueChange={(value) =>
-                          handleChange("categoryId", value)
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn danh mục" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {isLoadingCategories ? (
-                            <SelectItem value="loading" disabled>
-                              Đang tải danh mục...
-                            </SelectItem>
-                          ) : (
-                            categoriesData?.data.map((category) => (
-                              <SelectItem
-                                key={category._id}
-                                value={category._id}
-                              >
-                                {category.path || category.name}
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
+          <TabsContent value="basic" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Thông tin sản phẩm</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="description">Mô tả</Label>
-                    <textarea
-                      id="description"
-                      className="w-full min-h-[100px] p-2 border rounded-md"
-                      value={formData.description || ""}
-                      onChange={(e) =>
-                        handleChange("description", e.target.value)
-                      }
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="price">Giá (coin)</Label>
-                      <Input
-                        id="price"
-                        type="number"
-                        min="0"
-                        value={formData.price || 0}
-                        onChange={(e) =>
-                          handleChange("price", Number(e.target.value))
-                        }
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="discount">Giảm giá (%)</Label>
-                      <Input
-                        id="discount"
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={formData.discount || 0}
-                        onChange={(e) =>
-                          handleChange("discount", Number(e.target.value))
-                        }
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="size">Kích thước (MB)</Label>
-                      <Input
-                        id="size"
-                        type="number"
-                        min="0"
-                        value={formData.size || 0}
-                        onChange={(e) =>
-                          handleChange("size", Number(e.target.value))
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-8">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="isActive"
-                        checked={formData.isActive}
-                        onCheckedChange={(checked) =>
-                          handleChange("isActive", !!checked)
-                        }
-                      />
-                      <Label htmlFor="isActive">Hoạt động</Label>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="isPro"
-                        checked={formData.isPro}
-                        onCheckedChange={(checked) =>
-                          handleChange("isPro", !!checked)
-                        }
-                      />
-                      <Label htmlFor="isPro">Sản phẩm PRO</Label>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="details" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Thông số kỹ thuật</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="materials">Chất liệu</Label>
-                      <Select
-                        value={formData.materials || ""}
-                        onValueChange={(value) =>
-                          handleChange("materials", value)
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn chất liệu" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(Material).map(([key, value]) => (
-                            <SelectItem key={key} value={value}>
-                              {key.charAt(0) +
-                                key.slice(1).toLowerCase().replace("_", " ")}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="style">Phong cách</Label>
-                      <Select
-                        value={formData.style || ""}
-                        onValueChange={(value) => handleChange("style", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn phong cách" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(Style).map(([key, value]) => (
-                            <SelectItem key={key} value={value}>
-                              {key.charAt(0) +
-                                key.slice(1).toLowerCase().replace("_", " ")}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="render">Render</Label>
-                      <Select
-                        value={formData.render || ""}
-                        onValueChange={(value) => handleChange("render", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn render" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(Render).map(([key, value]) => (
-                            <SelectItem key={key} value={value}>
-                              {key
-                                .replace("_", " ")
-                                .replace(/([A-Z])/g, " $1")
-                                .trim()}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="form">Hình dạng</Label>
-                      <Select
-                        value={formData.form || ""}
-                        onValueChange={(value) => handleChange("form", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn hình dạng" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(Form).map(([key, value]) => (
-                            <SelectItem key={key} value={value}>
-                              {key.charAt(0) +
-                                key.slice(1).toLowerCase().replace("_", " ")}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="color">Màu sắc</Label>
-                      <Input
-                        id="color"
-                        value={formData.color || ""}
-                        onChange={(e) => handleChange("color", e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="media" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Hình ảnh & Tải xuống</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="images">URL Hình ảnh</Label>
+                    <Label htmlFor="name">Tên sản phẩm</Label>
                     <Input
-                      id="images"
-                      value={formData.images || ""}
-                      onChange={(e) => handleChange("images", e.target.value)}
-                      placeholder="Nhập URL hình ảnh"
+                      id="name"
+                      value={formData.name || ""}
+                      onChange={(e) => handleChange("name", e.target.value)}
+                      required
                     />
-                    {formData.images && (
-                      <div className="mt-2 relative h-64">
-                        <Image
-                          src={formData.images}
-                          alt={formData.name || "Product image"}
-                          className="rounded-md object-contain"
-                          fill
-                          sizes="(max-width: 768px) 100vw, 400px"
-                          onError={() => {
-                            // Fallback handled via next.config.js unoptimized images
-                            console.log("Image failed to load");
-                          }}
-                        />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="categoryId">Danh mục</Label>
+                    <Select
+                      key={`category-${formData.categoryId || "empty"}`}
+                      value={formData.categoryId || ""}
+                      onValueChange={handleCategoryChange}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Chọn danh mục" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-80 w-full">
+                        {isLoadingCategories ? (
+                          <SelectItem value="loading" disabled>
+                            Đang tải danh mục...
+                          </SelectItem>
+                        ) : categoriesError ? (
+                          <SelectItem value="error" disabled>
+                            Lỗi tải danh mục
+                          </SelectItem>
+                        ) : (
+                          categoriesData?.data.map((group) => (
+                            <div key={group._id} className="mb-2">
+                              {/* Danh mục cha */}
+                              <SelectItem
+                                key={`parent-${group._id}`}
+                                value={group._id}
+                                className="bg-muted font-semibold"
+                              >
+                                {group.title}
+                              </SelectItem>
+
+                              {/* Danh mục con - hiển thị thụt vào */}
+                              <div className="pl-4">
+                                {group.items.map((category) => (
+                                  <SelectItem
+                                    key={category._id}
+                                    value={category._id}
+                                    className="text-sm"
+                                  >
+                                    {category.name}
+                                  </SelectItem>
+                                ))}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Display selected category info */}
+                    {formData.categoryPath && (
+                      <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                        <div className="text-xs text-blue-600 font-medium">
+                          Đã chọn: {formData.categoryPath}
+                        </div>
+                        <div className="text-xs text-blue-500 mt-1">
+                          Category ID: {formData.categoryId}
+                        </div>
+                        <div className="text-xs text-blue-500">
+                          Root Category ID: {formData.rootCategoryId}
+                        </div>
                       </div>
                     )}
                   </div>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="folderId">ID Thư mục</Label>
-                    <Input
-                      id="folderId"
-                      value={formData.folderId || ""}
-                      onChange={(e) => handleChange("folderId", e.target.value)}
-                      placeholder="ID thư mục trên Google Drive"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Mô tả</Label>
+                  <textarea
+                    id="description"
+                    className="w-full min-h-[100px] p-2 border rounded-md"
+                    value={formData.description || ""}
+                    onChange={(e) =>
+                      handleChange("description", e.target.value)
+                    }
+                  />
+                </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="urlDownload">URL Tải xuống</Label>
+                    <Label htmlFor="price">Giá (coin)</Label>
                     <Input
-                      id="urlDownload"
-                      value={formData.urlDownload || ""}
+                      id="price"
+                      type="number"
+                      min="0"
+                      value={formData.price || 0}
                       onChange={(e) =>
-                        handleChange("urlDownload", e.target.value)
+                        handleChange("price", Number(e.target.value))
                       }
-                      placeholder="URL tải xuống trực tiếp"
+                      required
                     />
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
 
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={() => router.push("/dashboard/products")}
-            >
-              Hủy
-            </Button>
-            <Button type="submit" disabled={isUpdating}>
-              {isUpdating ? "Đang lưu..." : "Lưu sản phẩm"}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </>
+                  <div className="space-y-2">
+                    <Label htmlFor="discount">Giảm giá (%)</Label>
+                    <Input
+                      id="discount"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={formData.discount || 0}
+                      onChange={(e) =>
+                        handleChange("discount", Number(e.target.value))
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="size">Kích thước (MB)</Label>
+                    <Input
+                      id="size"
+                      type="number"
+                      min="0"
+                      value={formData.size || 0}
+                      onChange={(e) =>
+                        handleChange("size", Number(e.target.value))
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-8">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="isActive"
+                      checked={formData.isActive}
+                      onCheckedChange={(checked) =>
+                        handleChange("isActive", !!checked)
+                      }
+                    />
+                    <Label htmlFor="isActive">Hoạt động</Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="isPro"
+                      checked={formData.isPro}
+                      onCheckedChange={(checked) =>
+                        handleChange("isPro", !!checked)
+                      }
+                    />
+                    <Label htmlFor="isPro">Sản phẩm PRO</Label>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="details" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Thông số kỹ thuật</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="materials">Chất liệu</Label>
+                    <Select
+                      key={`materials-${formData.materials || ""}`}
+                      value={formData.materials || ""}
+                      onValueChange={handleMaterialsChange}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Chọn chất liệu" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(Material).map(([key, value]) => (
+                          <SelectItem key={key} value={value}>
+                            {key.charAt(0) +
+                              key.slice(1).toLowerCase().replace("_", " ")}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="style">Phong cách</Label>
+                    <Select
+                      key={`style-${formData.style || ""}`}
+                      value={formData.style || ""}
+                      onValueChange={handleStyleChange}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Chọn phong cách" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(Style).map(([key, value]) => (
+                          <SelectItem key={key} value={value}>
+                            {key.charAt(0) +
+                              key.slice(1).toLowerCase().replace("_", " ")}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="render">Render</Label>
+                    <Select
+                      key={`render-${formData.render || ""}`}
+                      value={formData.render || ""}
+                      onValueChange={handleRenderChange}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Chọn render" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(Render).map(([key, value]) => (
+                          <SelectItem key={key} value={value}>
+                            {key
+                              .replace("_", " ")
+                              .replace(/([A-Z])/g, " $1")
+                              .trim()}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="form">Hình dạng</Label>
+                    <Select
+                      key={`form-${formData.form || ""}`}
+                      value={formData.form || ""}
+                      onValueChange={handleFormChange}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Chọn hình dạng" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(Form).map(([key, value]) => (
+                          <SelectItem key={key} value={value}>
+                            {key.charAt(0) +
+                              key.slice(1).toLowerCase().replace("_", " ")}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="color">Màu sắc</Label>
+                    <Input
+                      id="color"
+                      value={formData.color || ""}
+                      onChange={(e) => handleChange("color", e.target.value)}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="media" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Hình ảnh & Tải xuống</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="images">URL Hình ảnh</Label>
+                  <Input
+                    id="images"
+                    value={formData.images || ""}
+                    onChange={(e) => handleChange("images", e.target.value)}
+                    placeholder="Nhập URL hình ảnh"
+                  />
+                  {formData.images && (
+                    <div className="mt-2 relative h-64">
+                      <Image
+                        src={formData.images}
+                        alt={formData.name || "Product image"}
+                        className="rounded-md object-contain"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 400px"
+                        onError={() => {
+                          // Fallback handled via next.config.js unoptimized images
+                          console.log("Image failed to load");
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="folderId">ID Thư mục</Label>
+                  <Input
+                    id="folderId"
+                    value={formData.folderId || ""}
+                    onChange={(e) => handleChange("folderId", e.target.value)}
+                    placeholder="ID thư mục trên Google Drive"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="urlDownload">URL Tải xuống</Label>
+                  <Input
+                    id="urlDownload"
+                    value={formData.urlDownload || ""}
+                    onChange={(e) =>
+                      handleChange("urlDownload", e.target.value)
+                    }
+                    placeholder="URL tải xuống trực tiếp"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="outline"
+            onClick={() => router.push("/dashboard/products")}
+          >
+            Hủy
+          </Button>
+          <Button type="submit" disabled={isUpdating}>
+            {isUpdating ? "Đang lưu..." : "Lưu sản phẩm"}
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 }

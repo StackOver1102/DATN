@@ -1,6 +1,6 @@
 "use client";
 
-import { useApiQuery } from "@/lib/hooks/useApi";
+import { useApiQuery, useApiMutation } from "@/lib/hooks/useApi";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -23,7 +23,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useState } from "react";
+import { productToasts } from "@/lib/toast";
+import { PageLoading, Loading } from "@/components/ui/loading";
 
 interface Product {
   _id: string;
@@ -40,11 +51,50 @@ interface Product {
 
 export default function ProductsPage() {
   const router = useRouter();
-  const { data, isLoading, error } = useApiQuery<
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+
+  const { data, isLoading, error, refetch } = useApiQuery<
     ApiResponse<PaginatedResult<Product>>
   >("products", "/products");
 
-  console.log(data);
+  // Delete mutation - will be called with proper endpoint
+  const { mutate: deleteProduct, isPending: isDeleting } = useApiMutation<
+    { success: boolean; message: string },
+    { id: string }
+  >("products", `/products/${productToDelete?._id}`, "delete");
+
+  // Handle delete confirmation
+  const handleDeleteClick = (product: Product) => {
+    setProductToDelete(product);
+    setDeleteModalOpen(true);
+  };
+
+  // Handle delete confirmation
+  const handleDeleteConfirm = () => {
+    if (!productToDelete) return;
+
+    deleteProduct(
+      { id: productToDelete._id },
+      {
+        onSuccess: () => {
+          productToasts.deleted();
+          setDeleteModalOpen(false);
+          setProductToDelete(null);
+          refetch(); // Refresh the data
+        },
+        onError: (error) => {
+          productToasts.error(error.message);
+        },
+      }
+    );
+  };
+
+  // Handle delete cancel
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false);
+    setProductToDelete(null);
+  };
 
   // Custom filter function to handle boolean values
   const booleanFilterFn: FilterFn<Product> = (row, columnId, filterValue) => {
@@ -161,7 +211,10 @@ export default function ProductsPage() {
                 Chỉnh sửa
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600">
+              <DropdownMenuItem
+                className="text-red-600"
+                onClick={() => handleDeleteClick(product)}
+              >
                 <IconTrash className="mr-2 h-4 w-4" />
                 Xóa
               </DropdownMenuItem>
@@ -173,11 +226,20 @@ export default function ProductsPage() {
   ];
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <PageLoading text="Đang tải danh sách sản phẩm..." />;
   }
 
   if (error) {
-    return <div>Error: {error?.message}</div>;
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-lg font-semibold mb-2">
+            Lỗi khi tải dữ liệu
+          </div>
+          <div className="text-muted-foreground">{error?.message}</div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -185,15 +247,12 @@ export default function ProductsPage() {
       <div className="flex items-center justify-between px-4 lg:px-6">
         <h1 className="text-2xl font-bold">Sản phẩm</h1>
         <div className="flex gap-2">
-          <Button onClick={() => router.push("/dashboard/products/create")}>
-            Thêm sản phẩm
-          </Button>
           <Button
             variant="outline"
             onClick={() => router.push("/dashboard/products/batch-create")}
           >
             <IconPlus className="h-4 w-4 mr-1" />
-            Tạo nhiều sản phẩm
+            Thêm sản phẩm
           </Button>
         </div>
       </div>
@@ -204,33 +263,59 @@ export default function ProductsPage() {
             <CardTitle>Tất cả sản phẩm</CardTitle>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <div className="flex justify-center p-4">
-                Đang tải sản phẩm...
-              </div>
-            ) : error ? (
-              <div className="text-red-500 p-4">Lỗi khi tải dữ liệu</div>
-            ) : (
-              <DataTable
-                columns={columns}
-                data={data?.data.items || []}
-                searchKey="name"
-                searchPlaceholder="Tìm kiếm sản phẩm..."
-                filters={[
-                  {
-                    columnId: "isActive",
-                    title: "Trạng thái",
-                    options: [
-                      { label: "Hoạt động", value: "true" },
-                      { label: "Không hoạt động", value: "false" },
-                    ],
-                  },
-                ]}
-              />
-            )}
+            <DataTable
+              columns={columns}
+              data={data?.data.items || []}
+              searchKey="name"
+              searchPlaceholder="Tìm kiếm sản phẩm..."
+              filters={[
+                {
+                  columnId: "isActive",
+                  title: "Trạng thái",
+                  options: [
+                    { label: "Hoạt động", value: "true" },
+                    { label: "Không hoạt động", value: "false" },
+                  ],
+                },
+              ]}
+            />
           </CardContent>
         </Card>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Xác nhận xóa sản phẩm</DialogTitle>
+            <DialogDescription>
+              Bạn có chắc chắn muốn xóa sản phẩm{" "}
+              <span className="font-semibold text-red-600">
+                &ldquo;{productToDelete?.name}&rdquo;
+              </span>
+              ? Hành động này không thể hoàn tác.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleDeleteCancel}
+              disabled={isDeleting}
+            >
+              Hủy
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="inline-flex items-center justify-center gap-2"
+            >
+              {isDeleting && <Loading size="sm" variant="spinner" />}
+              {isDeleting ? "Đang xóa..." : "Xóa sản phẩm"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

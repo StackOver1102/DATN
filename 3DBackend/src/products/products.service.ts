@@ -35,6 +35,7 @@ export class ProductsService {
   ): Promise<Product> {
     const { name, folderId, stt } = createProductDto;
 
+    console.log('createProductDto', createProductDto);
     if (!name) {
       throw new BadRequestException('Name is required');
     }
@@ -87,7 +88,24 @@ export class ProductsService {
       images: imageUrl,
     };
 
-    return this.createProductAndAddURL(productData);
+    try {
+      // Try to create product
+      const createdProduct = await this.createProductAndAddURL(productData);
+      return createdProduct;
+    } catch (error) {
+      // If there's an error and we have a file key, delete the uploaded image
+      if (file.key) {
+        try {
+          await this.uploadService.deleteFile(file.key);
+        } catch (deleteError) {
+          console.error(
+            `Failed to delete uploaded file: ${file.key}`,
+            deleteError,
+          );
+        }
+      }
+      throw error;
+    }
   }
 
   // Lấy URL hình ảnh từ file đã được tải lên
@@ -107,6 +125,19 @@ export class ProductsService {
       : file.location || file.imageUrl || 'default.jpg';
   }
 
+  // Clean up uploaded files when there's an error
+  private async cleanupUploadedFiles(fileKeys: string[]): Promise<void> {
+    if (fileKeys.length === 0) return;
+
+    for (const fileKey of fileKeys) {
+      try {
+        await this.uploadService.deleteFile(fileKey);
+      } catch (error) {
+        console.error(`Failed to delete file: ${fileKey}`, error);
+      }
+    }
+  }
+
   async createBatchWithImages(
     products: CreateProductDto[],
     files: Express.Multer.File[],
@@ -116,6 +147,8 @@ export class ProductsService {
     data?: Product[];
     errors?: any[];
   }> {
+    const uploadedFileKeys: string[] = [];
+
     try {
       if (!products || !Array.isArray(products) || products.length === 0) {
         return {
@@ -159,6 +192,7 @@ export class ProductsService {
             'products',
             file.originalname,
           );
+          uploadedFileKeys.push(uploadedFile.key);
           const imageUrl = this.uploadService.getFileUrl(uploadedFile.key);
 
           // Add image URL to product data
@@ -181,6 +215,8 @@ export class ProductsService {
       }
 
       if (productsWithImages.length === 0) {
+        // Clean up uploaded files if no products were processed
+        await this.cleanupUploadedFiles(uploadedFileKeys);
         return {
           success: false,
           message: 'Failed to process any products',
@@ -188,17 +224,31 @@ export class ProductsService {
         };
       }
 
-      // Create all products in the database
-      const createdProducts =
-        await this.productModel.insertMany(productsWithImages);
+      try {
+        // Create all products in the database
+        const createdProducts =
+          await this.productModel.insertMany(productsWithImages);
 
-      return {
-        success: true,
-        message: `Successfully created ${createdProducts.length} products`,
-        data: createdProducts as unknown as Product[],
-        errors: errors.length > 0 ? errors : undefined,
-      };
+        return {
+          success: true,
+          message: `Successfully created ${createdProducts.length} products`,
+          data: createdProducts as unknown as Product[],
+          errors: errors.length > 0 ? errors : undefined,
+        };
+      } catch (error: unknown) {
+        // If database insertion fails, clean up uploaded files
+        await this.cleanupUploadedFiles(uploadedFileKeys);
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        return {
+          success: false,
+          message: 'Failed to create products in database',
+          errors: [errorMessage],
+        };
+      }
     } catch (error: unknown) {
+      // Clean up any uploaded files on any error
+      await this.cleanupUploadedFiles(uploadedFileKeys);
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
       return {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useApiMutation, useApiQuery } from "@/lib/hooks/useApi";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,6 +32,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApiResponse } from "@/interface/pagination";
 import * as z from "zod";
+import { PageLoading } from "@/components/ui/loading";
 
 // Enums from the backend
 enum Material {
@@ -95,7 +96,7 @@ const productSchema = z.object({
   images: z.string().optional(),
   isActive: z.boolean().default(true),
   isPro: z.boolean().default(false),
-
+  stt: z.number().min(1, "STT phải lớn hơn 0"),
   categoryId: z.string().min(1, "Vui lòng chọn danh mục"),
   materials: z.nativeEnum(Material).optional(),
   style: z.nativeEnum(Style).optional(),
@@ -103,6 +104,9 @@ const productSchema = z.object({
   form: z.nativeEnum(Form).optional(),
   color: z.string().optional(),
   urlDownload: z.string().optional(),
+  categoryName: z.string().optional(),
+  categoryPath: z.string().optional(),
+  rootCategoryId: z.string().optional(),
 });
 
 // Type for a single product form
@@ -129,7 +133,10 @@ export default function BatchCreateProductPage() {
   const [activeTab, setActiveTab] = useState("0");
   const [products, setProducts] = useState<ProductForm[]>([getEmptyProduct()]);
   const [files, setFiles] = useState<(FileWithPreview | null)[]>([null]);
-  const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [sharedFolderId, setSharedFolderId] = useState("");
+  const [sharedProductName, setSharedProductName] = useState("");
+  // Simple ref for file input
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Fetch categories for dropdown
   const { data: categoriesData, isLoading: isLoadingCategories } = useApiQuery<
@@ -152,8 +159,11 @@ export default function BatchCreateProductPage() {
       isActive: true,
       isPro: false,
       categoryId: "",
+      categoryName: "",
+      categoryPath: "",
+      rootCategoryId: "",
       images: "",
-      folderId: "",
+      stt: 1,
       materials: undefined,
       style: undefined,
       render: undefined,
@@ -167,10 +177,10 @@ export default function BatchCreateProductPage() {
     const newProducts = [...products, getEmptyProduct()];
     setProducts(newProducts);
     setFiles([...files, null]);
-    // Switch to the new tab
-    setTimeout(() => {
-      setActiveTab((newProducts.length - 1).toString());
-    }, 0);
+
+    // Switch to the new tab - use flushSync to ensure DOM updates are synchronized
+    const newTabIndex = (newProducts.length - 1).toString();
+    setActiveTab(newTabIndex);
   };
 
   // Handle removing a product form
@@ -178,6 +188,11 @@ export default function BatchCreateProductPage() {
     if (products.length <= 1) {
       toast.error("Phải có ít nhất một sản phẩm");
       return;
+    }
+
+    // Clean up file preview if exists
+    if (files[index]) {
+      URL.revokeObjectURL(files[index]!.preview);
     }
 
     const newProducts = [...products];
@@ -208,6 +223,9 @@ export default function BatchCreateProductPage() {
       const newFiles = [...files];
       newFiles[index] = fileWithPreview;
       setFiles(newFiles);
+
+      // Clear the input value to allow selecting the same file again
+      e.target.value = "";
     }
   };
 
@@ -221,16 +239,16 @@ export default function BatchCreateProductPage() {
     newFiles[index] = null;
     setFiles(newFiles);
 
-    // Clear the file input
-    if (fileInputRefs.current[index]) {
-      fileInputRefs.current[index]!.value = "";
+    // Clear the file input safely
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
   // Trigger file input click
   const triggerFileInput = (index: number): void => {
-    if (fileInputRefs.current[index]) {
-      fileInputRefs.current[index]!.click();
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
     }
   };
 
@@ -242,19 +260,74 @@ export default function BatchCreateProductPage() {
   ): void => {
     const newProducts = [...products];
     newProducts[index] = { ...newProducts[index], [field]: value };
+
+    // If categoryId is changed, update related category fields
+    if (field === "categoryId" && typeof value === "string") {
+      const selectedCategory = findCategoryById(value);
+      if (selectedCategory) {
+        newProducts[index] = {
+          ...newProducts[index],
+          categoryId: value,
+          categoryName: selectedCategory.name,
+          categoryPath: selectedCategory.path,
+          rootCategoryId: selectedCategory.rootId,
+        };
+      }
+    }
+
     setProducts(newProducts);
+  };
+
+  // Helper function to find category by ID
+  const findCategoryById = (categoryId: string) => {
+    if (!categoriesData?.data) return null;
+
+    for (const group of categoriesData.data) {
+      // Check if it's a parent category
+      if (group._id === categoryId) {
+        return {
+          name: group.title,
+          path: group.title,
+          rootId: group._id,
+        };
+      }
+
+      // Check child categories
+      for (const item of group.items) {
+        if (item._id === categoryId) {
+          return {
+            name: item.name,
+            path: `${group.title}`,
+            rootId: group._id,
+          };
+        }
+      }
+    }
+    return null;
   };
 
   // Handle form submission
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
 
+    // Validate shared folder ID and product name
+    if (!sharedFolderId.trim()) {
+      toast.error("Vui lòng nhập ID Folder Google Drive");
+      return;
+    }
+
+    if (!sharedProductName.trim()) {
+      toast.error("Vui lòng nhập tên sản phẩm");
+      return;
+    }
+
     // Validate required fields
     const invalidProducts = products.filter(
       (product, index) =>
-        !product.name ||
         !product.categoryId ||
         product.price <= 0 ||
+        !product.stt ||
+        product.stt < 1 ||
         !files[index]
     );
 
@@ -265,11 +338,18 @@ export default function BatchCreateProductPage() {
       return;
     }
 
+    // Apply shared folder ID and product name to all products
+    const productsWithFolderId = products.map((product) => ({
+      ...product,
+      folderId: sharedFolderId,
+      name: sharedProductName,
+    }));
+
     // Create FormData to send files and product data
     const formData = new FormData();
 
     // Add each product as a JSON string
-    formData.append("products", JSON.stringify(products));
+    formData.append("products", JSON.stringify(productsWithFolderId));
 
     // Add each file with index as key
     files.forEach((file, index) => {
@@ -291,7 +371,7 @@ export default function BatchCreateProductPage() {
 
   // Loading state
   if (isLoadingCategories) {
-    return <div className="flex justify-center p-8">Đang tải danh mục...</div>;
+    return <PageLoading text="Đang tải danh mục..." />;
   }
 
   return (
@@ -303,9 +383,13 @@ export default function BatchCreateProductPage() {
               <IconHome className="h-4 w-4" />
             </BreadcrumbLink>
           </BreadcrumbItem>
+          <span className="mx-2 text-gray-400">&gt;</span>
+
           <BreadcrumbItem>
             <BreadcrumbLink href="/dashboard/products">Sản phẩm</BreadcrumbLink>
           </BreadcrumbItem>
+          <span className="mx-2 text-gray-400">&gt;</span>
+
           <BreadcrumbItem>
             <BreadcrumbLink>Tạo nhiều sản phẩm</BreadcrumbLink>
           </BreadcrumbItem>
@@ -347,6 +431,77 @@ export default function BatchCreateProductPage() {
         </div>
 
         <form onSubmit={handleSubmit}>
+          {/* Shared Folder ID Section */}
+          <Card className="mb-6">
+            <CardHeader className="bg-gradient-to-r from-orange-50 to-transparent border-b">
+              <CardTitle className="flex items-center gap-2">
+                <div className="bg-orange-100 text-orange-700 w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm">
+                  📁
+                </div>
+                Thông tin chung cho tất cả sản phẩm
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="shared-folder-id"
+                    className="text-sm font-medium flex items-center"
+                  >
+                    <span className="bg-orange-100 text-orange-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
+                      📁
+                    </span>
+                    ID Folder Google Drive (dùng chung)
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="shared-folder-id"
+                      value={sharedFolderId}
+                      onChange={(e) => setSharedFolderId(e.target.value)}
+                      placeholder="Nhập ID folder Google Drive (sẽ áp dụng cho tất cả sản phẩm)"
+                      className="pl-9 border-gray-300 focus:border-orange-500 focus:ring focus:ring-orange-200 focus:ring-opacity-50"
+                    />
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                      📁
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    ID folder này sẽ được áp dụng cho tất cả {products.length}{" "}
+                    sản phẩm
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="shared-product-name"
+                    className="text-sm font-medium flex items-center"
+                  >
+                    <span className="bg-orange-100 text-orange-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
+                      📦
+                    </span>
+                    Tên sản phẩm (dùng chung)
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="shared-product-name"
+                      value={sharedProductName}
+                      onChange={(e) => setSharedProductName(e.target.value)}
+                      placeholder="Nhập tên sản phẩm (sẽ áp dụng cho tất cả sản phẩm)"
+                      className="pl-9 border-gray-300 focus:border-orange-500 focus:ring focus:ring-orange-200 focus:ring-opacity-50"
+                    />
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                      📦
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    Tên sản phẩm này sẽ được áp dụng cho tất cả{" "}
+                    {products.length} sản phẩm
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4 flex-wrap bg-gray-100 p-1 rounded-lg">
               {products.map((_, index) => (
@@ -392,23 +547,25 @@ export default function BatchCreateProductPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <Label
-                          htmlFor={`name-${index}`}
+                          htmlFor={`stt-${index}`}
                           className="text-sm font-medium flex items-center"
                         >
                           <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
                             1
                           </span>
-                          Tên sản phẩm
+                          STT
                         </Label>
                         <Input
-                          id={`name-${index}`}
-                          value={product.name || ""}
+                          id={`stt-${index}`}
+                          type="number"
+                          min="1"
+                          value={product.stt || 1}
                           onChange={(e) =>
-                            handleChange(index, "name", e.target.value)
+                            handleChange(index, "stt", Number(e.target.value))
                           }
                           required
                           className="border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                          placeholder="Nhập tên sản phẩm"
+                          placeholder="Nhập STT"
                         />
                       </div>
 
@@ -459,6 +616,21 @@ export default function BatchCreateProductPage() {
                             ))}
                           </SelectContent>
                         </Select>
+
+                        {/* Display selected category info */}
+                        {product.categoryPath && (
+                          <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                            <div className="text-xs text-blue-600 font-medium">
+                              Đã chọn: {product.categoryPath}
+                            </div>
+                            <div className="text-xs text-blue-500 mt-1">
+                              Category ID: {product.categoryId}
+                            </div>
+                            <div className="text-xs text-blue-500">
+                              Root Category ID: {product.rootCategoryId}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -723,57 +895,29 @@ export default function BatchCreateProductPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-purple-50 p-4 rounded-lg border border-purple-100">
-                      <div className="space-y-2">
-                        <Label
-                          htmlFor={`color-${index}`}
-                          className="text-sm font-medium flex items-center"
-                        >
-                          <span className="bg-purple-100 text-purple-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                            11
-                          </span>
-                          Màu sắc
-                        </Label>
-                        <div className="relative">
-                          <Input
-                            id={`color-${index}`}
-                            value={product.color || ""}
-                            onChange={(e) =>
-                              handleChange(index, "color", e.target.value)
-                            }
-                            placeholder="Nhập màu sắc"
-                            className="pl-9 border-gray-300 focus:border-purple-500 focus:ring focus:ring-purple-200 focus:ring-opacity-50"
-                          />
-                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                            🎨
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label
-                          htmlFor={`folderId-${index}`}
-                          className="text-sm font-medium flex items-center"
-                        >
-                          <span className="bg-purple-100 text-purple-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                            12
-                          </span>
-                          ID Folder Google Drive
-                        </Label>
-                        <div className="relative">
-                          <Input
-                            id={`folderId-${index}`}
-                            value={product.folderId || ""}
-                            onChange={(e) =>
-                              handleChange(index, "folderId", e.target.value)
-                            }
-                            placeholder="Nhập ID folder Google Drive"
-                            className="pl-9 border-gray-300 focus:border-purple-500 focus:ring focus:ring-purple-200 focus:ring-opacity-50"
-                          />
-                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                            📁
-                          </span>
-                        </div>
+                    <div className="space-y-2 bg-purple-50 p-4 rounded-lg border border-purple-100">
+                      <Label
+                        htmlFor={`color-${index}`}
+                        className="text-sm font-medium flex items-center"
+                      >
+                        <span className="bg-purple-100 text-purple-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
+                          11
+                        </span>
+                        Màu sắc
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id={`color-${index}`}
+                          value={product.color || ""}
+                          onChange={(e) =>
+                            handleChange(index, "color", e.target.value)
+                          }
+                          placeholder="Nhập màu sắc"
+                          className="pl-9 border-gray-300 focus:border-purple-500 focus:ring focus:ring-purple-200 focus:ring-opacity-50"
+                        />
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                          🎨
+                        </span>
                       </div>
                     </div>
 
@@ -791,10 +935,7 @@ export default function BatchCreateProductPage() {
                         accept="image/*"
                         onChange={(e) => handleFileChange(index, e)}
                         className="hidden"
-                        ref={(el) => {
-                          fileInputRefs.current[index] = el;
-                          return undefined;
-                        }}
+                        ref={fileInputRef}
                       />
 
                       {!files[index] ? (
