@@ -7,7 +7,7 @@ import { CategorySection } from "@/lib/types";
 
 async function getProducts(page = 1, limit = 12) {
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/products?page=${page}&limit=${limit}`,
+    `${process.env.NEXT_PUBLIC_API_URL_SSR}/products?page=${page}&limit=${limit}`,
     {
       next: { revalidate: 60 },
     }
@@ -22,7 +22,7 @@ async function getProducts(page = 1, limit = 12) {
 
 async function getCategories() {
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/categories/grouped`,
+    `${process.env.NEXT_PUBLIC_API_URL_SSR}/categories/grouped`,
     {
       next: { revalidate: 3600 }, // Revalidate every hour
     }

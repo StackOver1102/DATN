@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -10,10 +11,37 @@ import { UserDocument } from './types/user.types';
 import { Model } from 'mongoose';
 import { User } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
+import { UserRole } from 'src/enum/user.enum';
 
 @Injectable()
-export class UsersService {
+export class UsersService implements OnModuleInit {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+
+  async onModuleInit() {
+    await this.createAdminIfNotExists();
+  }
+
+  async createAdminIfNotExists() {
+    try {
+      const adminExists = await this.userModel.findOne({
+        role: UserRole.ADMIN,
+      });
+      if (!adminExists) {
+        const adminPassword = await bcrypt.hash('admin123', 10);
+        await this.userModel.create({
+          fullName: 'Admin',
+          email: 'admin@gmail.com',
+          password: adminPassword,
+          role: UserRole.ADMIN,
+        });
+        console.log('Admin user created successfully');
+      } else {
+        console.log('Admin user already exists');
+      }
+    } catch (error) {
+      console.error('Failed to create admin user:', error);
+    }
+  }
 
   async create(createUserDto: CreateUserDto): Promise<UserDocument> {
     const { email } = createUserDto;

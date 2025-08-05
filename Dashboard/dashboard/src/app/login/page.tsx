@@ -53,7 +53,7 @@ export default function Login() {
       <div className="w-full max-w-md px-4">
         <Card>
           <CardHeader className="space-y-1 text-center">
-            <div className="flex justify-center mb-4">
+            {/* <div className="flex justify-center mb-4">
               <Image
                 src="/next.svg"
                 alt="Logo"
@@ -62,7 +62,7 @@ export default function Login() {
                 priority
                 className="dark:invert"
               />
-            </div>
+            </div> */}
             <CardTitle className="text-2xl font-bold">
               Admin Dashboard
             </CardTitle>

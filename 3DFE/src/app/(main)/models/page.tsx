@@ -63,7 +63,7 @@ async function getProducts(
     }
 
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/products?${queryParams.toString()}`,
+      `${process.env.NEXT_PUBLIC_API_URL_SSR}/products?${queryParams.toString()}`,
       {
         next: { revalidate: 60 }, // Revalidate every 60 seconds
       }

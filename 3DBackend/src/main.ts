@@ -16,6 +16,8 @@ async function bootstrap() {
     origin: [
       'http://localhost:3000',
       'http://localhost:4000',
+      'http://frontend:3000',
+      'http://dashboard:4000',
       'https://yourdomain.com',
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
@@ -50,7 +52,8 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
 
   const port = configService.get<number>('PORT') || 5000;
-  await app.listen(port);
-  console.log(`Application is running on: http://localhost:${port}`);
+  const host = configService.get<string>('HOST') || '0.0.0.0';
+  await app.listen(port, host);
+  console.log(`Application is running on: http://${host}:${port}`);
 }
 bootstrap();
