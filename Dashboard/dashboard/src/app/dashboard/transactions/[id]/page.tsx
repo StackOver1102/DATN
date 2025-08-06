@@ -12,12 +12,7 @@ import {
   BreadcrumbItem,
   BreadcrumbLink,
 } from "@/components/ui/breadcrumb";
-import {
-  IconHome,
-  IconCheck,
-  IconX,
-  IconArrowLeft,
-} from "@tabler/icons-react";
+import { IconHome, IconCheck, IconArrowLeft } from "@tabler/icons-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { User } from "../../users/page";
@@ -64,15 +59,17 @@ export default function TransactionEditPage() {
   const approveTransactionMutation = useMutation({
     mutationFn: (id: string) => api.patch(`/transactions/${id}/approve`, {}),
     onSuccess: () => {
-      toast.success('Giao dịch đã được phê duyệt thành công');
+      toast.success("Giao dịch đã được phê duyệt thành công");
       refetch();
       setTimeout(() => {
-        router.push('/dashboard/transactions');
+        router.push("/dashboard/transactions");
       }, 1500);
     },
-    onError: (error: any) => {
-      toast.error('Lỗi khi phê duyệt giao dịch: ' + (error.message || 'Đã xảy ra lỗi'));
-    }
+    onError: (error: Error) => {
+      toast.error(
+        "Lỗi khi phê duyệt giao dịch: " + (error.message || "Đã xảy ra lỗi")
+      );
+    },
   });
 
   // Don't render anything until component is mounted
@@ -116,7 +113,9 @@ export default function TransactionEditPage() {
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbItem>
-          <BreadcrumbLink href="/dashboard/transactions">Giao dịch</BreadcrumbLink>
+          <BreadcrumbLink href="/dashboard/transactions">
+            Giao dịch
+          </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbItem>
           <BreadcrumbLink>Phê duyệt giao dịch</BreadcrumbLink>
@@ -128,7 +127,7 @@ export default function TransactionEditPage() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => router.push('/dashboard/transactions')}
+          onClick={() => router.push("/dashboard/transactions")}
         >
           <IconArrowLeft className="h-4 w-4 mr-2" />
           Quay lại
@@ -137,7 +136,9 @@ export default function TransactionEditPage() {
 
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Thông tin giao dịch #{transaction.transactionCode}</CardTitle>
+          <CardTitle>
+            Thông tin giao dịch #{transaction.transactionCode}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -147,7 +148,9 @@ export default function TransactionEditPage() {
             </div>
             <div>
               <p className="text-sm text-gray-500">Người dùng</p>
-              <p className="font-medium">{transaction.userId.fullName || transaction.userId.email}</p>
+              <p className="font-medium">
+                {transaction.userId.fullName || transaction.userId.email}
+              </p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Loại giao dịch</p>
@@ -159,12 +162,26 @@ export default function TransactionEditPage() {
             </div>
             <div>
               <p className="text-sm text-gray-500">Phương thức</p>
-              <p className="font-medium capitalize">{transaction.method || "Coin"}</p>
+              <p className="font-medium capitalize">
+                {transaction.method || "Coin"}
+              </p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Trạng thái</p>
-              <Badge variant={transaction.status === "pending" ? "outline" : transaction.status === "success" ? "success" : "destructive"}>
-                {transaction.status === "pending" ? "Đang xử lý" : transaction.status === "success" ? "Thành công" : "Thất bại"}
+              <Badge
+                variant={
+                  transaction.status === "pending"
+                    ? "outline"
+                    : transaction.status === "success"
+                    ? "success"
+                    : "destructive"
+                }
+              >
+                {transaction.status === "pending"
+                  ? "Đang xử lý"
+                  : transaction.status === "success"
+                  ? "Thành công"
+                  : "Thất bại"}
               </Badge>
             </div>
           </div>
@@ -173,7 +190,7 @@ export default function TransactionEditPage() {
             <div className="mt-6 flex justify-end space-x-2">
               <Button
                 variant="outline"
-                onClick={() => router.push('/dashboard/transactions')}
+                onClick={() => router.push("/dashboard/transactions")}
               >
                 Hủy
               </Button>

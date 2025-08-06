@@ -22,10 +22,6 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import {
   IconChevronDown,
-  IconChevronLeft,
-  IconChevronRight,
-  IconChevronsLeft,
-  IconChevronsRight,
   IconCircleCheckFilled,
   IconDotsVertical,
   IconGripVertical,

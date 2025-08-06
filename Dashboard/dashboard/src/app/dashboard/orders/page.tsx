@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DataTable } from "@/components/ui/data-table";
-import { ApiResponse, PaginatedResult } from "@/interface/pagination";
+import { ApiResponse } from "@/interface/pagination";
 import { ColumnDef, FilterFn } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -32,7 +32,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { orderToasts } from "@/lib/toast";
 import { PageLoading, Loading } from "@/components/ui/loading";
 
@@ -50,7 +50,7 @@ interface Order {
   transactionId?: string;
 }
 
-export default function OrdersPage() {
+function OrdersPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const status = searchParams.get("status") || "all";
@@ -354,5 +354,13 @@ export default function OrdersPage() {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+export default function OrdersPage() {
+  return (
+    <Suspense fallback={<PageLoading text="Đang tải danh sách đơn hàng..." />}>
+      <OrdersPageContent />
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
@@ -25,7 +25,7 @@ const signupSchema = z.object({
 // Định nghĩa kiểu dữ liệu từ schema
 type SignupFormValues = z.infer<typeof signupSchema>;
 
-export default function SignUp() {
+function SignUpForm() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -228,5 +228,13 @@ export default function SignUp() {
         style={{ backgroundImage: "url('/assets/signup-background.jpg')" }}
       ></div>
     </div>
+  );
+}
+
+export default function SignUp() {
+  return (
+    <Suspense fallback={<Loading variant="spinner" size="lg" fullScreen />}>
+      <SignUpForm />
+    </Suspense>
   );
 }

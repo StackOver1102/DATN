@@ -31,7 +31,7 @@ export default function CategoriesPage() {
   const [newCategory, setNewCategory] = useState({ name: "", description: "" });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const createMutation = useApiMutation<any, typeof newCategory>(
+  const createMutation = useApiMutation<Category, typeof newCategory>(
     "categories",
     "/categories",
     "post"

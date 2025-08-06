@@ -20,6 +20,7 @@ import {
   IconCoin,
 } from "@tabler/icons-react";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 
 interface User {
   _id: string;
@@ -137,7 +138,7 @@ export default function UserViewPage() {
               <div className="flex flex-col items-center space-y-4">
                 <div className="relative w-24 h-24">
                   {user.avatar ? (
-                    <img
+                    <Image
                       src={user.avatar}
                       alt={user.fullName}
                       className="rounded-full w-full h-full object-cover"

@@ -18,8 +18,7 @@ import {
   IconEye,
   IconDownload,
 } from "@tabler/icons-react";
-import { useState } from "react";
-import { Loading, PageLoading } from "@/components/ui/loading";
+import { PageLoading } from "@/components/ui/loading";
 
 interface Product {
   _id: string;

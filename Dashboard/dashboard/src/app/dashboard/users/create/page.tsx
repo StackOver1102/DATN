@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { useApiQuery, useApiMutation } from "@/lib/hooks/useApi";
+import { useRouter } from "next/navigation";
+import { useApiMutation } from "@/lib/hooks/useApi";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +22,7 @@ import {
   BreadcrumbItem,
   BreadcrumbLink,
 } from "@/components/ui/breadcrumb";
-import { IconHome, IconUser } from "@tabler/icons-react";
+import { IconHome } from "@tabler/icons-react";
 import { Loading } from "@/components/ui/loading";
 
 interface User {

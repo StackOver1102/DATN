@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useApiMutation, useApiQuery } from "@/lib/hooks/useApi";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,6 +33,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApiResponse } from "@/interface/pagination";
 import * as z from "zod";
 import { PageLoading } from "@/components/ui/loading";
+import Image from "next/image";
 
 // Enums from the backend
 enum Material {
@@ -956,7 +957,7 @@ export default function BatchCreateProductPage() {
                       ) : (
                         <div className="relative">
                           <div className="rounded-lg overflow-hidden border border-indigo-200">
-                            <img
+                            <Image
                               src={files[index]!.preview}
                               alt="Preview"
                               className="w-full h-48 object-contain"

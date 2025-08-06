@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/breadcrumb";
 import {
   IconHome,
-  IconEdit,
   IconTrash,
   IconCoin,
   IconArrowUpRight,
@@ -28,7 +27,7 @@ import {
 } from "@tabler/icons-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { formatMoney, formatNumber } from "@/lib/formatMoney";
+import { formatNumber } from "@/lib/formatMoney";
 import { User } from "../../../users/page";
 
 interface Transaction {
@@ -109,7 +108,8 @@ export default function TransactionViewPage() {
   }
 
   // Determine if the amount should be displayed as positive or negative
-  const isPositive = transaction.type === "deposit" || transaction.type === "refund";
+  const isPositive =
+    transaction.type === "deposit" || transaction.type === "refund";
   const displayAmount = Math.abs(transaction.amount);
 
   // Get status badge
@@ -181,7 +181,9 @@ export default function TransactionViewPage() {
         <span className="mx-2 text-gray-400">&gt;</span>
 
         <BreadcrumbItem>
-          <BreadcrumbLink href="/dashboard/transactions">Giao dịch</BreadcrumbLink>
+          <BreadcrumbLink href="/dashboard/transactions">
+            Giao dịch
+          </BreadcrumbLink>
         </BreadcrumbItem>
 
         <span className="mx-2 text-gray-400">&gt;</span>
@@ -205,10 +207,7 @@ export default function TransactionViewPage() {
               Phê duyệt
             </Button>
           )}
-          <Button
-            variant="destructive"
-            size="sm"
-          >
+          <Button variant="destructive" size="sm">
             <IconTrash className="h-4 w-4 mr-2" />
             Xóa
           </Button>
@@ -226,29 +225,40 @@ export default function TransactionViewPage() {
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-2 mb-2">
                     <IconCoin className="h-6 w-6 text-yellow-500" />
-                    <span className={`text-2xl font-bold ${isPositive ? "text-green-600" : "text-red-600"}`}>
-                      {isPositive ? "+" : "-"}{formatNumber(displayAmount)}
+                    <span
+                      className={`text-2xl font-bold ${
+                        isPositive ? "text-green-600" : "text-red-600"
+                      }`}
+                    >
+                      {isPositive ? "+" : "-"}
+                      {formatNumber(displayAmount)}
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground">coin</p>
                 </div>
-                
+
                 <div className="pt-4 border-t">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm text-gray-500">Trạng thái:</span>
                     <div>{getStatusBadge(transaction.status)}</div>
                   </div>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-gray-500">Loại giao dịch:</span>
+                    <span className="text-sm text-gray-500">
+                      Loại giao dịch:
+                    </span>
                     <div>{getTypeBadge(transaction.type)}</div>
                   </div>
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm text-gray-500">Phương thức:</span>
-                    <span className="font-medium capitalize">{transaction.method || "Coin"}</span>
+                    <span className="font-medium capitalize">
+                      {transaction.method || "Coin"}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-500">Thời gian:</span>
-                    <span className="text-sm">{formatDate(transaction.createdAt)}</span>
+                    <span className="text-sm">
+                      {formatDate(transaction.createdAt)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -265,7 +275,9 @@ export default function TransactionViewPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-500">ID giao dịch</p>
-                  <p className="font-mono text-xs break-all">{transaction._id}</p>
+                  <p className="font-mono text-xs break-all">
+                    {transaction._id}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Mã giao dịch</p>
@@ -278,7 +290,7 @@ export default function TransactionViewPage() {
                   <p className="text-sm text-gray-500">Người dùng</p>
                   <div className="flex items-center gap-2">
                     <IconUser className="h-4 w-4 text-muted-foreground" />
-                    <Link 
+                    <Link
                       href={`/dashboard/users/${transaction.userId._id}/view`}
                       className="font-medium text-blue-500 hover:underline"
                     >
@@ -290,35 +302,48 @@ export default function TransactionViewPage() {
                   <p className="text-sm text-gray-500">Số tiền</p>
                   <div className="flex items-center gap-2">
                     <IconCoin className="h-4 w-4 text-muted-foreground" />
-                    <p className={`font-medium ${isPositive ? "text-green-600" : "text-red-600"}`}>
-                      {isPositive ? "+" : "-"}{formatNumber(displayAmount)} coin
+                    <p
+                      className={`font-medium ${
+                        isPositive ? "text-green-600" : "text-red-600"
+                      }`}
+                    >
+                      {isPositive ? "+" : "-"}
+                      {formatNumber(displayAmount)} coin
                     </p>
                   </div>
                 </div>
                 {transaction.balanceBefore !== undefined && (
                   <div>
                     <p className="text-sm text-gray-500">Số dư trước</p>
-                    <p className="font-medium">{formatNumber(transaction.balanceBefore)} coin</p>
+                    <p className="font-medium">
+                      {formatNumber(transaction.balanceBefore)} coin
+                    </p>
                   </div>
                 )}
                 {transaction.balanceAfter !== undefined && (
                   <div>
                     <p className="text-sm text-gray-500">Số dư sau</p>
-                    <p className="font-medium">{formatNumber(transaction.balanceAfter)} coin</p>
+                    <p className="font-medium">
+                      {formatNumber(transaction.balanceAfter)} coin
+                    </p>
                   </div>
                 )}
                 <div>
                   <p className="text-sm text-gray-500">Ngày tạo</p>
                   <div className="flex items-center gap-2">
                     <IconCalendar className="h-4 w-4 text-muted-foreground" />
-                    <p className="font-medium">{formatDate(transaction.createdAt)}</p>
+                    <p className="font-medium">
+                      {formatDate(transaction.createdAt)}
+                    </p>
                   </div>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Cập nhật lần cuối</p>
                   <div className="flex items-center gap-2">
                     <IconCalendar className="h-4 w-4 text-muted-foreground" />
-                    <p className="font-medium">{formatDate(transaction.updatedAt)}</p>
+                    <p className="font-medium">
+                      {formatDate(transaction.updatedAt)}
+                    </p>
                   </div>
                 </div>
               </div>

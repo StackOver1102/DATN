@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import {
   User as UserIcon,
@@ -31,6 +31,7 @@ import { User } from "@/lib/types";
 import { Product } from "@/interface/product";
 import Pagination from "@/components/Pagination";
 import { PaginatedResult } from "@/interface/pagination";
+import { Session } from "next-auth";
 
 type TabType = "info" | "password" | "purchases" | "payments";
 
@@ -94,13 +95,44 @@ const passwordSchema = z
 type UserProfileFormValues = z.infer<typeof userProfileSchema>;
 type PasswordFormValues = z.infer<typeof passwordSchema>;
 
-export default function ProfilePage() {
-  const { data: session } = useSession();
+// Component to handle search params
+function ProfileContentInner() {
   const searchParams = useSearchParams();
   const tabParam = searchParams?.get("tab");
   // const paymentSuccess = searchParams?.get("payment_success");
   const router = useRouter();
+  const { data: session } = useSession();
 
+  // Rest of the component logic
+  return (
+    <ProfilePageContent session={session} tabParam={tabParam} router={router} />
+  );
+}
+
+export default function ProfileContent() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-400"></div>
+        </div>
+      }
+    >
+      <ProfileContentInner />
+    </Suspense>
+  );
+}
+
+// Main component that doesn't directly use searchParams
+function ProfilePageContent({
+  session,
+  tabParam,
+  router,
+}: {
+  session: Session | null;
+  tabParam: string | null;
+  router: ReturnType<typeof useRouter>;
+}) {
   // Use Redux hooks
   const dispatch = useAppDispatch();
   const { profile, isLoading: isLoadingStore } = useAppSelector(

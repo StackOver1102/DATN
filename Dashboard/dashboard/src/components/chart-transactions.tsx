@@ -1,9 +1,16 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts"
-import { useApiQuery } from "@/lib/hooks/useApi"
-import { useIsMobile } from "@/hooks/use-mobile"
+import * as React from "react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  ResponsiveContainer,
+} from "recharts";
+import { useApiQuery } from "@/lib/hooks/useApi";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Card,
   CardAction,
@@ -11,26 +18,23 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart"
+} from "@/components/ui/chart";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@/components/ui/toggle-group"
-import { formatNumber } from "@/lib/formatMoney"
-import { PageLoading } from "@/components/ui/loading"
+} from "@/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { formatNumber } from "@/lib/formatMoney";
+import { PageLoading } from "@/components/ui/loading";
 
 interface Transaction {
   _id: string;
@@ -74,70 +78,79 @@ const chartConfig = {
     label: "Tổng",
     color: "var(--primary)",
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
 export function ChartTransactions({ className }: ChartTransactionsProps) {
-  const isMobile = useIsMobile()
-  const [timeRange, setTimeRange] = React.useState("30d")
+  const isMobile = useIsMobile();
+  const [timeRange, setTimeRange] = React.useState("30d");
 
   React.useEffect(() => {
     if (isMobile) {
-      setTimeRange("7d")
+      setTimeRange("7d");
     }
-  }, [isMobile])
+  }, [isMobile]);
 
   // Fetch transaction data from API
-  const { data: transactionsData, isLoading, error } = useApiQuery<{ data: Transaction[] }>(
+  const {
+    data: transactionsData,
+    isLoading,
+    error,
+  } = useApiQuery<{ data: Transaction[] }>(
     ["transactions-chart", timeRange],
     `/transactions/chart-stats?period=${timeRange}`
-  )
+  );
 
   // Process data for chart
-  const processTransactionData = (transactions: Transaction[] | undefined): TransactionStats[] => {
-    if (!transactions || transactions.length === 0) return []
+  const processTransactionData = (
+    transactions: Transaction[] | undefined
+  ): TransactionStats[] => {
+    if (!transactions || transactions.length === 0) return [];
 
     // Create a map to group transactions by date
-    const transactionsByDate = new Map<string, { 
-      deposit: number, 
-      payment: number,
-      withdrawal: number,
-      refund: number,
-      total: number
-    }>()
+    const transactionsByDate = new Map<
+      string,
+      {
+        deposit: number;
+        payment: number;
+        withdrawal: number;
+        refund: number;
+        total: number;
+      }
+    >();
 
     // Calculate date range based on timeRange
-    const endDate = new Date()
-    const startDate = new Date()
+    const endDate = new Date();
+    const startDate = new Date();
     if (timeRange === "7d") {
-      startDate.setDate(endDate.getDate() - 7)
+      startDate.setDate(endDate.getDate() - 7);
     } else if (timeRange === "30d") {
-      startDate.setDate(endDate.getDate() - 30)
+      startDate.setDate(endDate.getDate() - 30);
     } else if (timeRange === "90d") {
-      startDate.setDate(endDate.getDate() - 90)
+      startDate.setDate(endDate.getDate() - 90);
     }
 
     // Initialize all dates in the range with zero values
-    const dateRange: Date[] = []
-    const currentDate = new Date(startDate)
+    const dateRange: Date[] = [];
+    const currentDate = new Date(startDate);
     while (currentDate <= endDate) {
-      dateRange.push(new Date(currentDate))
-      currentDate.setDate(currentDate.getDate() + 1)
+      dateRange.push(new Date(currentDate));
+      currentDate.setDate(currentDate.getDate() + 1);
     }
 
     // Initialize the map with all dates in range
-    dateRange.forEach(date => {
-      const dateStr = date.toISOString().split('T')[0]
+    dateRange.forEach((date) => {
+      const dateStr = date.toISOString().split("T")[0];
       transactionsByDate.set(dateStr, {
         deposit: 0,
         payment: 0,
         withdrawal: 0,
         refund: 0,
-        total: 0
-      })
-    })
+        total: 0,
+      });
+    });
 
     // Group transactions by date and type
-    transactions.forEach(transaction => {
+    transactions.forEach((transaction) => {
       try {
         // Kiểm tra ngày có hợp lệ không
         const dateObj = new Date(transaction.createdAt);
@@ -145,15 +158,15 @@ export function ChartTransactions({ className }: ChartTransactionsProps) {
           console.warn("Invalid date:", transaction.createdAt);
           return; // Bỏ qua giao dịch có ngày không hợp lệ
         }
-        
-        const date = dateObj.toISOString().split('T')[0];
+
+        const date = dateObj.toISOString().split("T")[0];
         const amount = Math.abs(transaction.amount);
-        
+
         // Skip if outside our date range
         if (!transactionsByDate.has(date)) return;
-        
+
         const stats = transactionsByDate.get(date)!;
-        
+
         if (transaction.type === "deposit") {
           stats.deposit += amount;
           stats.total += amount;
@@ -180,23 +193,23 @@ export function ChartTransactions({ className }: ChartTransactionsProps) {
         payment: stats.payment,
         withdrawal: stats.withdrawal,
         refund: stats.refund,
-        total: stats.total
+        total: stats.total,
       }))
-      .filter(item => {
+      .filter((item) => {
         // Lọc các ngày không hợp lệ hoặc trong tương lai
         try {
           const itemDate = new Date(item.date);
           const now = new Date();
           return !isNaN(itemDate.getTime()) && itemDate <= now;
-        } catch (e) {
+        } catch {
           return false;
         }
       })
       .sort((a, b) => a.date.localeCompare(b.date));
     return result;
-  }
+  };
 
-  const chartData = processTransactionData(transactionsData?.data)
+  const chartData = processTransactionData(transactionsData?.data);
 
   // Show loading state
   if (isLoading) {
@@ -210,7 +223,7 @@ export function ChartTransactions({ className }: ChartTransactionsProps) {
           <PageLoading text="Đang tải dữ liệu biểu đồ..." />
         </CardContent>
       </Card>
-    )
+    );
   }
 
   // Show error state
@@ -227,7 +240,7 @@ export function ChartTransactions({ className }: ChartTransactionsProps) {
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -236,14 +249,18 @@ export function ChartTransactions({ className }: ChartTransactionsProps) {
         <CardTitle>Biểu đồ giao dịch</CardTitle>
         <CardDescription>
           <span className="hidden @[540px]/card:block">
-            {timeRange === "7d" ? "7 ngày gần đây" : 
-             timeRange === "30d" ? "30 ngày gần đây" : 
-             "90 ngày gần đây"}
+            {timeRange === "7d"
+              ? "7 ngày gần đây"
+              : timeRange === "30d"
+              ? "30 ngày gần đây"
+              : "90 ngày gần đây"}
           </span>
           <span className="@[540px]/card:hidden">
-            {timeRange === "7d" ? "7 ngày" : 
-             timeRange === "30d" ? "30 ngày" : 
-             "90 ngày"}
+            {timeRange === "7d"
+              ? "7 ngày"
+              : timeRange === "30d"
+              ? "30 ngày"
+              : "90 ngày"}
           </span>
         </CardDescription>
         <CardAction>
@@ -342,12 +359,12 @@ export function ChartTransactions({ className }: ChartTransactionsProps) {
                       month: "numeric",
                       day: "numeric",
                     });
-                  } catch (error) {
+                  } catch {
                     return ""; // Trả về chuỗi rỗng nếu có lỗi
                   }
                 }}
               />
-              <YAxis 
+              <YAxis
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
@@ -368,12 +385,12 @@ export function ChartTransactions({ className }: ChartTransactionsProps) {
                           month: "numeric",
                           day: "numeric",
                         });
-                      } catch (error) {
+                      } catch {
                         return "Ngày không hợp lệ";
                       }
                     }}
                     formatter={(value) => {
-                      if (typeof value === 'number') {
+                      if (typeof value === "number") {
                         return formatNumber(value) + " coin";
                       }
                       return String(value);
@@ -408,5 +425,5 @@ export function ChartTransactions({ className }: ChartTransactionsProps) {
         </ChartContainer>
       </CardContent>
     </Card>
-  )
+  );
 }

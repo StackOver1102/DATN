@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
@@ -11,7 +11,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import Image from "next/image";
 import { useUserProfile } from "@/lib/hooks/useAuth";
 
-export default function DepositSuccessPage() {
+function DepositSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, update: updateSession } = useSession();
@@ -233,5 +233,19 @@ export default function DepositSuccessPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function DepositSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-400"></div>
+        </div>
+      }
+    >
+      <DepositSuccessContent />
+    </Suspense>
   );
 }

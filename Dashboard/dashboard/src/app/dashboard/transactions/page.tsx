@@ -19,17 +19,20 @@ import {
   IconX,
   IconHome,
   IconEye,
-  IconEdit,
   IconTrash,
   IconDotsVertical,
   IconCheck as IconApprove,
-  IconArrowsUpDown
+  IconArrowsUpDown,
 } from "@tabler/icons-react";
 import { format } from "date-fns";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink } from "@/components/ui/breadcrumb";
-import { formatMoney, formatNumber } from "@/lib/formatMoney";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+} from "@/components/ui/breadcrumb";
+import { formatNumber } from "@/lib/formatMoney";
 import { DataTable } from "@/components/ui/data-table";
-import { Column } from "@tanstack/react-table";
+import { Column, ColumnDef } from "@tanstack/react-table";
 import { User } from "../users/page";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -39,7 +42,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -47,7 +50,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -72,12 +75,13 @@ interface Transaction {
 export default function TransactionsPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<string>("all");
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<Transaction | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
 
   const { data, isLoading, error, refetch } = useApiQuery<{
-    data: Transaction[]
+    data: Transaction[];
   }>(
     ["transactions", activeTab],
     activeTab === "all" ? "/transactions" : `/transactions?type=${activeTab}`
@@ -86,25 +90,29 @@ export default function TransactionsPage() {
   const deleteTransactionMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/transactions/${id}`),
     onSuccess: () => {
-      toast.success('Giao dịch đã được xóa thành công');
+      toast.success("Giao dịch đã được xóa thành công");
       refetch();
       setIsDeleteDialogOpen(false);
     },
-    onError: (error: any) => {
-      toast.error('Lỗi khi xóa giao dịch: ' + (error.message || 'Đã xảy ra lỗi'));
-    }
+    onError: (error: Error) => {
+      toast.error(
+        "Lỗi khi xóa giao dịch: " + (error.message || "Đã xảy ra lỗi")
+      );
+    },
   });
 
   const approveTransactionMutation = useMutation({
     mutationFn: (id: string) => api.patch(`/transactions/${id}/approve`, {}),
     onSuccess: () => {
-      toast.success('Giao dịch đã được phê duyệt thành công');
+      toast.success("Giao dịch đã được phê duyệt thành công");
       refetch();
       setIsApproveDialogOpen(false);
     },
-    onError: (error: any) => {
-      toast.error('Lỗi khi phê duyệt giao dịch: ' + (error.message || 'Đã xảy ra lỗi'));
-    }
+    onError: (error: Error) => {
+      toast.error(
+        "Lỗi khi phê duyệt giao dịch: " + (error.message || "Đã xảy ra lỗi")
+      );
+    },
   });
 
   const handleDeleteClick = (transaction: Transaction) => {
@@ -118,16 +126,17 @@ export default function TransactionsPage() {
   };
 
   // Map transactions to include id field for DataTable
-  const transactions = data?.data?.map((transaction) => ({
-    ...transaction,
-    id: transaction._id, // Map _id to id for DataTable
-  })) || [];
+  const transactions =
+    data?.data?.map((transaction) => ({
+      ...transaction,
+      id: transaction._id, // Map _id to id for DataTable
+    })) || [];
 
   // Define columns for the data table
-  const columns: any[] = [
+  const columns: ColumnDef<Transaction>[] = [
     {
       accessorKey: "transactionCode",
-      header: ({ column }: { column: Column<any, unknown> }) => {
+      header: ({ column }: { column: Column<Transaction, unknown> }) => {
         return (
           <Button
             variant="ghost"
@@ -137,16 +146,15 @@ export default function TransactionsPage() {
             Mã giao dịch
             <IconArrowsUpDown className="ml-2 h-4 w-4" />
           </Button>
-        )
+        );
       },
       cell: ({ row }: { row: { original: Transaction } }) => (
         <div className="font-medium">{row.original.transactionCode}</div>
       ),
-      sortable: true,
     },
     {
       accessorKey: "userName",
-      header: ({ column }: { column: Column<any, unknown> }) => {
+      header: ({ column }: { column: Column<Transaction, unknown> }) => {
         return (
           <Button
             variant="ghost"
@@ -156,18 +164,20 @@ export default function TransactionsPage() {
             Người dùng
             <IconArrowsUpDown className="ml-2 h-4 w-4" />
           </Button>
-        )
+        );
       },
       cell: ({ row }: { row: { original: Transaction } }) => (
-        <Link href={`/dashboard/users/${row.original.userId._id}`} className="text-blue-500 hover:underline">
+        <Link
+          href={`/dashboard/users/${row.original.userId._id}`}
+          className="text-blue-500 hover:underline"
+        >
           {row.original.userId.fullName || row.original.userId.email}
         </Link>
       ),
-      sortable: true,
     },
     {
       accessorKey: "type",
-      header: ({ column }: { column: Column<any, unknown> }) => {
+      header: ({ column }: { column: Column<Transaction, unknown> }) => {
         return (
           <Button
             variant="ghost"
@@ -177,9 +187,8 @@ export default function TransactionsPage() {
             Loại
             <IconArrowsUpDown className="ml-2 h-4 w-4" />
           </Button>
-        )
+        );
       },
-      sortable: true,
       cell: ({ row }: { row: { original: Transaction } }) => {
         const type = row.original.type;
 
@@ -215,7 +224,7 @@ export default function TransactionsPage() {
     },
     {
       accessorKey: "amount",
-      header: ({ column }: { column: Column<any, unknown> }) => {
+      header: ({ column }: { column: Column<Transaction, unknown> }) => {
         return (
           <Button
             variant="ghost"
@@ -225,9 +234,8 @@ export default function TransactionsPage() {
             Số tiền
             <IconArrowsUpDown className="ml-2 h-4 w-4" />
           </Button>
-        )
+        );
       },
-      sortable: true,
       cell: ({ row }: { row: { original: Transaction } }) => {
         const amount = row.original.amount;
         const type = row.original.type;
@@ -250,7 +258,7 @@ export default function TransactionsPage() {
     },
     {
       accessorKey: "method",
-      header: ({ column }: { column: Column<any, unknown> }) => {
+      header: ({ column }: { column: Column<Transaction, unknown> }) => {
         return (
           <Button
             variant="ghost"
@@ -260,16 +268,17 @@ export default function TransactionsPage() {
             Phương thức
             <IconArrowsUpDown className="ml-2 h-4 w-4" />
           </Button>
-        )
+        );
       },
-      sortable: true,
       cell: ({ row }: { row: { original: Transaction } }) => (
-        <div className="text-sm text-muted-foreground capitalize">{row.original.method || "Coin"}</div>
+        <div className="text-sm text-muted-foreground capitalize">
+          {row.original.method || "Coin"}
+        </div>
       ),
     },
     {
       accessorKey: "status",
-      header: ({ column }: { column: Column<any, unknown> }) => {
+      header: ({ column }: { column: Column<Transaction, unknown> }) => {
         return (
           <Button
             variant="ghost"
@@ -279,9 +288,8 @@ export default function TransactionsPage() {
             Trạng thái
             <IconArrowsUpDown className="ml-2 h-4 w-4" />
           </Button>
-        )
+        );
       },
-      sortable: true,
       cell: ({ row }: { row: { original: Transaction } }) => {
         const status = row.original.status;
 
@@ -311,7 +319,7 @@ export default function TransactionsPage() {
     },
     {
       accessorKey: "createdAt",
-      header: ({ column }: { column: Column<any, unknown> }) => {
+      header: ({ column }: { column: Column<Transaction, unknown> }) => {
         return (
           <Button
             variant="ghost"
@@ -321,12 +329,11 @@ export default function TransactionsPage() {
             Thời gian
             <IconArrowsUpDown className="ml-2 h-4 w-4" />
           </Button>
-        )
+        );
       },
-      sortable: true,
       cell: ({ row }: { row: { original: Transaction } }) => {
         return format(new Date(row.original.createdAt), "dd/MM/yyyy HH:mm:ss");
-      }
+      },
     },
     {
       id: "actions",
@@ -344,12 +351,14 @@ export default function TransactionsPage() {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Hành động</DropdownMenuLabel>
               <DropdownMenuItem
-                onClick={() => router.push(`/dashboard/transactions/${transaction._id}/view`)}
+                onClick={() =>
+                  router.push(`/dashboard/transactions/${transaction._id}/view`)
+                }
               >
                 <IconEye className="mr-2 h-4 w-4" />
                 Xem chi tiết
               </DropdownMenuItem>
-              
+
               {transaction.status === "pending" && (
                 <DropdownMenuItem
                   onClick={() => handleApproveClick(transaction)}
@@ -359,7 +368,7 @@ export default function TransactionsPage() {
                   Phê duyệt
                 </DropdownMenuItem>
               )}
-              
+
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="text-red-600"
@@ -435,7 +444,14 @@ export default function TransactionsPage() {
                 <CountUp end={summary.total} duration={2} separator="," />
               </div>
               <p className="text-xs text-muted-foreground">
-                Tổng số tiền: <CountUp end={summary.totalAmount} duration={2} separator="," decimals={0} /> coin
+                Tổng số tiền:{" "}
+                <CountUp
+                  end={summary.totalAmount}
+                  duration={2}
+                  separator=","
+                  decimals={0}
+                />{" "}
+                coin
               </p>
             </CardContent>
           </Card>
@@ -449,7 +465,14 @@ export default function TransactionsPage() {
                 <CountUp end={summary.deposit} duration={2} separator="," />
               </div>
               <p className="text-xs text-muted-foreground">
-                Tổng số tiền: <CountUp end={summary.depositAmount} duration={2} separator="," decimals={0} suffix=" đ" />
+                Tổng số tiền:{" "}
+                <CountUp
+                  end={summary.depositAmount}
+                  duration={2}
+                  separator=","
+                  decimals={0}
+                  suffix=" đ"
+                />
               </p>
             </CardContent>
           </Card>
@@ -463,7 +486,14 @@ export default function TransactionsPage() {
                 <CountUp end={summary.payment} duration={2} separator="," />
               </div>
               <p className="text-xs text-muted-foreground">
-                Tổng số tiền: <CountUp end={summary.paymentAmount} duration={2} separator="," decimals={0} /> coin
+                Tổng số tiền:{" "}
+                <CountUp
+                  end={summary.paymentAmount}
+                  duration={2}
+                  separator=","
+                  decimals={0}
+                />{" "}
+                coin
               </p>
             </CardContent>
           </Card>
@@ -502,8 +532,8 @@ export default function TransactionsPage() {
                     Lỗi khi tải dữ liệu giao dịch
                   </div>
                 ) : (
-                  <DataTable 
-                    data={transactions} 
+                  <DataTable
+                    data={transactions}
                     columns={columns}
                     searchKey="transactionCode"
                     searchPlaceholder="Tìm kiếm giao dịch..."
@@ -542,7 +572,8 @@ export default function TransactionsPage() {
           <DialogHeader>
             <DialogTitle>Xác nhận xóa giao dịch</DialogTitle>
             <DialogDescription>
-              Bạn có chắc chắn muốn xóa giao dịch này không? Hành động này không thể hoàn tác.
+              Bạn có chắc chắn muốn xóa giao dịch này không? Hành động này không
+              thể hoàn tác.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -580,19 +611,28 @@ export default function TransactionsPage() {
             <div className="space-y-2 py-2">
               <div className="flex justify-between">
                 <span className="text-sm font-medium">Mã giao dịch:</span>
-                <span className="text-sm">{selectedTransaction.transactionCode}</span>
+                <span className="text-sm">
+                  {selectedTransaction.transactionCode}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm font-medium">Loại giao dịch:</span>
-                <span className="text-sm capitalize">{selectedTransaction.type}</span>
+                <span className="text-sm capitalize">
+                  {selectedTransaction.type}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm font-medium">Số tiền:</span>
-                <span className="text-sm">{formatNumber(selectedTransaction.amount)} coin</span>
+                <span className="text-sm">
+                  {formatNumber(selectedTransaction.amount)} coin
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm font-medium">Người dùng:</span>
-                <span className="text-sm">{selectedTransaction.userId.fullName || selectedTransaction.userId.email}</span>
+                <span className="text-sm">
+                  {selectedTransaction.userId.fullName ||
+                    selectedTransaction.userId.email}
+                </span>
               </div>
             </div>
           )}
@@ -613,7 +653,9 @@ export default function TransactionsPage() {
               }}
               disabled={approveTransactionMutation.isPending}
             >
-              {approveTransactionMutation.isPending ? "Đang xử lý..." : "Phê duyệt"}
+              {approveTransactionMutation.isPending
+                ? "Đang xử lý..."
+                : "Phê duyệt"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -102,13 +102,6 @@ interface Product {
   urlDownload?: string;
 }
 
-interface Category {
-  _id: string;
-  name: string;
-  parentId?: string;
-  path?: string;
-}
-
 interface CategoryItem {
   _id: string;
   name: string;

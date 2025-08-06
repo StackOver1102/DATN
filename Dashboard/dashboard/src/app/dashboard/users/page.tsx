@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { DataTable } from "@/components/ui/data-table";
-import { ApiResponse, PaginatedResult } from "@/interface/pagination";
+import { ApiResponse } from "@/interface/pagination";
 import { ColumnDef, FilterFn } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import {

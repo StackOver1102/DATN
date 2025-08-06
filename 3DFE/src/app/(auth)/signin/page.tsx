@@ -1,7 +1,7 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -20,7 +20,7 @@ const loginSchema = z.object({
 // Định nghĩa kiểu dữ liệu từ schema
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-export default function SignIn() {
+function SignInForm() {
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const searchParams = useSearchParams();
@@ -237,5 +237,13 @@ export default function SignIn() {
         style={{ backgroundImage: "url('/assets/signup-background.jpg')" }}
       ></div>
     </div>
+  );
+}
+
+export default function SignIn() {
+  return (
+    <Suspense fallback={<Loading variant="spinner" size="lg" fullScreen />}>
+      <SignInForm />
+    </Suspense>
   );
 }
