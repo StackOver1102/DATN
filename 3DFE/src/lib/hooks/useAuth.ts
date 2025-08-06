@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { signIn, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { User } from '../types';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useUserStore } from '../store/userStore';
 import { useApi } from './useApi';
@@ -110,7 +110,7 @@ export function useUserProfile() {
   } = useUserStore();
 
   // Function to fetch profile directly without causing re-renders
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     // If we already have the profile data, just return it without API call
     if (profile) return profile;
     
@@ -137,14 +137,14 @@ export function useUserProfile() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [api, profile, hasLoadedProfile, setHasLoadedProfile, setLoading, setError, setProfile]);
 
   // Load profile once if authenticated and not already loaded
   useEffect(() => {
     if (status === 'authenticated' && !hasLoadedProfile && !profile) {
       fetchProfile();
     }
-  }, [status, hasLoadedProfile, profile]);
+  }, [status, hasLoadedProfile, profile, fetchProfile]);
 
   return {
     profile,

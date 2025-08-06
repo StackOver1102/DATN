@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -9,28 +9,28 @@ import Link from "next/link";
 
 export default function DepositCancelPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  // const searchParams = useSearchParams();
   const { data: session, update: updateSession } = useSession();
 
   // Get the PayPal token from the URL query parameters
-  const paypalToken = searchParams.get("token");
+  // const paypalToken = searchParams.get("token");
 
   useEffect(() => {
     console.log(session);
-    
+
     // Check if we have a session
     if (!session) {
       // Wait a moment and try to get the session again (in case it's still loading)
       const timer = setTimeout(async () => {
         await updateSession();
-        
+
         // If we still don't have a session after update, redirect to login
         if (!session) {
           toast.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại");
           router.push("/signin?callbackUrl=" + encodeURIComponent("/deposit"));
         }
       }, 1500);
-      
+
       return () => clearTimeout(timer);
     }
 
@@ -62,7 +62,8 @@ export default function DepositCancelPage() {
             Thanh toán đã bị hủy
           </h1>
           <p className="text-gray-600 text-center mb-6">
-            Bạn đã hủy giao dịch thanh toán. Không có khoản phí nào được tính cho bạn.
+            Bạn đã hủy giao dịch thanh toán. Không có khoản phí nào được tính
+            cho bạn.
           </p>
 
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 w-full mb-8">
@@ -70,7 +71,10 @@ export default function DepositCancelPage() {
             <ul className="list-disc pl-5 space-y-2 text-gray-600">
               <li>Không có khoản phí nào được tính cho giao dịch bị hủy</li>
               <li>Bạn có thể thử lại việc nạp tiền bất kỳ lúc nào</li>
-              <li>Nếu bạn gặp vấn đề với việc thanh toán, vui lòng liên hệ với bộ phận hỗ trợ</li>
+              <li>
+                Nếu bạn gặp vấn đề với việc thanh toán, vui lòng liên hệ với bộ
+                phận hỗ trợ
+              </li>
             </ul>
           </div>
 
@@ -81,13 +85,11 @@ export default function DepositCancelPage() {
               </Button>
             </Link>
             <Link href="/">
-              <Button variant="outline">
-                Về trang chủ
-              </Button>
+              <Button variant="outline">Về trang chủ</Button>
             </Link>
           </div>
         </div>
       </div>
     </div>
   );
-} 
+}
