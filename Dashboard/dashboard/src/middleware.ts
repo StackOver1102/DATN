@@ -10,10 +10,19 @@ export async function middleware(request: NextRequest) {
   const isPublicPath = publicPaths.includes(path);
   
   // Get the token from the session
-  const token = await getToken({
+  const token = await getToken({ 
     req: request,
     secret: process.env.NEXTAUTH_SECRET,
+    cookieName: "next-auth.session-token"
   });
+  
+  // console.log("Token from getToken:", token);
+  
+  // // For debugging - allow access to dashboard
+  // if (path.startsWith("/dashboard")) {
+  //   console.log("Allowing access to dashboard for debugging");
+  //   return NextResponse.next();
+  // }
   
   // Redirect logic
   if (!token && !isPublicPath) {

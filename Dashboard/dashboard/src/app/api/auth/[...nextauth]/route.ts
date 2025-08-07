@@ -47,6 +47,8 @@ const handler = NextAuth({
   ],
   callbacks: {
     async jwt({ token, user }) {
+      console.log("JWT callback - user:", user);
+      console.log("JWT callback - token before:", token);
       if (user) {
         token.id = user.id;
         token.email = user.email;
@@ -54,9 +56,12 @@ const handler = NextAuth({
         token.role = user.role;
         token.token = user.token;
       }
+      console.log("JWT callback - token after:", token);
       return token;
     },
     async session({ session, token }) {
+      console.log("Session callback - token:", token);
+      console.log("Session callback - session before:", session);
       if (token) {
         session.user.id = token.id;
         session.user.email = token.email;
@@ -64,6 +69,7 @@ const handler = NextAuth({
         session.user.role = token.role;
         session.user.token = token.token;
       }
+      console.log("Session callback - session after:", session);
       return session;
     },
   },
@@ -74,6 +80,23 @@ const handler = NextAuth({
   cookies: {
     sessionToken: {
       name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+    callbackUrl: {
+      name: `next-auth.callback-url`,
+      options: {
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+    csrfToken: {
+      name: 'next-auth.csrf-token',
       options: {
         httpOnly: true,
         sameSite: "lax",
