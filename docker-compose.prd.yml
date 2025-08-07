@@ -4,38 +4,89 @@ services:
       context: ./3DBackend
       dockerfile: Dockerfile
     container_name: web3d-backend
-    ports:
-      - "5000:5000"
+    expose:
+      - "5000"
     environment:
       - NODE_ENV=production
-      - JWT_SECRET=your_jwt_secret_here
+    env_file:
+      - ./3DBackend/.env
     restart: unless-stopped
+    networks:
+      - web3d-network
+    depends_on:
+      - mongodb
 
   frontend:
     build:
       context: ./3DFE
       dockerfile: Dockerfile
     container_name: web3d-frontend
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://backend:5000
+    env_file:
+      - ./3DFE/.env
     depends_on:
       - backend
     restart: unless-stopped
+    networks:
+      - web3d-network
 
   dashboard:
     build:
       context: ./Dashboard/dashboard
       dockerfile: Dockerfile
     container_name: web3d-dashboard
-    ports:
-      - "4000:4000"
+    expose:
+      - "4000"
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://backend:5000
+    env_file:
+      - ./Dashboard/dashboard/.env
     depends_on:
       - backend
     restart: unless-stopped
+    networks:
+      - web3d-network
 
+  mongodb:
+    image: mongo:latest
+    container_name: web3d-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=mongo_user
+      - MONGO_INITDB_ROOT_PASSWORD=mongo_password
+      - MONGO_INITDB_DATABASE=web3d
+    command: [--auth, --bind_ip_all]
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - web3d-network
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: web3d-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/conf:/etc/nginx/conf.d
+    environment:
+      - NGINX_HOST=model3dvn.org
+      - NGINX_PORT=80
+    depends_on:
+      - frontend
+      - backend
+      - dashboard
+    networks:
+      - web3d-network
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
+
+networks:
+  web3d-network:
+    driver: bridge
