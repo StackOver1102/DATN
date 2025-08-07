@@ -1,14 +1,23 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Product } from "@/interface/product";
+import { categoryApi } from "@/lib/api";
 
-interface Category {
-  id: string;
+interface CategoryItem {
+  _id: string;
   name: string;
-  icon: string;
+}
+
+interface CategoryResponse {
+  _id: string;
+  name: string;
+  icon?: string;
+  image?: string;
+  isActive: boolean;
+  parentId?: string | null;
 }
 
 interface ModelGridProps {
@@ -17,119 +26,62 @@ interface ModelGridProps {
 
 const ModelGrid: React.FC<ModelGridProps> = ({ products = [] }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [categories, setCategories] = useState<CategoryResponse[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
 
-  // Sample data - you can replace with real data
-  // const sampleModels = [
-  //   {
-  //     id: 1,
-  //     title: "Fire Bowl Set",
-  //     image:
-  //       "https://b5.3dsky.org/media/cache/sky_model_new_thumb_ang/model_images/0000/0000/7831/7831135.6867c3d126bac.jpeg",
-  //     isNew: false,
-  //     hasVideo: false,
-  //   },
-  //   {
-  //     id: 2,
-  //     title: "Gas Grill",
-  //     image:
-  //       "https://b5.3dsky.org/media/cache/sky_model_new_thumb_ang/model_images/0000/0000/7831/7831135.6867c3d126bac.jpeg",
-  //     isNew: false,
-  //     hasVideo: true,
-  //   },
-  //   {
-  //     id: 3,
-  //     title: "Wood Planks",
-  //     image:
-  //       "https://b5.3dsky.org/media/cache/sky_model_new_thumb_ang/model_images/0000/0000/7831/7831135.6867c3d126bac.jpeg",
-  //     isNew: false,
-  //     hasVideo: false,
-  //   },
-  //   {
-  //     id: 4,
-  //     title: "Leather Bags Set",
-  //     image:
-  //       "https://b5.3dsky.org/media/cache/sky_model_new_thumb_ang/model_images/0000/0000/7831/7831135.6867c3d126bac.jpeg",
-  //     isNew: false,
-  //     hasVideo: false,
-  //   },
-  //   {
-  //     id: 5,
-  //     title: "Egg Grill",
-  //     image:
-  //       "https://b5.3dsky.org/media/cache/sky_model_new_thumb_ang/model_images/0000/0000/7831/7831135.6867c3d126bac.jpeg",
-  //     isNew: false,
-  //     hasVideo: false,
-  //   },
-  //   {
-  //     id: 6,
-  //     title: "Kitchen Tools",
-  //     image:
-  //       "https://b5.3dsky.org/media/cache/sky_model_new_thumb_ang/model_images/0000/0000/7831/7831135.6867c3d126bac.jpeg",
-  //     isNew: false,
-  //     hasVideo: false,
-  //   },
-  //   {
-  //     id: 7,
-  //     title: "Brick Oven",
-  //     image:
-  //       "https://b5.3dsky.org/media/cache/sky_model_new_thumb_ang/model_images/0000/0000/7831/7831135.6867c3d126bac.jpeg",
-  //     isNew: false,
-  //     hasVideo: true,
-  //   },
-  //   {
-  //     id: 8,
-  //     title: "Kitchen Hood",
-  //     image:
-  //       "https://b5.3dsky.org/media/cache/sky_model_new_thumb_ang/model_images/0000/0000/7831/7831135.6867c3d126bac.jpeg",
-  //     isNew: false,
-  //     hasVideo: false,
-  //   },
-  //   {
-  //     id: 9,
-  //     title: "Kitchen Shelves",
-  //     image:
-  //       "https://b5.3dsky.org/media/cache/sky_model_new_thumb_ang/model_images/0000/0000/7831/7831135.6867c3d126bac.jpeg",
-  //     isNew: false,
-  //     hasVideo: false,
-  //   },
-  //   {
-  //     id: 10,
-  //     title: "Basket with Logs",
-  //     image:
-  //       "https://b5.3dsky.org/media/cache/sky_model_new_thumb_ang/model_images/0000/0000/7831/7831135.6867c3d126bac.jpeg",
-  //     isNew: false,
-  //     hasVideo: false,
-  //   },
-  //   {
-  //     id: 11,
-  //     title: "Brick Stove",
-  //     image:
-  //       "https://b5.3dsky.org/media/cache/sky_model_new_thumb_ang/model_images/0000/0000/7831/7831135.6867c3d126bac.jpeg",
-  //     isNew: false,
-  //     hasVideo: false,
-  //   },
-  // ];
+  // Fetch categories from API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true);
+        const response = await categoryApi.getAll();
+        if (response.success && response.data) {
+          // Add "All" category at the beginning
+          const allCategories = [
+            { _id: "all", name: "All", icon: "🏠", isActive: true, parentId: null }
+          ];
+          
+          // Ensure response.data is an array before spreading
+          if (Array.isArray(response.data)) {
+            setCategories([...allCategories, ...response.data]);
+          } else {
+            setCategories(allCategories);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Use provided products or fallback to sample data if empty
-  const displayProducts = products.length > 0 ? products : [];
+    fetchCategories();
+  }, []);
 
-  const categories: Category[] = [
-    { id: "all", name: "All", icon: "🏠" },
-    { id: "pendant-light", name: "Pendant light", icon: "💡" },
-    { id: "sofa", name: "Sofa", icon: "🛋️" },
-    { id: "arm-chair", name: "Arm chair", icon: "🪑" },
-    { id: "chair", name: "Chair", icon: "🪑" },
-    { id: "table", name: "Table", icon: "🪑" },
-    { id: "wardrobe", name: "Wardrobe & Display cabinets", icon: "🗄️" },
-    { id: "bed", name: "Bed", icon: "🛏️" },
-    { id: "table-chair", name: "Table + Chair", icon: "🍽️" },
-    { id: "kitchen", name: "Kitchen", icon: "👨‍🍳" },
-    { id: "bathroom", name: "Bathroom", icon: "🚿" },
-    { id: "decoration", name: "Decoration", icon: "🎨" },
-    { id: "lighting", name: "Lighting", icon: "💡" },
-    { id: "outdoor", name: "Outdoor", icon: "🌳" },
-    { id: "more", name: "...", icon: "➡️" },
-  ];
+  // Filter products when category changes
+  useEffect(() => {
+    if (selectedCategory === "all") {
+      setFilteredProducts(products);
+    } else {
+      // Filter products by category ID
+      const filtered = products.filter(product => 
+        product.categoryId === selectedCategory || 
+        product.rootCategoryId === selectedCategory
+      );
+      setFilteredProducts(filtered);
+    }
+  }, [selectedCategory, products]);
+
+  // Handle category selection
+  const handleCategorySelect = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+  };
+
+  // Use filtered products or all products if none are filtered
+  const displayProducts = filteredProducts.length > 0 || selectedCategory !== "all" 
+    ? filteredProducts 
+    : products;
 
   return (
     <div className="max-w-7xl mx-auto py-8">
@@ -173,20 +125,33 @@ const ModelGrid: React.FC<ModelGridProps> = ({ products = [] }) => {
       <div className="relative">
         {/* Scrollable Categories Container */}
         <div className="flex gap-2 overflow-x-auto py-2">
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => setSelectedCategory(category.id)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
-                selectedCategory === category.id
-                  ? "bg-gray-800 text-white"
-                  : "bg-gray-300 text-gray-700 hover:bg-gray-300"
-              }`}
-            >
-              <span>{category.icon}</span>
-              <span>{category.name}</span>
-            </button>
-          ))}
+          {loading ? (
+            // Loading skeleton for categories
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div 
+                  key={i} 
+                  className="h-10 w-24 bg-gray-200 rounded-full animate-pulse"
+                ></div>
+              ))}
+            </div>
+          ) : (
+            // Render categories when loaded
+            categories.map((category) => (
+              <button
+                key={category._id}
+                onClick={() => handleCategorySelect(category._id)}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
+                  selectedCategory === category._id
+                    ? "bg-gray-800 text-white"
+                    : "bg-gray-300 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                <span>{category.icon || "📁"}</span>
+                <span>{category.name}</span>
+              </button>
+            ))
+          )}
         </div>
       </div>
     </div>

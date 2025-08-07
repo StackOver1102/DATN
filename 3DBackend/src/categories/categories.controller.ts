@@ -165,4 +165,12 @@ export class CategoriesController extends BaseController {
       );
     }
   }
+
+  @Public()
+  @Get('parent/get-all')
+  @ApiOperation({ summary: 'Lấy danh sách danh mục cha' })
+  async getCategoryParent(): Promise<ApiResponse<Category[]>> {
+    const categories = await this.categoriesService.getCategoryParent();
+    return this.success(categories, 'Lấy danh sách danh mục cha thành công');
+  }
 }

@@ -9,7 +9,7 @@ async function getProducts(page = 1, limit = 12) {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL_SSR}/products?page=${page}&limit=${limit}`,
     {
-      next: { revalidate: 60 },
+      next: { revalidate: 5 },
     }
   );
 
