@@ -24,11 +24,9 @@ async function getCategories() {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL_SSR}/categories/grouped`,
     {
-      next: { revalidate: 3600 }, // Revalidate every hour
+      next: { revalidate: 1 }, // Revalidate every hour
     }
   );
-
-  console.log(res);
 
   if (!res.ok) {
     throw new Error("Failed to fetch categories");
@@ -62,6 +60,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     getCategories(),
   ]);
 
+  console.log(categoriesData);
   const paginatedProducts = paginatedProductsData?.data;
 
   // Ensure categories data has the correct structure

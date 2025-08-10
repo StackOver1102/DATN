@@ -62,6 +62,7 @@ interface CreateCommentRequest {
 export default function ProductDetailPage() {
   const params = useParams();
   const id = params.id as string;
+  console.log("id", id);
   const { data: session } = useSession();
   const router = useRouter();
 
@@ -77,12 +78,11 @@ export default function ProductDetailPage() {
   // Use the useFetchData hook to fetch the product
   const { data: product, isLoading: isLoadingProduct } = useFetchData<Product>(
     `products/${id}`,
-    ["product", id],
-    {
-      enabled: !!id,
-    }
+    ["product", id]
   );
 
+  console.log("product", product);
+  console.log("id", id);
   // Use the useFetchData hook to fetch similar products
   const { data: similarProductsData, isLoading: isLoadingSimilar } =
     useFetchData<Product[]>(
@@ -249,13 +249,13 @@ export default function ProductDetailPage() {
     }
   };
 
-  if (isLoadingProduct || !product) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
+  // if (isLoadingProduct || !product) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center">
+  //       <LoadingSpinner size="lg" />
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="min-h-screen bg-white">

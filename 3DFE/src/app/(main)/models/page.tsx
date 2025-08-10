@@ -63,7 +63,9 @@ async function getProducts(
     }
 
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL_SSR}/products?${queryParams.toString()}`,
+      `${
+        process.env.NEXT_PUBLIC_API_URL_SSR
+      }/products?${queryParams.toString()}`,
       {
         next: { revalidate: 60 }, // Revalidate every 60 seconds
       }
@@ -143,12 +145,21 @@ export default async function ModelsPage({ searchParams }: ModelsPageProps) {
   // Extract products data
   const products = productsData?.data?.items || [];
   const totalItems = productsData?.data?.meta?.totalItems || 0;
-  const totalPages = productsData?.data?.meta?.totalPages || 1;
+  // If there are no products, totalPages could be 0, but we'll handle this in the component
+  const totalPages = productsData?.data?.meta?.totalPages ?? 0;
+
+  // Log for debugging
+  console.log("Server-side products data:", {
+    items: products.length,
+    totalItems,
+    totalPages,
+    hasData: products.length > 0,
+  });
 
   // Map the products to ensure they have the required 'name' property
   const mappedProducts = products.map((product: Product) => ({
     ...product,
-    name: product.title || "Unnamed Product", // Ensure name property exists
+    name: product.name || "Unnamed Product", // Ensure name property exists
   }));
 
   // Pass all data to a client component that will handle the UI and interactions

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { CategorySection } from "@/lib/types";
 import { Loading } from "@/components/ui/loading";
 import React from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface FilterState {
   categories: string[];
@@ -15,9 +16,28 @@ interface FilterState {
   renderEngine: string[];
   colors: string[];
   forms: string[];
+  styles: string[];
+  materials: string[];
   free: boolean;
   hasTextures: boolean;
   hasAnimation: boolean;
+}
+
+// Interface for API filter parameters
+interface ApiFilterParams {
+  search?: string;
+  subSearch?: string;
+  categoryName?: string;
+  categoryPath?: string;
+  style?: string;
+  materials?: string;
+  render?: string;
+  form?: string;
+  color?: string;
+  sortBy?: string;
+  sortDirection?: "asc" | "desc";
+  page?: number;
+  limit?: number;
 }
 
 const initialFilterState: FilterState = {
@@ -28,13 +48,15 @@ const initialFilterState: FilterState = {
   renderEngine: [],
   colors: [],
   forms: [],
+  styles: [],
+  materials: [],
   free: false,
   hasTextures: false,
   hasAnimation: false,
 };
 
 interface ModelFilterProps {
-  onFilterChange: (filters: FilterState) => void;
+  onFilterChange: (filters: FilterState, apiParams?: ApiFilterParams) => void;
   categories?: CategorySection[];
   isLoading?: boolean;
   initialCategoryParam?: string;
@@ -49,6 +71,8 @@ export default function ModelFilter({
   initialItemParam,
 }: ModelFilterProps) {
   const [filters, setFilters] = useState<FilterState>(initialFilterState);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Set initial expanded sections based on URL parameters
   const [expandedSections, setExpandedSections] = useState({
@@ -58,6 +82,8 @@ export default function ModelFilter({
     properties: true,
     form: true,
     color: true,
+    style: true,
+    material: true,
   });
 
   // Initialize expanded categories based on URL parameters
@@ -215,6 +241,8 @@ export default function ModelFilter({
 
   // Ref để kiểm tra xem đã khởi tạo filter chưa
   const isInitialized = React.useRef(false);
+  // Ref để theo dõi lần cập nhật filter cuối cùng để tránh duplicate API calls
+  const lastFilterUpdate = React.useRef<string>("");
 
   // Lấy các tham số bộ lọc ban đầu từ URL
   useEffect(() => {
@@ -227,12 +255,6 @@ export default function ModelFilter({
     const updatedFilters = { ...filters };
     let shouldUpdateFilters = false;
 
-    console.log("ModelFilter initializing with:", {
-      initialCategoryParam,
-      initialItemParam,
-      transformedCategories,
-    });
-
     // Xử lý category và item
     if (initialCategoryParam) {
       // Tìm category trong danh sách
@@ -242,8 +264,6 @@ export default function ModelFilter({
       const foundCategory = transformedCategories.find(
         (cat) => cat.id.toLowerCase() === categoryId.toLowerCase()
       );
-
-      console.log("Found category:", foundCategory);
 
       if (foundCategory) {
         // Mở rộng category này
@@ -261,15 +281,11 @@ export default function ModelFilter({
             (subcat) => subcat.toLowerCase() === itemToFind.toLowerCase()
           );
 
-          console.log("Found item index:", foundItemIndex);
-
           if (foundItemIndex >= 0) {
             // Tạo ID cho category-item và cập nhật filters
             const subcatName = foundCategory.subcategories[foundItemIndex];
             const itemId = subcatName.toLowerCase().replace(/\s+/g, "-");
             const categoryItemId = `${foundCategory.id}-${itemId}`;
-
-            console.log("Setting filter with categoryItemId:", categoryItemId);
 
             // Cập nhật categories trong filters
             updatedFilters.categories = [categoryItemId];
@@ -287,15 +303,67 @@ export default function ModelFilter({
       }
     }
 
+    // Check URL parameters for additional filters
+    const urlStyle = searchParams.get("style");
+    const urlMaterials = searchParams.get("materials");
+    const urlRender = searchParams.get("render");
+    const urlForm = searchParams.get("form");
+    const urlColor = searchParams.get("color");
+
+    // Apply URL parameters to filters
+    if (urlStyle) {
+      updatedFilters.styles = urlStyle.split(",");
+      shouldUpdateFilters = true;
+    }
+
+    if (urlMaterials) {
+      updatedFilters.materials = urlMaterials.split(",");
+      shouldUpdateFilters = true;
+    }
+
+    if (urlRender) {
+      updatedFilters.renderEngine = urlRender.split(",");
+      shouldUpdateFilters = true;
+    }
+
+    if (urlForm) {
+      updatedFilters.forms = urlForm.split(",");
+      shouldUpdateFilters = true;
+    }
+
+    if (urlColor) {
+      // Convert color names to hex values
+      updatedFilters.colors = urlColor.split(",").map((colorName) => {
+        // Check if it's already a hex code
+        if (colorName.startsWith("#")) return colorName;
+
+        // Try to find the color by name (case insensitive)
+        const colorObj = colors.find(
+          (c) => c.name.toLowerCase() === colorName.toLowerCase()
+        );
+
+        // Return the hex if found, otherwise use the original value
+        return colorObj ? colorObj.hex : `#${colorName}`;
+      });
+      shouldUpdateFilters = true;
+    }
+
     // Nếu cần cập nhật filters
     if (shouldUpdateFilters) {
       setFilters(updatedFilters);
+      const apiParams = convertFiltersToApiParams(updatedFilters);
+
+      // Store this update to prevent duplicate calls
+      const updateKey = JSON.stringify(apiParams);
+      lastFilterUpdate.current = updateKey;
+
+      onFilterChange(updatedFilters, apiParams);
     }
 
     // Đánh dấu là đã khởi tạo
     isInitialized.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [searchParams]);
 
   // const fileFormats = [
   //   { id: "3ds", name: "3ds Max", count: 8947 },
@@ -309,41 +377,43 @@ export default function ModelFilter({
   // ];
 
   const renderEngines = [
-    { id: "vray", name: "Vray", count: 5432, icon: "✓" },
+    { id: "vray+corona", name: "Vray+Corona", count: 5432, icon: "✓" },
     { id: "corona", name: "Corona", count: 4321, icon: "🔴" },
-    { id: "standard", name: "Standard", count: 3210, icon: "" },
+    { id: "vray", name: "Vray", count: 3210, icon: "V" },
+    { id: "mentalray", name: "Mental Ray", count: 2100, icon: "M" },
+    { id: "standard", name: "Standard", count: 1500, icon: "" },
   ];
 
   const colors = [
-    "#ffffff",
-    "#6b7280",
-    "#000000",
-    "#8b4513",
-    "#dc2626",
-    "#f97316",
-    "#eab308",
-    "#f3e8d0",
-    "#fbb6ce",
-    "#d946ef",
-    "#8b5cf6",
-    "#3b82f6",
-    "#06b6d4",
-    "#10b981",
-    "#84cc16",
-    "#65a30d",
+    { hex: "#ffffff", name: "White" },
+    { hex: "#6b7280", name: "Gray" },
+    { hex: "#000000", name: "Black" },
+    { hex: "#8b4513", name: "Brown" },
+    { hex: "#dc2626", name: "Red" },
+    { hex: "#f97316", name: "Orange" },
+    { hex: "#eab308", name: "Yellow" },
+    { hex: "#f3e8d0", name: "Cream" },
+    { hex: "#fbb6ce", name: "Pink" },
+    { hex: "#d946ef", name: "Purple" },
+    { hex: "#8b5cf6", name: "Violet" },
+    { hex: "#3b82f6", name: "Blue" },
+    { hex: "#06b6d4", name: "Cyan" },
+    { hex: "#10b981", name: "Green" },
+    { hex: "#84cc16", name: "Lime" },
+    { hex: "#65a30d", name: "Olive" },
   ];
 
   const forms = [
-    { id: "circle", name: "Circle", shape: "○" },
-    { id: "oval", name: "Oval", shape: "⬭" },
-    { id: "square", name: "Square", shape: "□" },
-    { id: "rectangle", name: "Rectangle", shape: "▭" },
-    { id: "triangle", name: "Triangle", shape: "△" },
-    { id: "diamond", name: "Diamond", shape: "◇" },
-    { id: "pentagon", name: "Pentagon", shape: "⬟" },
+    { id: "shape", name: "Shape", shape: "◊" },
+    { id: "rhombus", name: "Rhombus", shape: "◇" },
+    { id: "line", name: "Line", shape: "—" },
     { id: "star", name: "Star", shape: "☆" },
-    { id: "l-shape", name: "L-Shape", shape: "L" },
-    { id: "cross", name: "Cross", shape: "✚" },
+    { id: "hexagon", name: "Hexagon", shape: "⬡" },
+    { id: "triangle", name: "Triangle", shape: "△" },
+    { id: "rectangle", name: "Rectangle", shape: "▭" },
+    { id: "square", name: "Square", shape: "□" },
+    { id: "oval", name: "Oval", shape: "⬭" },
+    { id: "circle", name: "Circle", shape: "○" },
   ];
 
   const toggleSection = (section: keyof typeof expandedSections) => {
@@ -367,7 +437,16 @@ export default function ModelFilter({
 
     const newFilters = { ...filters, categories: newCategories };
     setFilters(newFilters);
-    onFilterChange(newFilters);
+    const apiParams = convertFiltersToApiParams(newFilters);
+
+    // Prevent duplicate API calls
+    const updateKey = JSON.stringify(apiParams);
+    if (lastFilterUpdate.current !== updateKey) {
+      lastFilterUpdate.current = updateKey;
+      onFilterChange(newFilters, apiParams);
+    }
+
+    updateUrlWithFilters(apiParams);
   };
 
   const handleFormatChange = (formatId: string) => {
@@ -377,7 +456,16 @@ export default function ModelFilter({
 
     const newFilters = { ...filters, formats: newFormats };
     setFilters(newFilters);
-    onFilterChange(newFilters);
+    const apiParams = convertFiltersToApiParams(newFilters);
+
+    // Prevent duplicate API calls
+    const updateKey = JSON.stringify(apiParams);
+    if (lastFilterUpdate.current !== updateKey) {
+      lastFilterUpdate.current = updateKey;
+      onFilterChange(newFilters, apiParams);
+    }
+
+    updateUrlWithFilters(apiParams);
   };
 
   const handleRenderEngineChange = (engineId: string) => {
@@ -387,17 +475,35 @@ export default function ModelFilter({
 
     const newFilters = { ...filters, renderEngine: newEngines };
     setFilters(newFilters);
-    onFilterChange(newFilters);
+    const apiParams = convertFiltersToApiParams(newFilters);
+
+    // Prevent duplicate API calls
+    const updateKey = JSON.stringify(apiParams);
+    if (lastFilterUpdate.current !== updateKey) {
+      lastFilterUpdate.current = updateKey;
+      onFilterChange(newFilters, apiParams);
+    }
+
+    updateUrlWithFilters(apiParams);
   };
 
-  const handleColorChange = (color: string) => {
-    const newColors = filters.colors.includes(color)
-      ? filters.colors.filter((c) => c !== color)
-      : [...filters.colors, color];
+  const handleColorChange = (colorHex: string) => {
+    const newColors = filters.colors.includes(colorHex)
+      ? filters.colors.filter((c) => c !== colorHex)
+      : [...filters.colors, colorHex];
 
     const newFilters = { ...filters, colors: newColors };
     setFilters(newFilters);
-    onFilterChange(newFilters);
+    const apiParams = convertFiltersToApiParams(newFilters);
+
+    // Prevent duplicate API calls
+    const updateKey = JSON.stringify(apiParams);
+    if (lastFilterUpdate.current !== updateKey) {
+      lastFilterUpdate.current = updateKey;
+      onFilterChange(newFilters, apiParams);
+    }
+
+    updateUrlWithFilters(apiParams);
   };
 
   const handleFormChange = (formId: string) => {
@@ -407,12 +513,189 @@ export default function ModelFilter({
 
     const newFilters = { ...filters, forms: newForms };
     setFilters(newFilters);
-    onFilterChange(newFilters);
+    const apiParams = convertFiltersToApiParams(newFilters);
+
+    // Prevent duplicate API calls
+    const updateKey = JSON.stringify(apiParams);
+    if (lastFilterUpdate.current !== updateKey) {
+      lastFilterUpdate.current = updateKey;
+      onFilterChange(newFilters, apiParams);
+    }
+
+    updateUrlWithFilters(apiParams);
   };
 
   const clearAllFilters = () => {
     setFilters(initialFilterState);
-    onFilterChange(initialFilterState);
+
+    // Reset lastFilterUpdate to prevent duplicate calls
+    lastFilterUpdate.current = "{}";
+    onFilterChange(initialFilterState, {});
+
+    updateUrlWithFilters({});
+  };
+
+  const styles = [
+    { id: "luxury", name: "Luxury" },
+    { id: "indochine", name: "Indochine" },
+    { id: "ethnic", name: "Ethnic" },
+    { id: "modern", name: "Modern" },
+    { id: "classic", name: "Classic" },
+  ];
+
+  const materials = [
+    { id: "brick", name: "Brick" },
+    { id: "ceramics", name: "Ceramics" },
+    { id: "concrete", name: "Concrete" },
+    { id: "fabric", name: "Fabric" },
+    { id: "fur", name: "Fur" },
+    { id: "glass", name: "Glass" },
+    { id: "gypsum", name: "Gypsum" },
+    { id: "leather", name: "Leather" },
+    { id: "liquid", name: "Liquid" },
+    { id: "metal", name: "Metal" },
+    { id: "organics", name: "Organics" },
+    { id: "paper", name: "Paper" },
+    { id: "plastic", name: "Plastic" },
+    { id: "rattan", name: "Rattan" },
+    { id: "stone", name: "Stone" },
+    { id: "wood", name: "Wood" },
+  ];
+
+  const handleStyleChange = (styleId: string) => {
+    const newStyles = filters.styles.includes(styleId)
+      ? filters.styles.filter((id) => id !== styleId)
+      : [...filters.styles, styleId];
+
+    const newFilters = { ...filters, styles: newStyles };
+    setFilters(newFilters);
+    const apiParams = convertFiltersToApiParams(newFilters);
+
+    // Prevent duplicate API calls
+    const updateKey = JSON.stringify(apiParams);
+    if (lastFilterUpdate.current !== updateKey) {
+      lastFilterUpdate.current = updateKey;
+      onFilterChange(newFilters, apiParams);
+    }
+
+    updateUrlWithFilters(apiParams);
+  };
+
+  const handleMaterialChange = (materialId: string) => {
+    const newMaterials = filters.materials.includes(materialId)
+      ? filters.materials.filter((id) => id !== materialId)
+      : [...filters.materials, materialId];
+
+    const newFilters = { ...filters, materials: newMaterials };
+    setFilters(newFilters);
+    const apiParams = convertFiltersToApiParams(newFilters);
+
+    // Prevent duplicate API calls
+    const updateKey = JSON.stringify(apiParams);
+    if (lastFilterUpdate.current !== updateKey) {
+      lastFilterUpdate.current = updateKey;
+      onFilterChange(newFilters, apiParams);
+    }
+
+    updateUrlWithFilters(apiParams);
+  };
+
+  // Update URL with filter parameters
+  const updateUrlWithFilters = (apiParams: ApiFilterParams) => {
+    // Create a new URLSearchParams object
+    const params = new URLSearchParams(searchParams.toString());
+
+    // Clear existing filter params
+    params.delete("categoryName");
+    params.delete("subSearch");
+    params.delete("style");
+    params.delete("materials");
+    params.delete("render");
+    params.delete("form");
+    params.delete("color");
+    params.delete("search");
+
+    // Add new filter params
+    Object.entries(apiParams).forEach(([key, value]) => {
+      if (value) {
+        params.set(key, value.toString());
+      }
+    });
+
+    // Update the URL without refreshing the page
+    if (typeof window !== "undefined") {
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      router.push(newUrl, { scroll: false });
+    }
+  };
+
+  // Convert filter state to API parameters
+  const convertFiltersToApiParams = (filters: FilterState): ApiFilterParams => {
+    const params: ApiFilterParams = {};
+
+    // Process categories
+    if (filters.categories.length > 0) {
+      // Check if it's a category-subcategory pair
+      const categoryItem = filters.categories[0];
+      if (categoryItem.includes("-")) {
+        const [category, subcategory] = categoryItem.split("-");
+        params.categoryName = category;
+        params.subSearch = subcategory;
+      } else {
+        params.categoryName = categoryItem;
+      }
+    }
+
+    // Process styles
+    if (filters.styles.length > 0) {
+      params.style = filters.styles.join(",");
+    }
+
+    // Process materials
+    if (filters.materials.length > 0) {
+      params.materials = filters.materials.join(",");
+    }
+
+    // Process render engines
+    if (filters.renderEngine.length > 0) {
+      params.render = filters.renderEngine.join(",");
+    }
+
+    // Process forms
+    if (filters.forms.length > 0) {
+      params.form = filters.forms.join(",");
+    }
+
+    // Process colors
+    if (filters.colors.length > 0) {
+      // For colors, we need to use the hex values without the # symbol
+      const formattedColors = filters.colors.map((color) =>
+        color.replace("#", "")
+      );
+      params.color = formattedColors.join(",");
+    }
+
+    // Process formats if needed
+    if (filters.formats.length > 0) {
+      params.search = filters.formats.join(",");
+    }
+
+    // Process other boolean filters
+    if (filters.free) {
+      params.search = params.search ? `${params.search},free` : "free";
+    }
+
+    if (filters.hasTextures) {
+      params.search = params.search ? `${params.search},textures` : "textures";
+    }
+
+    if (filters.hasAnimation) {
+      params.search = params.search
+        ? `${params.search},animation`
+        : "animation";
+    }
+
+    return params;
   };
 
   const hasActiveFilters =
@@ -421,6 +704,8 @@ export default function ModelFilter({
     filters.renderEngine.length > 0 ||
     filters.colors.length > 0 ||
     filters.forms.length > 0 ||
+    filters.styles.length > 0 ||
+    filters.materials.length > 0 ||
     filters.free ||
     filters.hasTextures ||
     filters.hasAnimation;
@@ -434,7 +719,7 @@ export default function ModelFilter({
   };
 
   return (
-    <div className="w-full lg:w-80 bg-white border-r border-gray-200 h-screen overflow-y-auto">
+    <div className="w-full lg:w-60 bg-white border-r border-gray-200 h-screen overflow-y-auto">
       {/* Filter Header */}
       <div className="p-3 lg:p-4 border-b border-gray-200 sticky top-0 bg-white z-10">
         <div className="flex items-center justify-between mb-3">
@@ -454,16 +739,6 @@ export default function ModelFilter({
             </Button>
           )}
         </div>
-
-        {/* Search */}
-        {/* <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-3.5 h-3.5 lg:w-4 lg:h-4" />
-          <input
-            type="text"
-            placeholder="Search models..."
-            className="w-full pl-9 lg:pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm lg:text-base"
-          />
-        </div> */}
       </div>
 
       {/* Categories */}
@@ -761,34 +1036,116 @@ export default function ModelFilter({
         <div className="px-3 lg:px-4 pb-3 lg:pb-4">
           <div className="grid grid-cols-4 gap-1.5 lg:gap-2">
             {colors.map((color, index) => (
-              <button
-                key={index}
-                onClick={() => handleColorChange(color)}
-                className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full border-2 transition-all ${
-                  filters.colors.includes(color)
-                    ? "border-gray-800 scale-110"
-                    : "border-gray-300 hover:border-gray-400"
-                } ${color === "#ffffff" ? "border-gray-400" : ""}`}
-                style={{ backgroundColor: color }}
-                title={color}
-              >
-                {filters.colors.includes(color) && (
-                  <span
-                    className={`text-xs ${
-                      color === "#ffffff" ||
-                      color === "#f3e8d0" ||
-                      color === "#fbb6ce"
-                        ? "text-black"
-                        : "text-white"
-                    }`}
-                  >
-                    ✓
-                  </span>
-                )}
-              </button>
+              <div key={index} className="relative group">
+                <button
+                  onClick={() => handleColorChange(color.hex)}
+                  className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full border-2 transition-all ${
+                    filters.colors.includes(color.hex)
+                      ? "border-gray-800 scale-110"
+                      : "border-gray-300 hover:border-gray-400"
+                  } ${color.hex === "#ffffff" ? "border-gray-400" : ""}`}
+                  style={{ backgroundColor: color.hex }}
+                  aria-label={color.name}
+                >
+                  {filters.colors.includes(color.hex) && (
+                    <span
+                      className={`text-xs ${
+                        color.hex === "#ffffff" ||
+                        color.hex === "#f3e8d0" ||
+                        color.hex === "#fbb6ce"
+                          ? "text-black"
+                          : "text-white"
+                      }`}
+                    >
+                      ✓
+                    </span>
+                  )}
+                </button>
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                  {color.name}
+                </div>
+              </div>
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Style */}
+      <div className="border-b border-gray-200">
+        <Button
+          variant="ghost"
+          onClick={() => toggleSection("style")}
+          className="w-full px-3 lg:px-4 py-2.5 lg:py-3 h-auto justify-between text-left hover:bg-gray-50"
+        >
+          <span className="font-medium text-gray-900 text-sm lg:text-base">
+            Style
+          </span>
+          {expandedSections.style ? (
+            <ChevronUp className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-gray-500" />
+          ) : (
+            <ChevronDown className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-gray-500" />
+          )}
+        </Button>
+
+        {expandedSections.style && (
+          <div className="px-3 lg:px-4 pb-3 lg:pb-4 space-y-1.5">
+            {styles.map((style) => (
+              <label
+                key={style.id}
+                className="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded"
+              >
+                <input
+                  type="checkbox"
+                  checked={filters.styles.includes(style.id)}
+                  onChange={() => handleStyleChange(style.id)}
+                  className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <span className="ml-2 text-xs lg:text-sm text-gray-700">
+                  {style.name}
+                </span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Material */}
+      <div className="border-b border-gray-200">
+        <Button
+          variant="ghost"
+          onClick={() => toggleSection("material")}
+          className="w-full px-3 lg:px-4 py-2.5 lg:py-3 h-auto justify-between text-left hover:bg-gray-50"
+        >
+          <span className="font-medium text-gray-900 text-sm lg:text-base">
+            Material
+          </span>
+          {expandedSections.material ? (
+            <ChevronUp className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-gray-500" />
+          ) : (
+            <ChevronDown className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-gray-500" />
+          )}
+        </Button>
+
+        {expandedSections.material && (
+          <div className="px-3 lg:px-4 pb-3 lg:pb-4 space-y-1.5">
+            {materials.map((material) => (
+              <label
+                key={material.id}
+                className="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded"
+              >
+                <input
+                  type="checkbox"
+                  checked={filters.materials.includes(material.id)}
+                  onChange={() => handleMaterialChange(material.id)}
+                  className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <span className="ml-2 text-xs lg:text-sm text-gray-700">
+                  {material.name}
+                </span>
+              </label>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

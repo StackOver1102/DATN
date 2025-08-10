@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { SlidersHorizontal, Grid, List } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
@@ -9,6 +9,7 @@ import Image from "next/image";
 import ClientSideModelFilter from "./ClientSideModelFilter";
 import Pagination from "@/components/Pagination";
 import ProductCard from "@/components/ProductCard";
+import { useSearchParams } from "next/navigation";
 
 interface Model {
   _id: string;
@@ -35,6 +36,23 @@ interface ClientSideModelsPageProps {
   itemParam?: string;
 }
 
+// Interface for API filter parameters
+interface ApiFilterParams {
+  search?: string;
+  subSearch?: string;
+  categoryName?: string;
+  categoryPath?: string;
+  style?: string;
+  materials?: string;
+  render?: string;
+  form?: string;
+  color?: string;
+  sortBy?: string;
+  sortDirection?: "asc" | "desc";
+  page?: number;
+  limit?: number;
+}
+
 export default function ClientSideModelsPage({
   categories,
   initialModels,
@@ -44,10 +62,101 @@ export default function ClientSideModelsPage({
   categoryParam,
   itemParam,
 }: ClientSideModelsPageProps) {
+  const searchParams = useSearchParams();
+
   const [showFilters, setShowFilters] = useState(true);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [models] = useState(initialModels);
-  const [count] = useState(totalModels);
+  const [models, setModels] = useState(initialModels);
+  const [count, setCount] = useState(totalModels);
+  const [loading, setLoading] = useState(false);
+  const [currentApiParams, setCurrentApiParams] =
+    useState<ApiFilterParams | null>(null);
+
+  // Function to fetch models based on filter parameters
+  const fetchModels = useCallback(
+    async (apiParams: ApiFilterParams) => {
+      // Skip if the parameters haven't changed
+      if (
+        currentApiParams &&
+        JSON.stringify(currentApiParams) === JSON.stringify(apiParams)
+      ) {
+        return;
+      }
+
+      try {
+        setLoading(true);
+
+        // Build query string from API parameters
+        const queryParams = new URLSearchParams();
+        Object.entries(apiParams).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            queryParams.append(key, value.toString());
+          }
+        });
+
+        // Add page and limit if not present
+        if (!apiParams.page) {
+          queryParams.append("page", "1");
+        }
+
+        if (!apiParams.limit) {
+          queryParams.append("limit", "20");
+        }
+
+        // Make API request
+        const response = await fetch(
+          `${
+            process.env.NEXT_PUBLIC_API_URL
+          }/products?${queryParams.toString()}`
+        );
+        const data = await response.json();
+
+        // Log for debugging
+        console.log("Client-side fetch response:", data);
+
+        // Check for the correct response format
+        if (data && data.data) {
+          // Handle the NestJS standard response format
+          const items = data.data.items || [];
+          setModels(items);
+          setCount(data.data.meta?.totalItems || 0);
+
+          // If we have no items, ensure we show the empty state
+          if (items.length === 0) {
+            console.log("No products found in API response");
+          }
+
+          setCurrentApiParams(apiParams);
+        } else if (data && data.results) {
+          // Handle the old response format for backward compatibility
+          setModels(data.results || []);
+          setCount(data.total || data.results?.length || 0);
+          setCurrentApiParams(apiParams);
+        } else {
+          // If no valid data format is found, set empty models
+          console.log("No valid data format found in API response");
+          setModels([]);
+          setCount(0);
+          setCurrentApiParams(apiParams);
+        }
+      } catch (error) {
+        console.error("Error fetching models:", error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [currentApiParams]
+  );
+
+  // Handle filter changes
+  const handleFilterChange = (
+    _filters: unknown,
+    apiParams: ApiFilterParams
+  ) => {
+    if (apiParams) {
+      fetchModels(apiParams);
+    }
+  };
 
   // Initialize filters state
   // We're tracking the state but not directly using it in the render
@@ -56,17 +165,58 @@ export default function ClientSideModelsPage({
     setShowFilters(!showFilters);
   };
 
+  // Track initial render
+  const isInitialRender = useCallback(() => {
+    const ref = { current: true };
+    return () => {
+      if (ref.current) {
+        ref.current = false;
+        return true;
+      }
+      return false;
+    };
+  }, [])();
+
+  // Effect to fetch models when URL parameters change
+  useEffect(() => {
+    // Skip on initial render since we already have initialModels
+    if (isInitialRender()) {
+      return;
+    }
+
+    // Extract filter parameters from URL
+    const params: ApiFilterParams = {};
+
+    // Get all search parameters
+    searchParams.forEach((value, key) => {
+      // Skip pagination parameters as they're handled separately
+      if (key !== "page" && key !== "limit") {
+        (params as Record<string, string>)[key] = value;
+      }
+    });
+
+    // Add pagination parameters
+    params.page = parseInt(searchParams.get("page") || "1", 10);
+    params.limit = 20; // Default limit
+
+    // Fetch models with the extracted parameters
+    if (Object.keys(params).length > 0) {
+      fetchModels(params);
+    }
+  }, [searchParams, fetchModels, isInitialRender]);
+
   return (
     <div className="min-h-screen bg-gray-50 container mx-auto max-w-7xl">
       <div className="flex">
         {/* Filter Sidebar */}
         {showFilters && (
-          <div className="w-80 flex-shrink-0">
+          <div className="w-60 flex-shrink-0">
             <div className="sticky top-0 h-screen">
               <ClientSideModelFilter
                 initialCategories={categories}
                 initialCategoryParam={categoryParam}
                 initialItemParam={itemParam}
+                onFilterChange={handleFilterChange}
               />
             </div>
           </div>
@@ -125,7 +275,11 @@ export default function ClientSideModelsPage({
                 </div>
               }
             >
-              {models.length > 0 ? (
+              {loading ? (
+                <div className="flex items-center justify-center py-20">
+                  <Loading variant="spinner" size="lg" />
+                </div>
+              ) : models.length > 0 ? (
                 <>
                   {viewMode === "grid" ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
@@ -219,12 +373,12 @@ export default function ClientSideModelsPage({
               )}
             </Suspense>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
+            {/* Pagination - only show if we have pages to display */}
+            {totalPages > 0 && models.length > 0 && (
               <div className="mt-8 flex justify-center">
                 <Pagination
                   currentPage={currentPage}
-                  totalPages={totalPages}
+                  totalPages={totalPages || 1} /* Ensure minimum of 1 page */
                   currentPageHref={(page) =>
                     `?page=${page}${
                       categoryParam ? `&category=${categoryParam}` : ""
