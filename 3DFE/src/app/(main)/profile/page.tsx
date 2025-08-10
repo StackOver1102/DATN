@@ -834,7 +834,7 @@ function ProfilePageContent({
                           No purchase history
                         </h3>
                         <p className="text-gray-500 mt-2">
-                          You haven't made any purchases yet.
+                          You haven&apos;t made any purchases yet.
                         </p>
                         <Button
                           className="mt-4 text-yellow-400"
@@ -949,7 +949,7 @@ function ProfilePageContent({
                           No transaction history
                         </h3>
                         <p className="text-gray-500 mt-2">
-                          You haven't made any transactions yet.
+                          You haven&apos;t made any transactions yet.
                         </p>
                         <div className="flex gap-3 justify-center mt-4">
                           <Button

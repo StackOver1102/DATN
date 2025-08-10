@@ -6,10 +6,10 @@ import Link from "next/link";
 import { Product } from "@/interface/product";
 import { categoryApi } from "@/lib/api";
 
-interface CategoryItem {
-  _id: string;
-  name: string;
-}
+// interface CategoryItem {
+//   _id: string;
+//   name: string;
+// }
 
 interface CategoryResponse {
   _id: string;

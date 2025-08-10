@@ -76,7 +76,7 @@ export default function ProductDetailPage() {
   const { profile } = useAppSelector((state) => state.user);
 
   // Use the useFetchData hook to fetch the product
-  const { data: product, isLoading: isLoadingProduct } = useFetchData<Product>(
+  const { data: product} = useFetchData<Product>(
     `products/${id}`,
     ["product", id]
   );

@@ -448,24 +448,24 @@ export default function ModelFilter({
     updateUrlWithFilters(apiParams);
   };
 
-  const handleFormatChange = (formatId: string) => {
-    const newFormats = filters.formats.includes(formatId)
-      ? filters.formats.filter((id) => id !== formatId)
-      : [...filters.formats, formatId];
+  // const handleFormatChange = (formatId: string) => {
+  //   const newFormats = filters.formats.includes(formatId)
+  //     ? filters.formats.filter((id) => id !== formatId)
+  //     : [...filters.formats, formatId];
 
-    const newFilters = { ...filters, formats: newFormats };
-    setFilters(newFilters);
-    const apiParams = convertFiltersToApiParams(newFilters);
+  //   const newFilters = { ...filters, formats: newFormats };
+  //   setFilters(newFilters);
+  //   const apiParams = convertFiltersToApiParams(newFilters);
 
-    // Prevent duplicate API calls
-    const updateKey = JSON.stringify(apiParams);
-    if (lastFilterUpdate.current !== updateKey) {
-      lastFilterUpdate.current = updateKey;
-      onFilterChange(newFilters, apiParams);
-    }
+  //   // Prevent duplicate API calls
+  //   const updateKey = JSON.stringify(apiParams);
+  //   if (lastFilterUpdate.current !== updateKey) {
+  //     lastFilterUpdate.current = updateKey;
+  //     onFilterChange(newFilters, apiParams);
+  //   }
 
-    updateUrlWithFilters(apiParams);
-  };
+  //   updateUrlWithFilters(apiParams);
+  // };
 
   const handleRenderEngineChange = (engineId: string) => {
     const newEngines = filters.renderEngine.includes(engineId)
