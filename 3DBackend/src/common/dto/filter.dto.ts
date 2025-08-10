@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 import { PaginationDto } from './pagination.dto';
 
 export class FilterDto extends PaginationDto {
@@ -47,4 +47,53 @@ export class FilterDto extends PaginationDto {
   @IsOptional()
   @IsString()
   sortDirection?: 'asc' | 'desc' = 'desc';
+
+  @ApiPropertyOptional({
+    description: 'Filter by price',
+  })
+  @IsOptional()
+  @IsNumber()
+  price?: number;
+
+  @ApiPropertyOptional({
+    description: 'Filter by discount',
+  })
+  @IsOptional()
+  @IsNumber()
+  discount?: number;
+
+  @ApiPropertyOptional({
+    description: 'Filter by style',
+  })
+  @IsOptional()
+  @IsString()
+  style?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by materials',
+  })
+  @IsOptional()
+  @IsString()
+  materials?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by render',
+  })
+  @IsOptional()
+  @IsString()
+  render?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by form',
+  })
+  @IsOptional()
+  @IsString()
+  form?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by color',
+  })
+  @IsOptional()
+  @IsString()
+  color?: string;
 }

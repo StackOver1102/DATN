@@ -36,6 +36,14 @@ export class FilterService {
       categoryPath,
       sortBy,
       sortDirection = 'desc',
+      // Extract additional filter fields
+      style,
+      materials,
+      render,
+      form,
+      color,
+      price,
+      discount,
     } = filterDto;
     const skip = (page - 1) * limit;
 
@@ -44,6 +52,7 @@ export class FilterService {
     const orConditions: Record<string, any>[] = [];
     const andConditions: Record<string, any>[] = [];
 
+    console.log('searchFields', searchFields);
     // Add search conditions if provided
     if (search && searchFields.length > 0) {
       const searchRegex = new RegExp(search, 'i');
@@ -71,6 +80,42 @@ export class FilterService {
       andConditions.push({ categoryPath: categoryPathRegex });
     }
 
+    // Process additional filter fields
+    // For text fields, use regex for case-insensitive partial matching
+    if (style) {
+      const styleRegex = new RegExp(style, 'i');
+      andConditions.push({ style: styleRegex });
+    }
+
+    if (materials) {
+      const materialsRegex = new RegExp(materials, 'i');
+      andConditions.push({ materials: materialsRegex });
+    }
+
+    if (render) {
+      const renderRegex = new RegExp(render, 'i');
+      andConditions.push({ render: renderRegex });
+    }
+
+    if (form) {
+      const formRegex = new RegExp(form, 'i');
+      andConditions.push({ form: formRegex });
+    }
+
+    if (color) {
+      const colorRegex = new RegExp(color, 'i');
+      andConditions.push({ color: colorRegex });
+    }
+
+    // For numeric fields, use exact matching
+    if (price !== undefined) {
+      andConditions.push({ price });
+    }
+
+    if (discount !== undefined) {
+      andConditions.push({ discount });
+    }
+
     // Kết hợp các điều kiện AND và OR
     if (orConditions.length > 0) {
       query.$or = orConditions;
@@ -92,6 +137,7 @@ export class FilterService {
       ? { [sortBy]: sortDirection === 'asc' ? 1 : -1 }
       : { createdAt: -1 };
 
+    console.log('query', query);
     // Execute queries
     let findQuery = model.find(query).sort(sort).skip(skip).limit(limit);
 

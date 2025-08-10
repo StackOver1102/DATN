@@ -266,11 +266,17 @@ export class ProductsService {
   async findAllWithFilters(
     filterDto: FilterDto,
   ): Promise<PaginatedResult<ProductDocument>> {
+    console.log('filterDto', filterDto);
     return this.filterService.applyFilters(this.productModel, filterDto, {}, [
       'name',
       'description',
       'categoryName',
       'categoryPath',
+      'style',
+      'materials',
+      'render',
+      'form',
+      'color',
     ]);
   }
 

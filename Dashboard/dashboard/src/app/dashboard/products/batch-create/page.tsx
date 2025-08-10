@@ -962,6 +962,8 @@ export default function BatchCreateProductPage() {
                               src={files[index]!.preview}
                               alt="Preview"
                               className="w-full h-48 object-contain"
+                              width={100}
+                              height={100}
                             />
                           </div>
                           <div className="absolute top-2 right-2 flex gap-2">

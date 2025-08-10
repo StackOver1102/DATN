@@ -1,70 +1,70 @@
 services:
-  backend:
-    build:
-      context: ./3DBackend
-      dockerfile: Dockerfile.dev
-    container_name: web3d-backend-dev
-    ports:
-      - "5000:5000"
-    volumes:
-      - ./3DBackend:/app
-      - /app/node_modules
-    restart: unless-stopped
-    command: npm run start:dev
-    env_file:
-      - ./3DBackend/.env
-    depends_on:
-      - mongodb
-    networks:
-      - web3d-network
+  # backend:
+  #   build:
+  #     context: ./3DBackend
+  #     dockerfile: Dockerfile.dev
+  #   container_name: web3d-backend-dev
+  #   ports:
+  #     - "5000:5000"
+  #   volumes:
+  #     - ./3DBackend:/app
+  #     - /app/node_modules
+  #   restart: unless-stopped
+  #   command: npm run start:dev
+  #   env_file:
+  #     - ./3DBackend/.env
+  #   depends_on:
+  #     - mongodb
+  #   networks:
+  #     - web3d-network
 
-  frontend:
-    build:
-      context: ./3DFE
-      dockerfile: Dockerfile.dev
-    container_name: web3d-frontend-dev
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./3DFE:/app
-      - /app/node_modules
-    depends_on:
-      - backend
-    restart: unless-stopped
-    command: npm run dev
-    env_file:
-      - ./3DFE/.env
-    networks:
-      - web3d-network
+  # frontend:
+  #   build:
+  #     context: ./3DFE
+  #     dockerfile: Dockerfile.dev
+  #   container_name: web3d-frontend-dev
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - ./3DFE:/app
+  #     - /app/node_modules
+  #   depends_on:
+  #     - backend
+  #   restart: unless-stopped
+  #   command: npm run dev
+  #   env_file:
+  #     - ./3DFE/.env
+  #   networks:
+  #     - web3d-network
 
-  dashboard:
-    build:
-      context: ./Dashboard/dashboard
-      dockerfile: Dockerfile.dev
-    container_name: web3d-dashboard-dev
-    ports:
-      - "4000:4000"
-    environment:
-      - NODE_ENV=development
-      - NEXT_PUBLIC_API_URL=http://localhost:5000
-      - PORT=4000
-    volumes:
-      - ./Dashboard/dashboard:/app
-      - /app/node_modules
-    depends_on:
-      - backend
-    restart: unless-stopped
-    command: npm run dev
-    env_file:
-      - ./Dashboard/dashboard/.env
-    networks:
-      - web3d-network
+  # dashboard:
+  #   build:
+  #     context: ./Dashboard/dashboard
+  #     dockerfile: Dockerfile.dev
+  #   container_name: web3d-dashboard-dev
+  #   ports:
+  #     - "4000:4000"
+  #   environment:
+  #     - NODE_ENV=development
+  #     - NEXT_PUBLIC_API_URL=http://localhost:5000
+  #     - PORT=4000
+  #   volumes:
+  #     - ./Dashboard/dashboard:/app
+  #     - /app/node_modules
+  #   depends_on:
+  #     - backend
+  #   restart: unless-stopped
+  #   command: npm run dev
+  #   env_file:
+  #     - ./Dashboard/dashboard/.env
+  #   networks:
+  #     - web3d-network
 
   mongodb:
     image: mongo:latest
     container_name: web3d-mongodb
     ports:
-      - "27017:27017"
+      - "27018:27017"
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongo_user
       - MONGO_INITDB_ROOT_PASSWORD=mongo_password
