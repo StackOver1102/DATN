@@ -125,8 +125,8 @@ export class SupportController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  update(@Param('id') id: string, @Body() updateSupportDto: UpdateSupportDto) {
-    return this.supportService.update(id, updateSupportDto);
+  update(@Param('id') id: string, @Body() updateSupportDto: UpdateSupportDto, @CurrentUser() user: UserWithId) {
+    return this.supportService.update(id, updateSupportDto, user._id);
   }
 
   @Post(':id/respond')
