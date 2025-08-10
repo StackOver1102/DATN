@@ -35,6 +35,8 @@ interface User {
   phone?: string;
   address?: string;
   avatar?: string;
+  password?: string;
+  
 }
 
 export default function CreateUserPage() {
@@ -48,7 +50,7 @@ export default function CreateUserPage() {
   }, []);
 
   // State for form
-  const [formData, setFormData] = useState<Partial<User>>({
+  const [formData, setFormData] = useState<Partial<User & { password?: string }>>({
     email: "",
     fullName: "",
     role: "user",
@@ -57,16 +59,17 @@ export default function CreateUserPage() {
     phone: "",
     address: "",
     avatar: "",
+    password: "",
   });
 
   // Create user mutation
   const { mutate: createUser, isPending: isCreating } = useApiMutation<
     { data: User },
-    Partial<User>
-  >("users", "/users", "post");
+    Partial<User & { password?: string }>
+  >("users", "/users/dashboard", "post");
 
   // Handle form change
-  const handleChange = (field: keyof User, value: unknown) => {
+  const handleChange = (field: keyof (User & { password?: string }), value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -87,7 +90,13 @@ export default function CreateUserPage() {
       return;
     }
 
-    createUser(formData, {
+    // Remove empty password field if not provided
+    const userData = { ...formData };
+    if (!userData.password) {
+      delete userData.password;
+    }
+    
+    createUser(userData, {
       onSuccess: () => {
         userToasts.created();
         router.push("/dashboard/users");
@@ -290,11 +299,11 @@ export default function CreateUserPage() {
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Để trống để tạo mật khẩu mặc định"
-                    disabled
+                    placeholder="Nhập mật khẩu hoặc để trống để tạo mật khẩu mặc định"
+                    onChange={(e) => handleChange("password", e.target.value)}
                   />
                   <p className="text-sm text-muted-foreground">
-                    Mật khẩu mặc định sẽ được gửi qua email
+                    Nếu để trống, hệ thống sẽ tạo mật khẩu mặc định và gửi qua email
                   </p>
                 </div>
 

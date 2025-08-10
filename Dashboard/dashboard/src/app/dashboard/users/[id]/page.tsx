@@ -91,8 +91,10 @@ export default function EditUserPage() {
   const { mutate: updateUser, isPending: isUpdating } = useApiMutation<
     { data: User },
     Partial<User>
-  >("users", `/users/${id}`, "put");
+  >("users", `/users/admin/${id}`, "patch");
 
+
+    console.log("id", id)
   // Handle form change
   const handleChange = (field: keyof User, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));

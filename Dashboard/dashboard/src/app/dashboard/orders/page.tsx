@@ -35,6 +35,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useState, Suspense } from "react";
 import { orderToasts } from "@/lib/toast";
 import { PageLoading, Loading } from "@/components/ui/loading";
+import { User } from "../users/page";
+import Link from "next/link";
+import { Product } from "@/interface/product";
 
 interface Order {
   _id: string;
@@ -137,25 +140,40 @@ function OrdersPageContent() {
       ),
     },
     {
-      accessorKey: "userName",
+      accessorKey: "userId",
       header: "Khách hàng",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <IconShoppingCart className="h-4 w-4 text-muted-foreground" />
-          <span className="font-medium">{row.getValue("userName")}</span>
-        </div>
-      ),
+      cell: ({ row }) => {
+        const userId = row.getValue("userId") as User;
+        const userName = userId.fullName || userId.email;
+        return (
+          <div className="flex items-center gap-2">
+            <Link href={`/dashboard/users/${userId._id}`} className="hover:underline text-blue-500">
+              <span className="font-medium">{userName}</span>
+            </Link>
+          </div>
+        );
+      },
     },
     {
-      accessorKey: "productName",
+      accessorKey: "productId",
       header: "Sản phẩm",
-      cell: ({ row }) => <div>{row.getValue("productName")}</div>,
+      cell: ({ row }) => {
+        const productId = row.getValue("productId") as Product;
+        const productName = productId.name;
+        return (
+          <div className="flex items-center gap-2">
+            <Link href={`/dashboard/products/${productId._id}`} className="hover:underline text-blue-500">
+              <span className="font-medium">{productName}</span>
+            </Link>
+          </div>
+        );
+      },
     },
     {
-      accessorKey: "amount",
+      accessorKey: "totalAmount",
       header: "Giá trị",
       cell: ({ row }) => {
-        const amount = parseFloat(row.getValue("amount"));
+        const amount = parseFloat(row.getValue("totalAmount"));
         return (
           <div className="font-mono font-semibold">
             {amount.toLocaleString("vi-VN")} coin
@@ -301,7 +319,7 @@ function OrdersPageContent() {
             <DataTable
               columns={columns}
               data={data?.data || []}
-              searchKey="userName"
+              searchKey="userId"
               searchPlaceholder="Tìm kiếm đơn hàng..."
               filters={[
                 {

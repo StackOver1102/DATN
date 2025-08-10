@@ -42,6 +42,9 @@ export class SupportRequest {
 
   @Prop({ type: Types.ObjectId, ref: 'User' })
   userId?: Types.ObjectId;
+
+  @Prop()
+  adminResponse?: string;
 }
 
 export const SupportRequestSchema =

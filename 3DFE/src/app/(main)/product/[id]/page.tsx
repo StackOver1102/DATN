@@ -81,8 +81,6 @@ export default function ProductDetailPage() {
     ["product", id]
   );
 
-  console.log("product", product);
-  console.log("id", id);
   // Use the useFetchData hook to fetch similar products
   const { data: similarProductsData, isLoading: isLoadingSimilar } =
     useFetchData<Product[]>(

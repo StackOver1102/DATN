@@ -85,11 +85,11 @@ export class OrdersService {
   }
 
   async findAll(): Promise<Order[]> {
-    return this.orderModel.find().exec();
+    return this.orderModel.find().populate('productId userId', '-password').exec();
   }
 
   async findOne(id: string): Promise<Order> {
-    const order = await this.orderModel.findById(id).exec();
+    const order = await this.orderModel.findById(id).populate('productId userId', '-password').exec();
     if (!order) {
       throw new NotFoundException(`Không tìm thấy đơn hàng với ID ${id}`);
     }

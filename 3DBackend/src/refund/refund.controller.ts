@@ -18,7 +18,7 @@ import { UserRole } from 'src/enum/user.enum';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { UserPayload } from 'src/auth/types';
 
-@Controller('refund')
+@Controller('refunds')
 export class RefundController {
   constructor(private readonly refundService: RefundService) {}
 

@@ -34,6 +34,7 @@ interface UserWithId {
 
 interface FileWithBuffer extends Express.Multer.File {
   buffer: Buffer;
+  key: string;
 }
 
 @Controller('support')
@@ -50,20 +51,14 @@ export class SupportController {
     @Body() createSupportDto: CreateSupportDto,
     @UploadedFiles() files?: FileWithBuffer[],
   ) {
+    console.log(files)
     // Upload files if any
     let attachments: string[] = [];
     if (files && files.length > 0) {
-      attachments = await Promise.all(
-        files.map(async (file) => {
-          const uploadResult = await this.uploadService.uploadFile(
-            file.buffer,
-            file.originalname,
-            file.mimetype,
-            'support',
-          );
-          return uploadResult.url;
-        }),
-      );
+      attachments = files.map((file: FileWithBuffer) => {
+        const url = this.uploadService.getFileUrl(file.key);
+        return url;
+      });
     }
 
     return this.supportService.create({

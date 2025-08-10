@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNumber, IsOptional, IsString } from 'class-validator';
 import { PaginationDto } from './pagination.dto';
+import { Transform } from 'class-transformer';
 
 export class FilterDto extends PaginationDto {
   @ApiPropertyOptional({
@@ -9,6 +10,14 @@ export class FilterDto extends PaginationDto {
   @IsOptional()
   @IsString()
   search?: string;
+  
+  @ApiPropertyOptional({
+    description: 'Quick search term (alias for search)',
+  })
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) => value)
+  q?: string;
 
   @ApiPropertyOptional({
     description: 'Search term for categoryPath',

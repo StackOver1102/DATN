@@ -13,6 +13,8 @@ import {
   IconSearch,
   IconSettings,
   IconUsers,
+  IconCoin,
+  IconFlag,
 } from "@tabler/icons-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -64,6 +66,16 @@ const data = {
       title: "Transactions",
       url: "/dashboard/transactions",
       icon: IconChartBar,
+    },
+    {
+      title: "Refunds",
+      url: "/dashboard/refunds",
+      icon: IconCoin,
+    },
+    {
+      title: "Support",
+      url: "/dashboard/support",
+      icon: IconHelp,
     },
   ],
   navClouds: [
@@ -117,6 +129,44 @@ const data = {
         },
       ],
     },
+    {
+      title: "Refunds",
+      icon: IconCoin,
+      url: "/dashboard/refunds",
+      items: [
+        {
+          title: "All Refunds",
+          url: "/dashboard/refunds",
+        },
+        {
+          title: "Pending Refunds",
+          url: "/dashboard/refunds?status=pending",
+        },
+        {
+          title: "Completed Refunds",
+          url: "/dashboard/refunds?status=completed",
+        },
+      ],
+    },
+    {
+      title: "Support",
+      icon: IconHelp,
+      url: "/dashboard/support",
+      items: [
+        {
+          title: "All Support",
+          url: "/dashboard/support",
+        },
+        {
+          title: "Pending Support",
+          url: "/dashboard/support?status=pending",
+        },
+        {
+          title: "Resolved Support",
+          url: "/dashboard/support?status=resolved",
+        },
+      ],
+    },
   ],
   navSecondary: [
     {
@@ -124,11 +174,7 @@ const data = {
       url: "/dashboard/settings",
       icon: IconSettings,
     },
-    {
-      title: "Support",
-      url: "/dashboard/support",
-      icon: IconHelp,
-    },
+    // Removed Support from here as it's now in the main nav
     {
       title: "Search",
       url: "/dashboard/search",
@@ -136,11 +182,16 @@ const data = {
     },
   ],
   documents: [
-    // {
-    //   name: "Refunds",
-    //   url: "/dashboard/refunds",
-    //   icon: IconReport,
-    // },
+    {
+      name: "Refunds",
+      url: "/dashboard/refunds",
+      icon: IconCoin,
+    },
+    {
+      name: "Support",
+      url: "/dashboard/support",
+      icon: IconHelp,
+    },
     // {
     //   name: "Comments",
     //   url: "/dashboard/comments",
@@ -197,14 +248,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     });
 
     // Check documents
-    // data.documents.forEach((item, index) => {
-    //   if (isPathActive(item.url, pathname)) {
-    //     const specificity = item.url.length;
-    //     if (specificity > bestMatch.specificity) {
-    //       bestMatch = { type: "documents", index, url: item.url, specificity };
-    //     }
-    //   }
-    // });
+    data.documents.forEach((item, index) => {
+      if (isPathActive(item.url, pathname)) {
+        const specificity = item.url.length;
+        if (specificity > bestMatch.specificity) {
+          bestMatch = { type: "documents", index, url: item.url, specificity };
+        }
+      }
+    });
 
     // Check secondary navigation
     data.navSecondary.forEach((item, index) => {
@@ -231,10 +282,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // For now, we're using the flat navigation structure
 
   // Update documents items with isActive property
-  // const documentsWithActive = data.documents.map((item, index) => ({
-  //   ...item,
-  //   isActive: bestMatch.type === "documents" && bestMatch.index === index,
-  // }));
+  const documentsWithActive = data.documents.map((item, index) => ({
+    ...item,
+    isActive: bestMatch.type === "documents" && bestMatch.index === index,
+  }));
 
   // Update secondary nav items with isActive property
   const secondaryWithActive = data.navSecondary.map((item, index) => ({
@@ -261,7 +312,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navMainWithActive} />
-        {/* <NavDocuments items={documentsWithActive} /> */}
         <NavSecondary items={secondaryWithActive} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>

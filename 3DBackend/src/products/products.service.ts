@@ -267,6 +267,12 @@ export class ProductsService {
     filterDto: FilterDto,
   ): Promise<PaginatedResult<ProductDocument>> {
     console.log('filterDto', filterDto);
+    
+    // Log if q parameter is being used
+    if (filterDto.q) {
+      console.log('Using q parameter for search:', filterDto.q);
+    }
+    
     return this.filterService.applyFilters(this.productModel, filterDto, {}, [
       'name',
       'description',

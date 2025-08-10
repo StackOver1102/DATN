@@ -3,8 +3,11 @@ import {
   Injectable,
   NotFoundException,
   OnModuleInit,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
+import { CreateDashboardUserDto } from './dto/create-dashboard-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { UserDocument } from './types/user.types';
@@ -12,10 +15,15 @@ import { Model } from 'mongoose';
 import { User } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { UserRole } from 'src/enum/user.enum';
+import { randomBytes } from 'crypto';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class UsersService implements OnModuleInit {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @Inject(forwardRef(() => MailService)) private mailService: MailService,
+  ) {}
 
   async onModuleInit() {
     await this.createAdminIfNotExists();
@@ -44,7 +52,7 @@ export class UsersService implements OnModuleInit {
   }
 
   async create(createUserDto: CreateUserDto): Promise<UserDocument> {
-    const { email } = createUserDto;
+    const { email, password } = createUserDto;
 
     const checkUser = await this.userModel.findOne({ email });
 
@@ -52,8 +60,61 @@ export class UsersService implements OnModuleInit {
       throw new BadRequestException('User already exists');
     }
 
+    // Hash the password before saving
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      createUserDto.password = hashedPassword;
+    }
+
     const user = await this.userModel.create(createUserDto);
     return user;
+  }
+  
+  /**
+   * Create a user from dashboard with optional password
+   * If password is not provided, a random one will be generated
+   */
+  async createFromDashboard(createDashboardUserDto: CreateDashboardUserDto): Promise<{ user: UserDocument; generatedPassword?: string }> {
+    const { email, password, sendWelcomeEmail = true } = createDashboardUserDto;
+
+    const checkUser = await this.userModel.findOne({ email });
+
+    if (checkUser) {
+      throw new BadRequestException('User already exists');
+    }
+
+    let generatedPassword: string | undefined;
+    const userData = { ...createDashboardUserDto };
+    
+    // If no password provided, generate a random one
+    if (!password) {
+      generatedPassword = randomBytes(8).toString('hex');
+      userData.password = await bcrypt.hash(generatedPassword, 10);
+    } else {
+      // Hash the provided password
+      userData.password = await bcrypt.hash(password, 10);
+    }
+
+    // Remove sendWelcomeEmail field as it's not part of the User entity
+    delete userData.sendWelcomeEmail;
+
+    const user = await this.userModel.create(userData);
+    
+    // Send email with credentials to the user if requested
+    if (sendWelcomeEmail) {
+      try {
+        await this.mailService.sendNewUserCredentials(user, generatedPassword);
+        console.log(`Credentials email sent to ${email}`);
+      } catch (error) {
+        console.error(`Failed to send credentials email to ${email}:`, error);
+        // Don't fail the user creation if email sending fails
+      }
+    }
+    
+    return {
+      user,
+      generatedPassword,
+    };
   }
 
   async findByEmail(email: string): Promise<UserDocument | null> {
@@ -80,14 +141,33 @@ export class UsersService implements OnModuleInit {
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
+    // Make sure user can't update role or balance through this method
+    const { role, balance, ...updateData } = updateUserDto as any;
+    
     const updatedUser = await this.userModel.findByIdAndUpdate(
       id,
-      updateUserDto,
+      updateData,
       { new: true },
     );
+    
     if (!updatedUser) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
+    
+    return updatedUser;
+  }
+  
+  async adminUpdate(id: string, adminUpdateUserDto: any) {
+    const updatedUser = await this.userModel.findByIdAndUpdate(
+      id,
+      adminUpdateUserDto,
+      { new: true },
+    );
+    
+    if (!updatedUser) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    
     return updatedUser;
   }
 

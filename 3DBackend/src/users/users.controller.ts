@@ -7,11 +7,15 @@ import {
   Param,
   Delete,
   UseGuards,
+  Put,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { CreateDashboardUserDto } from './dto/create-dashboard-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { AdminUpdateUserDto } from './dto/admin-update-user.dto';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../enum/user.enum';
@@ -29,6 +33,22 @@ export class UsersController {
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
+  }
+  
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @Post('/dashboard')
+  async createFromDashboard(@Body() createDashboardUserDto: CreateDashboardUserDto) {
+    const result = await this.usersService.createFromDashboard(createDashboardUserDto);
+    
+    // Don't return the generated password in the response for security
+    // Frontend should handle displaying it to the admin
+    return {
+      user: result.user,
+      passwordGenerated: !!result.generatedPassword,
+      generatedPassword: result.generatedPassword,
+    };
   }
 
   @UseGuards(RolesGuard)
@@ -65,15 +85,29 @@ export class UsersController {
     return this.usersService.findOne(id);
   }
 
-  @UseGuards(RolesGuard)
-  // @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
-  @Patch()
-  update(
+  @Patch('/:id')
+  updateProfile(
     @Body() updateUserDto: UpdateUserDto,
     @CurrentUser() user: UserPayload,
   ) {
     return this.usersService.update(user.userId, updateUserDto);
+  }
+  
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @Patch('/admin/:id')
+  adminUpdate(
+    @Param('id') id: string,
+    @Body() adminUpdateUserDto: AdminUpdateUserDto,
+    @CurrentUser() user: UserPayload,
+  ) {
+    // Prevent admin from changing their own role
+    if (id === user.userId && adminUpdateUserDto.role && adminUpdateUserDto.role !== UserRole.ADMIN) {
+      throw new ForbiddenException('Admins cannot downgrade their own role');
+    }
+    return this.usersService.adminUpdate(id, adminUpdateUserDto);
   }
 
   @UseGuards(RolesGuard)

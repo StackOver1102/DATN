@@ -170,7 +170,82 @@ export const transactionApi = {
     apiRequest(`transactions/code/${code}`, 'GET', undefined, token),
 };
 
-// Add more API function groups as needed for your application 
+/**
+ * Support-related API functions
+ */
+export interface CreateSupportRequest {
+  name: string;
+  phone: string;
+  email: string;
+  message?: string;
+  attachments?: string[];
+  [key: string]: unknown;
+}
+
+export const supportApi = {
+  create: (data: CreateSupportRequest) => 
+    apiRequest('support', 'POST', data),
+  
+  createWithAttachments: async (data: CreateSupportRequest, files: File[]) => {
+    try {
+      // Create FormData for file upload
+      const formData = new FormData();
+      
+      // Add text fields
+      formData.append('name', data.name);
+      formData.append('phone', data.phone);
+      formData.append('email', data.email);
+      if (data.message) formData.append('message', data.message);
+      
+      // Add files
+      files.forEach(file => {
+        formData.append('attachments', file);
+      });
+      
+      // Custom fetch for FormData
+      const response = await fetch(`${API_BASE_URL}/support`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+      
+      const responseData = await response.json();
+      
+      if (!response.ok) {
+        const errorMessage = responseData.message || 
+          (Array.isArray(responseData.message) ? responseData.message[0] : 'Request failed');
+        
+        return {
+          success: false,
+          message: errorMessage,
+          data: null,
+          timestamp: Date.now(),
+          statusCode: response.status
+        };
+      }
+      
+      return {
+        success: true,
+        message: 'Support request submitted successfully',
+        data: responseData,
+        timestamp: Date.now(),
+        statusCode: response.status
+      };
+    } catch (error) {
+      console.error('Support request error:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Network error',
+        data: null,
+        timestamp: Date.now(),
+        statusCode: 500
+      };
+    }
+  },
+  
+  getUserRequests: (token: string) => 
+    apiRequest('support/my-requests', 'GET', undefined, token),
+};
 
 /**
  * Product-related API functions

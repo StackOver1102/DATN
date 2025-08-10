@@ -11,7 +11,7 @@ export function useApiQuery<T>(key: string | string[], endpoint: string) {
 export function useApiMutation<T, R>(
   key: string | string[],
   endpoint: string,
-  method: "post" | "put" | "delete" = "post"
+  method: "post" | "put" | "delete" | "patch" = "post"
 ) {
   const queryClient = useQueryClient();
   
@@ -19,6 +19,9 @@ export function useApiMutation<T, R>(
     mutationFn: (data: R) => {
       if (method === "delete") {
         return api.delete(endpoint);
+      }
+      if (method === "patch") {
+        return api.patch(endpoint, data);
       }
       return method === "post" ? api.post(endpoint, data) : api.put(endpoint, data);
     },

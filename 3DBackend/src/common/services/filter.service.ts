@@ -31,6 +31,7 @@ export class FilterService {
       page = 1,
       limit = 10,
       search,
+      q,
       subSearch,
       categoryName,
       categoryPath,
@@ -45,6 +46,9 @@ export class FilterService {
       price,
       discount,
     } = filterDto;
+    
+    // Use q parameter as search if provided
+    const searchTerm = q || search;
     const skip = (page - 1) * limit;
 
     // Build the query
@@ -54,12 +58,12 @@ export class FilterService {
 
     console.log('searchFields', searchFields);
     // Add search conditions if provided
-    if (search && searchFields.length > 0) {
-      const searchRegex = new RegExp(search, 'i');
+    if (searchTerm && searchFields.length > 0) {
+      const searchRegex = new RegExp(searchTerm, 'i');
       const searchQuery = searchFields.map((field) => ({
         [field]: searchRegex,
       }));
-      // Thêm điều kiện tìm kiếm vào mảng OR
+      // Add search conditions to OR array
       orConditions.push(...searchQuery);
     }
 

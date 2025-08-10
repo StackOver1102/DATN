@@ -83,9 +83,10 @@ export class SupportService {
   async update(
     id: string,
     updateSupportDto: UpdateSupportDto,
+    updatedBy: string,
   ): Promise<SupportRequest> {
     const updatedSupportRequest = await this.supportRequestModel
-      .findByIdAndUpdate(id, updateSupportDto, { new: true })
+      .findByIdAndUpdate(id, { ...updateSupportDto, respondedBy: new Types.ObjectId(updatedBy) }, { new: true })
       .exec();
 
     if (!updatedSupportRequest) {

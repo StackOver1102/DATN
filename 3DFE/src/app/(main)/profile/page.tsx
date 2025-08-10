@@ -72,8 +72,8 @@ interface Payment {
 
 // Schema validation for user profile form
 const userProfileSchema = z.object({
-  fullName: z.string().min(2, "Tên phải có ít nhất 2 ký tự"),
-  email: z.string().email("Email không hợp lệ"),
+  fullName: z.string().min(2, "Name must have at least 2 characters"),
+  email: z.string().email("Invalid email address"),
   phone: z.string().optional(),
   address: z.string().optional(),
 });
@@ -81,14 +81,14 @@ const userProfileSchema = z.object({
 // Schema validation for password change form
 const passwordSchema = z
   .object({
-    oldPassword: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
-    newPassword: z.string().min(6, "Mật khẩu mới phải có ít nhất 6 ký tự"),
+    oldPassword: z.string().min(6, "Password must have at least 6 characters"),
+    newPassword: z.string().min(6, "New password must have at least 6 characters"),
     confirmPassword: z
       .string()
-      .min(6, "Xác nhận mật khẩu phải có ít nhất 6 ký tự"),
+      .min(6, "Confirm password must have at least 6 characters"),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Mật khẩu xác nhận không khớp",
+    message: "Passwords do not match",
     path: ["confirmPassword"],
   });
 
@@ -168,9 +168,9 @@ function ProfilePageContent({
   >(
     `orders/my-orders?page=${purchasesPage}&limit=${itemsPerPage}`,
     ["purchases", purchasesPage.toString()],
-    {
-      enabled: activeTab === "purchases",
-    }
+    // {
+    //   enabled: activeTab === "purchases",
+    // }
   );
 
   const { data: paymentsData, isLoading: isLoadingPayments } = useFetchData<
@@ -178,9 +178,9 @@ function ProfilePageContent({
   >(
     `transactions/my-transactions?page=${paymentsPage}&limit=${itemsPerPage}`,
     ["transactions", paymentsPage.toString()],
-    {
-      enabled: activeTab === "payments",
-    }
+    // {
+    //   enabled: activeTab === "payments",
+    // }
   );
 
   // Extract data from paginated responses
@@ -252,8 +252,15 @@ function ProfilePageContent({
           ? new Date(profile.createdAt).toISOString().split("T")[0]
           : new Date().toISOString().split("T")[0],
         balance: profile.balance || 0,
-        totalDownloads: profile.totalDownloads || 0,
+        totalDownloads: purchasesData?.items.length || 0,
       });
+
+      // if(purchasesData?.items.length) {
+      //   setUserData({
+      //     ...userData,
+      //     totalDownloads: purchasesData?.items.length || 0,
+      //   });
+      // }
 
       // Update form values
       setProfileValue("fullName", profile.fullName || "");
@@ -261,17 +268,17 @@ function ProfilePageContent({
       setProfileValue("phone", profile.phone || "");
       setProfileValue("address", profile.address || "");
     }
-  }, [profile, setProfileValue]);
+  }, [profile, setProfileValue, purchasesData]);
 
   const tabs = [
-    { id: "info" as TabType, label: "Thông tin cá nhân", icon: UserIcon },
-    { id: "password" as TabType, label: "Đổi mật khẩu", icon: Lock },
+    { id: "info" as TabType, label: "Personal Information", icon: UserIcon },
+    { id: "password" as TabType, label: "Change Password", icon: Lock },
     {
       id: "purchases" as TabType,
-      label: "Lịch sử mua hàng",
+      label: "Purchase History",
       icon: ShoppingBag,
     },
-    { id: "payments" as TabType, label: "Lịch sử nạp tiền", icon: CreditCard },
+    { id: "payments" as TabType, label: "Payment History", icon: CreditCard },
   ];
 
   // Update profile mutation
@@ -308,11 +315,11 @@ function ProfilePageContent({
           ...data,
         });
         setIsEditing(false);
-        toast.success("Thông tin đã được cập nhật thành công!");
+        toast.success("Information updated successfully!");
       }
     } catch (error) {
       toast.error(
-        `Có lỗi xảy ra khi cập nhật thông tin: ${
+        `An error occurred while updating information: ${
           error instanceof Error ? error.message : "Unknown error"
         }`
       );
@@ -327,7 +334,7 @@ function ProfilePageContent({
         newPassword: data.newPassword,
       });
       resetPassword();
-      toast.success("Mật khẩu đã được thay đổi thành công!");
+      toast.success("Password changed successfully!");
     } catch (error) {
       toast.error(
         `${error instanceof Error ? error.message : "Unknown error"}`
@@ -343,13 +350,13 @@ function ProfilePageContent({
 
   const handleRefundSubmit = async () => {
     if (!refundReason.trim()) {
-      alert("Vui lòng nhập lý do hoàn hàng!");
+      alert("Please enter a reason for the refund request!");
       return;
     }
 
     try {
       // Handle refund request submission
-      const response = await post(`refund`, {
+      const response = await post(`refunds`, {
         description: refundReason,
         orderId: selectedPurchase?._id,
       });
@@ -360,12 +367,12 @@ function ProfilePageContent({
         setSelectedPurchase(null);
         setRefundReason("");
         toast.success(
-          "Yêu cầu hoàn hàng đã được gửi! Chúng tôi sẽ xử lý trong vòng 24-48 giờ."
+          "Refund request submitted! We will process it within 24-48 hours."
         );
       }
     } catch (error) {
       console.error("Error submitting refund request:", error);
-      toast.error("Có lỗi xảy ra khi gửi yêu cầu hoàn hàng!");
+      toast.error("An error occurred while submitting the refund request!");
     }
   };
 
@@ -389,13 +396,13 @@ function ProfilePageContent({
     switch (status) {
       case "completed":
       case "success":
-        return "Hoàn thành";
+        return "Completed";
       case "pending":
-        return "Đang xử lý";
+        return "Processing";
       case "failed":
-        return "Thất bại";
+        return "Failed";
       case "refunded":
-        return "Hoàn tiền";
+        return "Refunded";
       default:
         return status;
     }
@@ -415,7 +422,7 @@ function ProfilePageContent({
   if (isLoadingPurchases || isLoadingPayments || isLoadingStore) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <Loading variant="spinner" size="lg" text="Đang tải thông tin..." />
+        <Loading variant="spinner" size="lg" text="Loading information..." />
       </div>
     );
   }
@@ -454,19 +461,19 @@ function ProfilePageContent({
                     <div className="text-2xl font-bold text-blue-600">
                       {formatCurrency(userData.balance)}
                     </div>
-                    <div className="text-sm text-gray-600">Số tiền còn lại</div>
+                    <div className="text-sm text-gray-600">Available Balance</div>
                   </div>
                   <div className="bg-green-50 rounded-lg p-4">
                     <div className="text-2xl font-bold text-green-600">
                       {userData.totalDownloads}
                     </div>
-                    <div className="text-sm text-gray-600">Lượt tải về</div>
+                    <div className="text-sm text-gray-600">Downloads</div>
                   </div>
                   <div className="bg-purple-50 rounded-lg p-4">
                     <div className="text-2xl font-bold text-purple-600">
                       {formatDate(userData.joinDate)}
                     </div>
-                    <div className="text-sm text-gray-600">Ngày tham gia</div>
+                    <div className="text-sm text-gray-600">Join Date</div>
                   </div>
                 </div>
               </div>
@@ -503,7 +510,7 @@ function ProfilePageContent({
                 <div className="space-y-6">
                   <div className="flex justify-between items-center">
                     <h2 className="text-2xl font-bold text-gray-900">
-                      Thông tin cá nhân
+                      Personal Information
                     </h2>
                     <Button
                       onClick={() =>
@@ -518,7 +525,7 @@ function ProfilePageContent({
                       ) : (
                         <Edit3 className="w-4 h-4" />
                       )}
-                      {isEditing ? "Lưu" : "Chỉnh sửa"}
+                      {isEditing ? "Save" : "Edit"}
                     </Button>
                   </div>
 
@@ -528,7 +535,7 @@ function ProfilePageContent({
                   >
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Họ và tên
+                        Full Name
                       </label>
                       <input
                         {...registerProfile("fullName")}
@@ -568,7 +575,7 @@ function ProfilePageContent({
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Số điện thoại
+                        Phone Number
                       </label>
                       <input
                         {...registerProfile("phone")}
@@ -588,7 +595,7 @@ function ProfilePageContent({
 
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Địa chỉ
+                        Address
                       </label>
                       <textarea
                         {...registerProfile("address")}
@@ -613,7 +620,7 @@ function ProfilePageContent({
               {activeTab === "password" && (
                 <div className="space-y-6 max-w-md">
                   <h2 className="text-2xl font-bold text-gray-900">
-                    Đổi mật khẩu
+                    Change Password
                   </h2>
 
                   <form
@@ -622,7 +629,7 @@ function ProfilePageContent({
                   >
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Mật khẩu hiện tại
+                        Current Password
                       </label>
                       <div className="relative">
                         <input
@@ -657,7 +664,7 @@ function ProfilePageContent({
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Mật khẩu mới
+                        New Password
                       </label>
                       <div className="relative">
                         <input
@@ -692,7 +699,7 @@ function ProfilePageContent({
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Xác nhận mật khẩu mới
+                        Confirm New Password
                       </label>
                       <div className="relative">
                         <input
@@ -728,7 +735,7 @@ function ProfilePageContent({
                     </div>
 
                     <Button type="submit" className="w-full text-yellow-400">
-                      Đổi mật khẩu
+                      Change Password
                     </Button>
                   </form>
                 </div>
@@ -737,7 +744,7 @@ function ProfilePageContent({
               {activeTab === "purchases" && (
                 <div className="space-y-6">
                   <h2 className="text-2xl font-bold text-gray-900">
-                    Lịch sử mua hàng
+                    Purchase History
                   </h2>
 
                   <div className="space-y-4">
@@ -801,7 +808,7 @@ function ProfilePageContent({
                                     className="flex items-center gap-2 text-yellow-400 bg-black"
                                   >
                                     <AlertTriangle className="w-4 h-4" />
-                                    Báo cáo
+                                    Report
                                   </Button>
                                 </>
                               )}
@@ -824,16 +831,16 @@ function ProfilePageContent({
                           <ShoppingBag className="w-12 h-12 mx-auto text-gray-400" />
                         </div>
                         <h3 className="text-lg font-medium text-gray-900">
-                          Chưa có lịch sử mua hàng
+                          No purchase history
                         </h3>
                         <p className="text-gray-500 mt-2">
-                          Bạn chưa thực hiện giao dịch mua hàng nào.
+                          You haven't made any purchases yet.
                         </p>
                         <Button
                           className="mt-4 text-yellow-400"
                           onClick={() => router.push("/models")}
                         >
-                          Khám phá sản phẩm
+                          Explore Products
                         </Button>
                       </div>
                     )}
@@ -844,7 +851,7 @@ function ProfilePageContent({
               {activeTab === "payments" && (
                 <div className="space-y-6">
                   <h2 className="text-2xl font-bold text-gray-900">
-                    Lịch sử nạp tiền
+                    Payment History
                   </h2>
 
                   <div className="space-y-4">
@@ -876,7 +883,7 @@ function ProfilePageContent({
                               <div>
                                 <h3 className="font-semibold text-gray-900">
                                   {payment.type === "payment"
-                                    ? "Thanh toán đơn hàng"
+                                    ? "Order Payment"
                                     : payment.description}
                                 </h3>
                                 <p className="text-sm text-gray-600">
@@ -887,12 +894,12 @@ function ProfilePageContent({
                                   payment.balanceBefore && (
                                     <div>
                                       <p className="text-xs text-gray-500">
-                                        Số dư trước giao dịch:{" "}
+                                        Balance before transaction:{" "}
                                         {formatCurrency(payment.balanceBefore)}
                                       </p>
 
                                       <p className="text-xs text-gray-500">
-                                        Số dư sau giao dịch:{" "}
+                                        Balance after transaction:{" "}
                                         {formatCurrency(payment.balanceAfter)}
                                       </p>
                                     </div>
@@ -939,23 +946,23 @@ function ProfilePageContent({
                           <CreditCard className="w-12 h-12 mx-auto text-gray-400" />
                         </div>
                         <h3 className="text-lg font-medium text-gray-900">
-                          Chưa có lịch sử giao dịch
+                          No transaction history
                         </h3>
                         <p className="text-gray-500 mt-2">
-                          Bạn chưa thực hiện giao dịch nào.
+                          You haven't made any transactions yet.
                         </p>
                         <div className="flex gap-3 justify-center mt-4">
                           <Button
                             className="text-yellow-400"
                             onClick={() => router.push("/deposit")}
                           >
-                            Nạp tiền
+                            Deposit
                           </Button>
                           <Button
                             className="text-yellow-400"
                             onClick={() => router.push("/models")}
                           >
-                            Mua sắm
+                            Shop
                           </Button>
                         </div>
                       </div>
@@ -980,7 +987,7 @@ function ProfilePageContent({
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
-                    Yêu cầu hoàn hàng
+                    Refund Request
                   </h3>
                   <p className="text-sm text-gray-500">
                     #{selectedPurchase._id}
@@ -1019,7 +1026,7 @@ function ProfilePageContent({
                     {formatCurrency(selectedPurchase.totalAmount)}
                   </p>
                   <p className="text-xs text-gray-500">
-                    Mua ngày: {formatDate(selectedPurchase.createdAt)}
+                    Purchase date: {formatDate(selectedPurchase.createdAt)}
                   </p>
                 </div>
               </div>
@@ -1028,17 +1035,17 @@ function ProfilePageContent({
             {/* Refund Reason */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Lý do hoàn hàng *
+                Reason for refund *
               </label>
               <textarea
                 value={refundReason}
                 onChange={(e) => setRefundReason(e.target.value)}
-                placeholder="Vui lòng mô tả lý do bạn muốn hoàn hàng..."
+                placeholder="Please describe why you want a refund..."
                 rows={4}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Chúng tôi sẽ xem xét yêu cầu của bạn trong vòng 24-48 giờ
+                We will review your request within 24-48 hours
               </p>
             </div>
 
@@ -1053,13 +1060,13 @@ function ProfilePageContent({
                 }}
                 className="flex-1"
               >
-                Hủy
+                Cancel
               </Button>
               <Button
                 onClick={handleRefundSubmit}
                 className="flex-1 bg-red-600 hover:bg-red-700"
               >
-                Gửi yêu cầu
+                Submit Request
               </Button>
             </div>
           </div>

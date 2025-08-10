@@ -32,7 +32,7 @@ export default function Header() {
     hasLoadedProfile,
     sessionLoaded,
   } = useAppSelector((state) => state.user);
-  // Xử lý đăng xuất
+  // Handle sign out
   const handleSignOut = async () => {
     setIsLoggingOut(true);
     try {
@@ -45,33 +45,34 @@ export default function Header() {
     }
   };
 
-  // Xử lý tìm kiếm
+  // Handle search
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       router.push(`/models?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery(""); // Clear the search input after submitting
     }
   };
 
-  // Lấy chữ cái đầu tiên của tên người dùng cho avatar fallback
+  // Get the first letter of the user's name for avatar fallback
   const getInitials = (name: string | null | undefined) => {
     if (!name) return "U";
     return name.charAt(0).toUpperCase();
   };
 
-  // Hiển thị loading toàn màn hình khi đang đăng xuất
+  // Display full screen loading when signing out
   if (isLoggingOut) {
     return (
       <Loading
         variant="spinner"
         size="sm"
-        text="Đang đăng xuất..."
+        text="Signing out..."
         fullScreen
       />
     );
   }
 
-  // Kiểm tra xem người dùng đã đăng nhập hay chưa
+  // Check if the user is authenticated
   const isAuthenticated = status === "authenticated" && session?.user;
 
   // Prevent flickering by showing consistent UI based on combined state
@@ -116,12 +117,12 @@ export default function Header() {
               >
                 Support
               </Link>
-              <Link
+              {/* <Link
                 href="/help"
                 className="text-sm hover:text-gray-300 transition-colors"
               >
                 Help
-              </Link>
+              </Link> */}
             </div>
 
             {/* Mobile menu button */}
@@ -192,14 +193,14 @@ export default function Header() {
                         </Avatar>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Tài khoản</DropdownMenuLabel>
+                        <DropdownMenuLabel>Account</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
                           <Link
                             href="/profile"
                             className="cursor-pointer w-full"
                           >
-                            Hồ sơ
+                            Profile
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
@@ -207,7 +208,7 @@ export default function Header() {
                             href="/settings"
                             className="cursor-pointer w-full"
                           >
-                            Cài đặt
+                            Settings
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
@@ -215,7 +216,7 @@ export default function Header() {
                           onClick={handleSignOut}
                           className="cursor-pointer"
                         >
-                          Đăng xuất
+                          Sign out
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -357,11 +358,11 @@ export default function Header() {
                       </div>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56">
-                      <DropdownMenuLabel>Tài khoản của bạn</DropdownMenuLabel>
+                      <DropdownMenuLabel>Your Account</DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
                         <Link href="/profile" className="cursor-pointer w-full">
-                          Hồ sơ cá nhân
+                          Personal Profile
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
@@ -369,7 +370,7 @@ export default function Header() {
                           href="/profile?tab=purchases"
                           className="cursor-pointer w-full"
                         >
-                          Lịch sử mua hàng
+                          Purchase History
                         </Link>
                       </DropdownMenuItem>
 
@@ -378,7 +379,7 @@ export default function Header() {
                         onClick={handleSignOut}
                         className="cursor-pointer text-red-500 focus:text-red-500"
                       >
-                        Đăng xuất
+                        Sign out
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

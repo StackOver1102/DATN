@@ -168,10 +168,10 @@ export default function TransactionsPage() {
       },
       cell: ({ row }: { row: { original: Transaction } }) => (
         <Link
-          href={`/dashboard/users/${row.original.userId._id}`}
+          href={`/dashboard/users/${row?.original?.userId?._id}`}
           className="text-blue-500 hover:underline"
         >
-          {row.original.userId.fullName || row.original.userId.email}
+          {row?.original?.userId?.fullName || row?.original?.userId?.email}
         </Link>
       ),
     },
@@ -587,12 +587,12 @@ export default function TransactionsPage() {
               variant="destructive"
               onClick={() => {
                 if (selectedTransaction) {
-                  deleteTransactionMutation.mutate(selectedTransaction._id);
+                  deleteTransactionMutation.mutate(selectedTransaction?._id);
                 }
               }}
-              disabled={deleteTransactionMutation.isPending}
+              disabled={deleteTransactionMutation?.isPending}
             >
-              {deleteTransactionMutation.isPending ? "Đang xóa..." : "Xóa"}
+              {deleteTransactionMutation?.isPending ? "Đang xóa..." : "Xóa"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -612,26 +612,26 @@ export default function TransactionsPage() {
               <div className="flex justify-between">
                 <span className="text-sm font-medium">Mã giao dịch:</span>
                 <span className="text-sm">
-                  {selectedTransaction.transactionCode}
+                  {selectedTransaction?.transactionCode}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm font-medium">Loại giao dịch:</span>
                 <span className="text-sm capitalize">
-                  {selectedTransaction.type}
+                  {selectedTransaction?.type}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm font-medium">Số tiền:</span>
                 <span className="text-sm">
-                  {formatNumber(selectedTransaction.amount)} coin
+                  {formatNumber(selectedTransaction?.amount)} coin
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm font-medium">Người dùng:</span>
                 <span className="text-sm">
-                  {selectedTransaction.userId.fullName ||
-                    selectedTransaction.userId.email}
+                  {selectedTransaction?.userId?.fullName ||
+                    selectedTransaction?.userId?.email}
                 </span>
               </div>
             </div>
@@ -648,12 +648,12 @@ export default function TransactionsPage() {
               className="bg-green-600 hover:bg-green-700"
               onClick={() => {
                 if (selectedTransaction) {
-                  approveTransactionMutation.mutate(selectedTransaction._id);
+                  approveTransactionMutation.mutate(selectedTransaction?._id);
                 }
               }}
-              disabled={approveTransactionMutation.isPending}
+              disabled={approveTransactionMutation?.isPending}
             >
-              {approveTransactionMutation.isPending
+              {approveTransactionMutation?.isPending
                 ? "Đang xử lý..."
                 : "Phê duyệt"}
             </Button>

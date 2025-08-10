@@ -20,6 +20,9 @@ import { UserRole } from 'src/enum/user.enum';
 import { UserPayload } from 'src/auth/types';
 import { FilterDto } from 'src/common/dto/filter.dto';
 import { PaginatedResult } from 'src/common/interfaces/pagination.interface';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('orders')
 @UseGuards(JwtAuthGuard)
@@ -36,6 +39,9 @@ export class OrdersController {
     return this.ordersService.create(createOrderDto, userId);
   }
 
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
   @Get()
   findAll(): Promise<Order[]> {
     return this.ordersService.findAll();

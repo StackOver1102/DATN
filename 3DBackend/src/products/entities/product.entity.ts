@@ -75,6 +75,9 @@ export class Product {
 
   @Prop({ type: String, select: false })
   urlDownload?: string;
+
+  @Prop({ type: String })
+  q?: string;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

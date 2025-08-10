@@ -200,4 +200,25 @@ export class MailService {
       },
     });
   }
+  
+  /**
+   * Send new user credentials to user created from dashboard
+   */
+  async sendNewUserCredentials(
+    user: UserDocument,
+    generatedPassword?: string,
+  ): Promise<void> {
+    await this.mailerService.sendMail({
+      to: user.email,
+      subject: 'Thông tin tài khoản mới của bạn',
+      template: './new-user-credentials',
+      context: {
+        name: user.fullName || user.email,
+        email: user.email,
+        password: generatedPassword || 'Mật khẩu bạn đã đặt',
+        frontendUrl: process.env.FRONTEND_URL || 'https://3dvn.org',
+        year: new Date().getFullYear(),
+      },
+    });
+  }
 }

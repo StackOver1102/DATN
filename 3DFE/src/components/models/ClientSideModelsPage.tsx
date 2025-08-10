@@ -364,10 +364,10 @@ export default function ClientSideModelsPage({
               ) : (
                 <div className="flex flex-col items-center justify-center py-20">
                   <div className="text-gray-500 text-lg mb-4">
-                    Không tìm thấy sản phẩm nào
+                    No products found
                   </div>
                   <p className="text-gray-400">
-                    Vui lòng thử tìm kiếm với các bộ lọc khác
+                    Please try searching with different filters
                   </p>
                 </div>
               )}

@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Send, Upload, X } from "lucide-react";
 import Image from "next/image";
+import { supportApi } from "@/lib/api";
+import { toast } from "sonner";
 
 export default function SupportPage() {
   const [formData, setFormData] = useState({
@@ -46,22 +48,38 @@ export default function SupportPage() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      // Submit data to API
+      const response = await supportApi.createWithAttachments(
+        {
+          name: formData.name,
+          phone: formData.phone,
+          email: formData.email,
+          message: formData.message || undefined,
+        },
+        uploadedFiles
+      );
 
-    // Reset form
-    setFormData({
-      name: "",
-      phone: "",
-      email: "",
-      message: "",
-    });
-    setUploadedFiles([]);
-
-    setIsSubmitting(false);
-    alert(
-      "Thank you for your message! We will contact you as soon as possible."
-    );
+      if (response.success) {
+        // Reset form on success
+        setFormData({
+          name: "",
+          phone: "",
+          email: "",
+          message: "",
+        });
+        setUploadedFiles([]);
+        
+        toast.success("Thank you for your message! We will contact you as soon as possible.");
+      } else {
+        toast.error(`Error: ${response.message || "Failed to submit support request"}`);
+      }
+    } catch (error) {
+      console.error("Support submission error:", error);
+      toast.error("An unexpected error occurred. Please try again later.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

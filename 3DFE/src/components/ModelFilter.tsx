@@ -7,6 +7,7 @@ import { CategorySection } from "@/lib/types";
 import { Loading } from "@/components/ui/loading";
 import React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 
 interface FilterState {
   categories: string[];
@@ -377,11 +378,9 @@ export default function ModelFilter({
   // ];
 
   const renderEngines = [
-    { id: "vray+corona", name: "Vray+Corona", count: 5432, icon: "✓" },
-    { id: "corona", name: "Corona", count: 4321, icon: "🔴" },
-    { id: "vray", name: "Vray", count: 3210, icon: "V" },
-    { id: "mentalray", name: "Mental Ray", count: 2100, icon: "M" },
-    { id: "standard", name: "Standard", count: 1500, icon: "" },
+    { id: "vray", name: "Vray", icon: <Image src="/vray.svg" alt="Vray" width={16} height={16} /> },
+    { id: "corona", name: "Corona", icon: <Image src="/corona.svg" alt="Corona" width={17} height={16} /> },
+    { id: "standard", name: "Standard" },
   ];
 
   const colors = [
@@ -959,7 +958,7 @@ export default function ModelFilter({
       </div>
 
       {/* Format */}
-      <div className="border-b border-gray-200">
+      {/* <div className="border-b border-gray-200">
         <div className="px-3 lg:px-4 py-2.5 lg:py-3">
           <span className="font-medium text-gray-900 text-sm lg:text-base">
             Format
@@ -997,7 +996,7 @@ export default function ModelFilter({
             </Button>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Form */}
       <div className="border-b border-gray-200">
