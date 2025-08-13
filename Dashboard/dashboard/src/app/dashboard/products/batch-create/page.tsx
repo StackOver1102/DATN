@@ -88,6 +88,7 @@ enum Form {
 // eslint-disable-next-line
 const productSchema = z.object({
   name: z.string().min(1, "Tên sản phẩm không được để trống"),
+  nameFolder: z.string().optional(),
   description: z.string().optional(),
   price: z.number().min(0, "Giá không được âm"),
   discount: z
@@ -136,7 +137,7 @@ export default function BatchCreateProductPage() {
   const [products, setProducts] = useState<ProductForm[]>([getEmptyProduct()]);
   const [files, setFiles] = useState<(FileWithPreview | null)[]>([null]);
   const [sharedFolderId, setSharedFolderId] = useState("");
-  const [sharedProductName, setSharedProductName] = useState("");
+  const [sharedFolderName, setSharedFolderName] = useState("");
   // Simple ref for file input
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -155,6 +156,7 @@ export default function BatchCreateProductPage() {
   function getEmptyProduct(): ProductForm {
     return {
       name: "",
+      nameFolder: "",
       description: "",
       price: 0,
       discount: 0,
@@ -248,7 +250,7 @@ export default function BatchCreateProductPage() {
   };
 
   // Trigger file input click
-  const triggerFileInput = (index: number): void => {
+  const triggerFileInput = (): void => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
@@ -312,14 +314,14 @@ export default function BatchCreateProductPage() {
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
 
-    // Validate shared folder ID and product name
+    // Validate shared folder ID and folder name
     if (!sharedFolderId.trim()) {
       toast.error("Vui lòng nhập ID Folder Google Drive");
       return;
     }
 
-    if (!sharedProductName.trim()) {
-      toast.error("Vui lòng nhập tên sản phẩm");
+    if (!sharedFolderName.trim()) {
+      toast.error("Vui lòng nhập tên folder trên Drive");
       return;
     }
 
@@ -340,11 +342,12 @@ export default function BatchCreateProductPage() {
       return;
     }
 
-    // Apply shared folder ID and product name to all products
+    // Apply shared folder ID and folder name to all products, and generate product names
     const productsWithFolderId = products.map((product) => ({
       ...product,
       folderId: sharedFolderId,
-      name: sharedProductName,
+      nameFolder: sharedFolderName,
+      name: `Model ${product.categoryName} 3dmax`,
     }));
 
     // Create FormData to send files and product data
@@ -475,20 +478,20 @@ export default function BatchCreateProductPage() {
 
                 <div className="space-y-2">
                   <Label
-                    htmlFor="shared-product-name"
+                    htmlFor="shared-folder-name"
                     className="text-sm font-medium flex items-center"
                   >
                     <span className="bg-orange-100 text-orange-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
                       📦
                     </span>
-                    Tên sản phẩm (dùng chung)
+                    Tên folder trên Drive (dùng chung)
                   </Label>
                   <div className="relative">
                     <Input
-                      id="shared-product-name"
-                      value={sharedProductName}
-                      onChange={(e) => setSharedProductName(e.target.value)}
-                      placeholder="Nhập tên sản phẩm (sẽ áp dụng cho tất cả sản phẩm)"
+                      id="shared-folder-name"
+                      value={sharedFolderName}
+                      onChange={(e) => setSharedFolderName(e.target.value)}
+                      placeholder="Nhập tên folder trên Drive (sẽ áp dụng cho tất cả sản phẩm)"
                       className="pl-9 border-gray-300 focus:border-orange-500 focus:ring focus:ring-orange-200 focus:ring-opacity-50"
                     />
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
@@ -496,8 +499,8 @@ export default function BatchCreateProductPage() {
                     </span>
                   </div>
                   <p className="text-sm text-gray-500">
-                    Tên sản phẩm này sẽ được áp dụng cho tất cả{" "}
-                    {products.length} sản phẩm
+                    Tên folder này sẽ được áp dụng cho tất cả {products.length}{" "}
+                    sản phẩm
                   </p>
                 </div>
               </div>
@@ -546,6 +549,29 @@ export default function BatchCreateProductPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6 pt-6">
+                    <div className="space-y-2 bg-gray-50 p-4 rounded-lg border border-gray-100 mb-4">
+                      <Label
+                        htmlFor={`name-${index}`}
+                        className="text-sm font-medium flex items-center"
+                      >
+                        <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
+                          1
+                        </span>
+                        Tên sản phẩm (tự động)
+                      </Label>
+                      <Input
+                        id={`name-${index}`}
+                        value={`Model ${
+                          product.categoryName || "[Chọn danh mục]"
+                        } 3dmax`}
+                        disabled
+                        className="border-gray-300 bg-gray-50 text-gray-500 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Tên sản phẩm được tạo tự động dựa trên danh mục đã chọn
+                      </p>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <Label
@@ -553,7 +579,7 @@ export default function BatchCreateProductPage() {
                           className="text-sm font-medium flex items-center"
                         >
                           <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                            1
+                            2
                           </span>
                           STT
                         </Label>
@@ -577,7 +603,7 @@ export default function BatchCreateProductPage() {
                           className="text-sm font-medium flex items-center"
                         >
                           <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                            2
+                            3
                           </span>
                           Danh mục
                         </Label>
@@ -625,36 +651,30 @@ export default function BatchCreateProductPage() {
                             <div className="text-xs text-blue-600 font-medium">
                               Đã chọn: {product.categoryPath}
                             </div>
-                            <div className="text-xs text-blue-500 mt-1">
-                              Category ID: {product.categoryId}
-                            </div>
-                            <div className="text-xs text-blue-500">
-                              Root Category ID: {product.rootCategoryId}
-                            </div>
                           </div>
                         )}
                       </div>
-                    </div>
 
-                    <div className="space-y-2 bg-gray-50 p-4 rounded-lg border border-gray-100">
-                      <Label
-                        htmlFor={`description-${index}`}
-                        className="text-sm font-medium flex items-center"
-                      >
-                        <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                          3
-                        </span>
-                        Mô tả
-                      </Label>
-                      <textarea
-                        id={`description-${index}`}
-                        className="w-full min-h-[120px] p-3 border border-gray-300 rounded-md focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                        value={product.description || ""}
-                        onChange={(e) =>
-                          handleChange(index, "description", e.target.value)
-                        }
-                        placeholder="Nhập mô tả chi tiết về sản phẩm..."
-                      />
+                      <div className="space-y-2 bg-gray-50 p-4 rounded-lg border border-gray-100">
+                        <Label
+                          htmlFor={`description-${index}`}
+                          className="text-sm font-medium flex items-center"
+                        >
+                          <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
+                            4
+                          </span>
+                          Mô tả
+                        </Label>
+                        <textarea
+                          id={`description-${index}`}
+                          className="w-full min-h-[120px] p-3 border border-gray-300 rounded-md focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                          value={product.description || ""}
+                          onChange={(e) =>
+                            handleChange(index, "description", e.target.value)
+                          }
+                          placeholder="Nhập mô tả chi tiết về sản phẩm..."
+                        />
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
@@ -872,7 +892,7 @@ export default function BatchCreateProductPage() {
                           className="text-sm font-medium flex items-center"
                         >
                           <span className="bg-yellow-100 text-yellow-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                            10
+                            11
                           </span>
                           Hình dạng
                         </Label>
@@ -926,7 +946,7 @@ export default function BatchCreateProductPage() {
                     <div className="space-y-2 bg-indigo-50 p-4 rounded-lg border border-indigo-100">
                       <Label className="text-sm font-medium flex items-center">
                         <span className="bg-indigo-100 text-indigo-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                          13
+                          12
                         </span>
                         Hình ảnh sản phẩm
                       </Label>
@@ -942,7 +962,7 @@ export default function BatchCreateProductPage() {
 
                       {!files[index] ? (
                         <div
-                          onClick={() => triggerFileInput(index)}
+                          onClick={() => triggerFileInput()}
                           className="border-2 border-dashed border-indigo-300 rounded-lg p-8 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-indigo-100/50 transition-colors"
                         >
                           <IconUpload className="h-10 w-10 text-indigo-500" />
@@ -969,7 +989,7 @@ export default function BatchCreateProductPage() {
                           <div className="absolute top-2 right-2 flex gap-2">
                             <button
                               type="button"
-                              onClick={() => triggerFileInput(index)}
+                              onClick={() => triggerFileInput()}
                               className="bg-indigo-500 hover:bg-indigo-600 text-white rounded-full p-1.5 shadow-sm transition-colors"
                               title="Thay đổi hình ảnh"
                             >
