@@ -33,9 +33,8 @@ export class ProductsService {
   async createProductAndAddURL(
     createProductDto: CreateProductDto,
   ): Promise<Product> {
-    const { name, folderId, stt } = createProductDto;
+    const { name, folderId, stt, nameFolder } = createProductDto;
 
-    console.log('createProductDto', createProductDto);
     if (!name) {
       throw new BadRequestException('Name is required');
     }
@@ -50,11 +49,12 @@ export class ProductsService {
 
     const folderInfo = await this.googleDriveService.getFolderInfo(
       folderId,
-      `${stt}. ${name}`,
+      `${stt}. ${nameFolder}`,
     );
 
     const productData = {
       ...createProductDto,
+      name: `${stt}. ${createProductDto.name}`,
       urlDownload: folderInfo?.rar?.id
         ? `https://drive.google.com/uc?id=${folderInfo.rar.id}`
         : createProductDto.urlDownload || '',
@@ -267,12 +267,12 @@ export class ProductsService {
     filterDto: FilterDto,
   ): Promise<PaginatedResult<ProductDocument>> {
     console.log('filterDto', filterDto);
-    
+
     // Log if q parameter is being used
     if (filterDto.q) {
       console.log('Using q parameter for search:', filterDto.q);
     }
-    
+
     return this.filterService.applyFilters(this.productModel, filterDto, {}, [
       'name',
       'description',

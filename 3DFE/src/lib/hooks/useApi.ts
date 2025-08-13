@@ -113,6 +113,8 @@ export function useFetchData<T>(
     onError?: (error: Error) => void;
   }
 ) {
+  // debugger;
+  console.log("endpoint", endpoint);
   const { data: session } = useSession();
   const token = session?.accessToken as string | undefined;
 
@@ -127,7 +129,7 @@ export function useFetchData<T>(
       }
       return response.data;
     },
-    enabled: options?.enabled !== false && !!token,
+    enabled: options?.enabled !== false,
     staleTime: options?.staleTime,
     refetchInterval: options?.refetchInterval,
     gcTime: 1000 * 60 * 5, // 5 minutes

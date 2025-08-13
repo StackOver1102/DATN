@@ -62,7 +62,6 @@ interface CreateCommentRequest {
 export default function ProductDetailPage() {
   const params = useParams();
   const id = params.id as string;
-  console.log("id", id);
   const { data: session } = useSession();
   const router = useRouter();
 
@@ -76,11 +75,12 @@ export default function ProductDetailPage() {
   const { profile } = useAppSelector((state) => state.user);
 
   // Use the useFetchData hook to fetch the product
-  const { data: product} = useFetchData<Product>(
-    `products/${id}`,
-    ["product", id]
-  );
+  const { data: product } = useFetchData<Product>(`products/${id}`, [
+    "product",
+    id,
+  ]);
 
+  console.log("product", product);
   // Use the useFetchData hook to fetch similar products
   const { data: similarProductsData, isLoading: isLoadingSimilar } =
     useFetchData<Product[]>(

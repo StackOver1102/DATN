@@ -291,12 +291,19 @@ export class TransactionsService {
     }
   }
 
-  @UseGuards(RolesGuard)   
+  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   async findAll(type: string): Promise<Transaction[]> {
-    if (!type) return this.transactionModel.find({}).populate("userId", "fullName email").exec();
-    
-    return this.transactionModel.find({ type }).populate("userId", "fullName email").exec();
+    if (!type)
+      return this.transactionModel
+        .find({})
+        .populate('userId', 'fullName email')
+        .exec();
+
+    return this.transactionModel
+      .find({ type })
+      .populate('userId', 'fullName email')
+      .exec();
   }
 
   async findByUserId(
@@ -390,6 +397,18 @@ export class TransactionsService {
   }
 
   async remove(id: string): Promise<Transaction> {
+    const deletedTransaction = await this.transactionModel
+      .findByIdAndDelete(id)
+      .exec();
+
+    if (!deletedTransaction) {
+      throw new NotFoundException(`Không tìm thấy giao dịch với ID ${id}`);
+    }
+
+    return deletedTransaction;
+  }
+
+  async deleteById(id: string): Promise<Transaction> {
     const deletedTransaction = await this.transactionModel
       .findByIdAndDelete(id)
       .exec();
@@ -832,94 +851,109 @@ export class TransactionsService {
 
     user.balance += transaction.amount;
     await user.save();
-    
+
     return transaction.save();
   }
 
   async getTransactionStats(period: string = '30d'): Promise<any> {
-    try {
-      // Calculate date range based on period
-      const endDate = new Date();
-      const startDate = new Date();
-      
-      if (period === '7d') {
-        startDate.setDate(endDate.getDate() - 7);
-      } else if (period === '30d') {
-        startDate.setDate(endDate.getDate() - 30);
-      } else if (period === '90d') {
-        startDate.setDate(endDate.getDate() - 90);
-      } else {
-        startDate.setDate(endDate.getDate() - 30); // Default to 30 days
-      }
+    // Calculate date range based on period
+    const endDate = new Date();
+    const startDate = new Date();
 
-      // Get all transactions within the date range
-      const transactions = await this.transactionModel.find({
+    if (period === '7d') {
+      startDate.setDate(endDate.getDate() - 7);
+    } else if (period === '30d') {
+      startDate.setDate(endDate.getDate() - 30);
+    } else if (period === '90d') {
+      startDate.setDate(endDate.getDate() - 90);
+    } else {
+      startDate.setDate(endDate.getDate() - 30); // Default to 30 days
+    }
+
+    // Get all transactions within the date range
+    const transactions = await this.transactionModel
+      .find({
         createdAt: { $gte: startDate, $lte: endDate },
-      }).exec();
+      })
+      .exec();
 
-      // Group transactions by date and type
-      const transactionsByDate = new Map();
+    // Group transactions by date and type
+    const transactionsByDate = new Map();
 
-      // Initialize all dates in the range with zero values
-      const dateRange: Date[] = [];
-      const currentDate = new Date(startDate);
-      while (currentDate <= endDate) {
-        dateRange.push(new Date(currentDate));
-        currentDate.setDate(currentDate.getDate() + 1);
+    // Initialize all dates in the range with zero values
+    const dateRange: Date[] = [];
+    const currentDate = new Date(startDate);
+    while (currentDate <= endDate) {
+      dateRange.push(new Date(currentDate));
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    // Initialize the map with all dates in range
+    dateRange.forEach((date) => {
+      const dateStr = date.toISOString().split('T')[0];
+      transactionsByDate.set(dateStr, {
+        deposit: 0,
+        payment: 0,
+        withdrawal: 0,
+        refund: 0,
+        total: 0,
+      });
+    });
+
+    // Group transactions by date and type
+    transactions.forEach((transaction) => {
+      const date = transaction.createdAt?.toISOString().split('T')[0];
+      const amount = Math.abs(transaction.amount);
+
+      // Skip if outside our date range
+      if (!transactionsByDate.has(date)) return;
+
+      const stats = transactionsByDate.get(date) as {
+        deposit: number;
+        payment: number;
+        withdrawal: number;
+        refund: number;
+        total: number;
+      };
+
+      if (transaction.type === TransactionType.DEPOSIT) {
+        stats.deposit += amount;
+        stats.total += amount;
+      } else if (transaction.type === TransactionType.PAYMENT) {
+        stats.payment += amount;
+        stats.total += amount;
+      } else if (transaction.type === TransactionType.WITHDRAWAL) {
+        stats.withdrawal += amount;
+        stats.total += amount;
+      } else if (transaction.type === TransactionType.REFUND) {
+        stats.refund += amount;
+        stats.total += amount;
       }
+    });
 
-      // Initialize the map with all dates in range
-      dateRange.forEach(date => {
-        const dateStr = date.toISOString().split('T')[0];
-        transactionsByDate.set(dateStr, {
-          deposit: 0,
-          payment: 0,
-          withdrawal: 0,
-          refund: 0,
-          total: 0
-        });
-      });
-
-      // Group transactions by date and type
-      transactions.forEach(transaction => {
-        const date = transaction.createdAt?.toISOString().split('T')[0];
-        const amount = Math.abs(transaction.amount);
-        
-        // Skip if outside our date range
-        if (!transactionsByDate.has(date)) return;
-        
-        const stats = transactionsByDate.get(date);
-        
-        if (transaction.type === TransactionType.DEPOSIT) {
-          stats.deposit += amount;
-          stats.total += amount;
-        } else if (transaction.type === TransactionType.PAYMENT) {
-          stats.payment += amount;
-          stats.total += amount;
-        } else if (transaction.type === TransactionType.WITHDRAWAL) {
-          stats.withdrawal += amount;
-          stats.total += amount;
-        } else if (transaction.type === TransactionType.REFUND) {
-          stats.refund += amount;
-          stats.total += amount;
-        }
-      });
-
-      // Convert map to array for response
-      const result = Array.from(transactionsByDate.entries())
-        .map(([date, stats]) => ({
+    // Convert map to array for response
+    const result = Array.from(transactionsByDate.entries())
+      .map(
+        ([date, stats]: [
+          string,
+          {
+            deposit: number;
+            payment: number;
+            withdrawal: number;
+            refund: number;
+            total: number;
+          },
+        ]) => ({
           date,
           deposit: stats.deposit,
           payment: stats.payment,
           withdrawal: stats.withdrawal,
           refund: stats.refund,
-          total: stats.total
-        }))
-        .sort((a, b) => a.date.localeCompare(b.date));
+          total: stats.total,
+        }),
+      )
+      .sort((a, b) => a.date.localeCompare(b.date));
 
-      return { data: result };
-    } catch (error) {
-      throw error;
-    }
+    return { data: result };
   }
 }

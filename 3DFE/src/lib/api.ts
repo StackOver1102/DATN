@@ -47,6 +47,7 @@ export async function apiRequest<T>(
     const response = await fetch(`${API_BASE_URL}/${endpoint}`, options);
     const responseData = await response.json();
 
+    console.log("responseData", responseData);
     // If the NestJS response is not in our ApiResponse format, convert it
     if (responseData.success === undefined) {
       if (!response.ok) {

@@ -69,12 +69,14 @@ export class UsersService implements OnModuleInit {
     const user = await this.userModel.create(createUserDto);
     return user;
   }
-  
+
   /**
    * Create a user from dashboard with optional password
    * If password is not provided, a random one will be generated
    */
-  async createFromDashboard(createDashboardUserDto: CreateDashboardUserDto): Promise<{ user: UserDocument; generatedPassword?: string }> {
+  async createFromDashboard(
+    createDashboardUserDto: CreateDashboardUserDto,
+  ): Promise<{ user: UserDocument; generatedPassword?: string }> {
     const { email, password, sendWelcomeEmail = true } = createDashboardUserDto;
 
     const checkUser = await this.userModel.findOne({ email });
@@ -85,7 +87,7 @@ export class UsersService implements OnModuleInit {
 
     let generatedPassword: string | undefined;
     const userData = { ...createDashboardUserDto };
-    
+
     // If no password provided, generate a random one
     if (!password) {
       generatedPassword = randomBytes(8).toString('hex');
@@ -99,7 +101,7 @@ export class UsersService implements OnModuleInit {
     delete userData.sendWelcomeEmail;
 
     const user = await this.userModel.create(userData);
-    
+
     // Send email with credentials to the user if requested
     if (sendWelcomeEmail) {
       try {
@@ -110,7 +112,7 @@ export class UsersService implements OnModuleInit {
         // Don't fail the user creation if email sending fails
       }
     }
-    
+
     return {
       user,
       generatedPassword,
@@ -142,32 +144,30 @@ export class UsersService implements OnModuleInit {
 
   async update(id: string, updateUserDto: UpdateUserDto) {
     // Make sure user can't update role or balance through this method
-    const { role, balance, ...updateData } = updateUserDto as any;
-    
-    const updatedUser = await this.userModel.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true },
-    );
-    
+    const { ...updateData } = updateUserDto;
+
+    const updatedUser = await this.userModel.findByIdAndUpdate(id, updateData, {
+      new: true,
+    });
+
     if (!updatedUser) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-    
+
     return updatedUser;
   }
-  
+
   async adminUpdate(id: string, adminUpdateUserDto: any) {
     const updatedUser = await this.userModel.findByIdAndUpdate(
       id,
       adminUpdateUserDto,
       { new: true },
     );
-    
+
     if (!updatedUser) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-    
+
     return updatedUser;
   }
 

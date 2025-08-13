@@ -78,6 +78,9 @@ export class Product {
 
   @Prop({ type: String })
   q?: string;
+
+  @Prop({ type: String })
+  nameFolder?: string;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

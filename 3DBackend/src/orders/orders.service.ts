@@ -16,6 +16,7 @@ import { GoogleDriveService } from 'src/drive/google-drive.service';
 import { FilterDto } from 'src/common/dto/filter.dto';
 import { PaginatedResult } from 'src/common/interfaces/pagination.interface';
 import { FilterService } from 'src/common/services/filter.service';
+import { TransactionDocument } from 'src/transactions/entities/transaction.entity';
 
 @Injectable()
 export class OrdersService {
@@ -32,64 +33,93 @@ export class OrdersService {
     createOrderDto: CreateOrderDto,
     userId: string,
   ): Promise<{ urlDownload: string }> {
-    const user = await this.usersService.findOne(userId);
+    let transaction: TransactionDocument | null = null;
+    let initialBalance = 0;
+    try {
+      const user = await this.usersService.findOne(userId);
 
-    const { email } = user;
+      const { email } = user;
 
-    const { balance } = user;
-    const { productId } = createOrderDto;
+      const { balance } = user;
+      initialBalance = balance; // Store initial balance for rollback
+      const { productId } = createOrderDto;
 
-    const product = await this.productsService.findById(productId);
+      const product = await this.productsService.findById(productId);
 
-    if (!product) {
-      throw new NotFoundException('Product not found');
+      if (!product) {
+        throw new NotFoundException('Product not found');
+      }
+
+      const { discount, urlDownload, price } = product;
+      const totalAmount = discount ? price - (price * discount) / 100 : price;
+
+      if (balance < totalAmount) {
+        throw new BadRequestException('Bạn không đủ tiền để thanh toán');
+      }
+
+      const fileId = this.driveService.getIdByUrl(urlDownload!);
+      if (!fileId) {
+        throw new BadRequestException('Không thể tìm thấy file');
+      }
+
+      // Create transaction only after validating everything else
+      transaction = await this.transactionsService.create(
+        {
+          amount: totalAmount,
+          type: TransactionType.PAYMENT,
+          balanceBefore: balance,
+          balanceAfter: balance - totalAmount,
+          status: TransactionStatus.SUCCESS,
+          // method:
+        },
+        userId,
+      );
+
+      if (!transaction) {
+        throw new BadRequestException('Thanh toán thất bại');
+      }
+
+      const createdOrder = new this.orderModel({
+        ...createOrderDto,
+        userId,
+        transactionId: transaction._id,
+        fileId,
+        totalAmount,
+        status: OrderStatus.COMPLETED,
+      });
+
+      await createdOrder.save();
+      await this.driveService.addDrivePermission(fileId, email);
+      return { urlDownload: urlDownload! };
+    } catch (error) {
+      // Rollback transaction if it was created
+      if (transaction) {
+        try {
+          await this.transactionsService.deleteById(transaction._id.toString());
+          // Restore user balance to initial value
+          await this.usersService.updateBalance(userId, initialBalance);
+        } catch (rollbackError) {
+          console.error('Error during rollback:', rollbackError);
+        }
+      }
+      throw new BadRequestException(
+        error instanceof Error ? error.message : 'Order creation failed',
+      );
     }
-
-    const { discount, urlDownload, price } = product;
-    const totalAmount = discount ? price - (price * discount) / 100 : price;
-
-    if (balance < totalAmount) {
-      throw new BadRequestException('Bạn không đủ tiền để thanh toán');
-    }
-
-    const transaction = await this.transactionsService.create(
-      {
-        amount: totalAmount,
-        type: TransactionType.PAYMENT,
-        balanceBefore: balance,
-        balanceAfter: balance - totalAmount,
-        status: TransactionStatus.SUCCESS,
-        // method:
-      },
-      userId,
-    );
-
-    if (!transaction) {
-      throw new BadRequestException('Thanh toán thất bại');
-    }
-
-    const fileId = this.driveService.getIdByUrl(urlDownload!);
-
-    const createdOrder = new this.orderModel({
-      ...createOrderDto,
-      userId,
-      transactionId: transaction._id,
-      fileId,
-      totalAmount,
-      status: OrderStatus.COMPLETED,
-    });
-
-    await createdOrder.save();
-    await this.driveService.addDrivePermission(fileId, email);
-    return { urlDownload: urlDownload! };
   }
 
   async findAll(): Promise<Order[]> {
-    return this.orderModel.find().populate('productId userId', '-password').exec();
+    return this.orderModel
+      .find()
+      .populate('productId userId', '-password')
+      .exec();
   }
 
   async findOne(id: string): Promise<Order> {
-    const order = await this.orderModel.findById(id).populate('productId userId', '-password').exec();
+    const order = await this.orderModel
+      .findById(id)
+      .populate('productId userId', '-password')
+      .exec();
     if (!order) {
       throw new NotFoundException(`Không tìm thấy đơn hàng với ID ${id}`);
     }

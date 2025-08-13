@@ -79,6 +79,10 @@ export class CreateProductDto {
   @IsOptional()
   @IsString()
   stt?: string;
+
+  @IsOptional()
+  @IsString()
+  nameFolder?: string;
 }
 
 export class CreateProductsDto {
