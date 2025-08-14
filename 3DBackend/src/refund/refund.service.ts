@@ -62,7 +62,10 @@ export class RefundService {
   }
 
   async findAll(): Promise<Refund[]> {
-    return this.refundModel.find().populate('userId orderId', '-password').exec();
+    return this.refundModel
+      .find()
+      .populate('userId orderId', '-password')
+      .exec();
   }
 
   async findByUserId(userId: string): Promise<Refund[]> {

@@ -378,8 +378,16 @@ export default function ModelFilter({
   // ];
 
   const renderEngines = [
-    { id: "vray", name: "Vray", icon: <Image src="/vray.svg" alt="Vray" width={16} height={16} /> },
-    { id: "corona", name: "Corona", icon: <Image src="/corona.svg" alt="Corona" width={17} height={16} /> },
+    {
+      id: "vray",
+      name: "Vray",
+      icon: <Image src="/vray.svg" alt="Vray" width={16} height={16} />,
+    },
+    {
+      id: "corona",
+      name: "Corona",
+      icon: <Image src="/corona.svg" alt="Corona" width={17} height={16} />,
+    },
     { id: "standard", name: "Standard" },
   ];
 
@@ -430,9 +438,11 @@ export default function ModelFilter({
   };
 
   const handleCategoryChange = (categoryId: string) => {
+    // If the category is already selected, deselect it
+    // Otherwise, replace any existing category with the new one
     const newCategories = filters.categories.includes(categoryId)
-      ? filters.categories.filter((id) => id !== categoryId)
-      : [...filters.categories, categoryId];
+      ? []
+      : [categoryId];
 
     const newFilters = { ...filters, categories: newCategories };
     setFilters(newFilters);

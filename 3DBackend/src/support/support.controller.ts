@@ -51,7 +51,7 @@ export class SupportController {
     @Body() createSupportDto: CreateSupportDto,
     @UploadedFiles() files?: FileWithBuffer[],
   ) {
-    console.log(files)
+    console.log(files);
     // Upload files if any
     let attachments: string[] = [];
     if (files && files.length > 0) {
@@ -125,7 +125,11 @@ export class SupportController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  update(@Param('id') id: string, @Body() updateSupportDto: UpdateSupportDto, @CurrentUser() user: UserWithId) {
+  update(
+    @Param('id') id: string,
+    @Body() updateSupportDto: UpdateSupportDto,
+    @CurrentUser() user: UserWithId,
+  ) {
     return this.supportService.update(id, updateSupportDto, user._id);
   }
 

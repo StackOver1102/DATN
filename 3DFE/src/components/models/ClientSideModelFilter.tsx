@@ -201,6 +201,14 @@ export default function ClientSideModelFilter({
 
   // Handle filter changes
   const handleFilterChange = (filterParams: FilterState) => {
+    // Ensure only one category can be selected
+    if (filterParams.categories.length > 1) {
+      // Keep only the latest selected category
+      filterParams.categories = [
+        filterParams.categories[filterParams.categories.length - 1],
+      ];
+    }
+
     // So sánh để đảm bảo chỉ cập nhật khi có thay đổi thực sự
     if (JSON.stringify(filters) === JSON.stringify(filterParams)) {
       return;

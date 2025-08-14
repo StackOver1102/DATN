@@ -46,7 +46,7 @@ export class FilterService {
       price,
       discount,
     } = filterDto;
-    
+
     // Use q parameter as search if provided
     const searchTerm = q || search;
     const skip = (page - 1) * limit;
@@ -147,7 +147,6 @@ export class FilterService {
 
     // Apply populate if provided
     if (populateOptions) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       findQuery = findQuery.populate(populateOptions);
     }
 

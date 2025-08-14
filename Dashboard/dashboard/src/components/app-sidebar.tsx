@@ -14,7 +14,6 @@ import {
   IconSettings,
   IconUsers,
   IconCoin,
-  IconFlag,
 } from "@tabler/icons-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -76,6 +75,11 @@ const data = {
       title: "Support",
       url: "/dashboard/support",
       icon: IconHelp,
+    },
+    {
+      title: "Master Data",
+      url: "/dashboard/master-data",
+      icon: IconDatabase,
     },
   ],
   navClouds: [

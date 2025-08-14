@@ -63,12 +63,7 @@ export default function Header() {
   // Display full screen loading when signing out
   if (isLoggingOut) {
     return (
-      <Loading
-        variant="spinner"
-        size="sm"
-        text="Signing out..."
-        fullScreen
-      />
+      <Loading variant="spinner" size="sm" text="Signing out..." fullScreen />
     );
   }
 
@@ -299,7 +294,7 @@ export default function Header() {
                   <Input
                     type="text"
                     placeholder="Search 3D models, textures, materials..."
-                    className="w-full px-4 py-5 pl-4 pr-12 text-sm border border-gray-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-[#e7e6e5] hover:bg-white"
+                    className="w-full px-4 py-5 pl-4 pr-12 bg-white text-sm border border-gray-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent  hover:bg-white"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -388,20 +383,20 @@ export default function Header() {
                 <>
                   <Link
                     href="/signup"
-                    className="text-blue-600 transition-colors text-base"
+                    className="text-blue-600 transition-colors text-base font-medium"
                   >
                     Join
                   </Link>
                   <Link
                     href="/signin"
-                    className="text-blue-600 transition-colors text-base flex items-center"
+                    className="text-blue-600 transition-colors text-base font-medium flex items-center"
                   >
                     <Image
                       src="/icons/signin-arrow.svg"
                       alt="Sign in"
                       width={24}
                       height={24}
-                      className="mr-1"
+                      className="mr-1 "
                     />
                     Sign in
                   </Link>

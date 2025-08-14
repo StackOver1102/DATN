@@ -96,11 +96,13 @@ export class TransactionsController {
     return this.transactionsService.findByUserId(user.userId, filterDto);
   }
 
-   @UseGuards(RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @Get('chart-stats')
-  @ApiOperation({ summary: 'Get transaction statistics for charts (admin only)' })
+  @ApiOperation({
+    summary: 'Get transaction statistics for charts (admin only)',
+  })
   @ApiResponse({ status: 200, description: 'Transaction statistics' })
   getStats(@Query('period') period: string = '30d') {
     return this.transactionsService.getTransactionStats(period);
@@ -182,10 +184,11 @@ export class TransactionsController {
   @Patch(':id/approve')
   @ApiOperation({ summary: 'Approve transaction' })
   @ApiParam({ name: 'id', description: 'Transaction MongoDB ObjectId' })
-  @ApiResponse({ status: 200, description: 'Transaction approved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Transaction approved successfully',
+  })
   approve(@Param('id') id: string) {
     return this.transactionsService.handleApprove(id);
   }
-
- 
 }

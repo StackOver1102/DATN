@@ -15,6 +15,7 @@ import { SupportModule } from './support/support.module';
 import { CommentModule } from './comment/comment.module';
 import { MailModule } from './mail/mail.module';
 import { CommonModule } from './common/common.module';
+import { MasterDataModule } from './master-data/master-data.module';
 import * as Joi from 'joi';
 
 // Định nghĩa schema xác thực cho biến môi trường
@@ -53,6 +54,7 @@ const validationSchema = Joi.object({
     CommentModule,
     MailModule,
     CommonModule,
+    MasterDataModule,
   ],
   controllers: [],
   providers: [],

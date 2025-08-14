@@ -21,9 +21,10 @@ export class CreateDashboardUserDto {
   @IsNotEmpty()
   email: string;
 
-  @ApiProperty({ 
-    example: 'password123', 
-    description: 'Optional password. If not provided, a random password will be generated and sent to the user\'s email.' 
+  @ApiProperty({
+    example: 'password123',
+    description:
+      "Optional password. If not provided, a random password will be generated and sent to the user's email.",
   })
   @IsString()
   @IsOptional()

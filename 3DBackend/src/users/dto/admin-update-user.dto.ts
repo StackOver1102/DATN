@@ -14,19 +14,19 @@ export class AdminUpdateUserDto extends PartialType(CreateUserDto) {
   @IsOptional()
   role?: UserRole;
 
-  @ApiProperty({ 
-    default: 0, 
-    example: 1000, 
-    description: 'User balance - admin only' 
+  @ApiProperty({
+    default: 0,
+    example: 1000,
+    description: 'User balance - admin only',
   })
   @IsNumber()
   @IsOptional()
   balance?: number;
 
-  @ApiProperty({ 
-    default: true, 
-    example: true, 
-    description: 'User active status - admin only' 
+  @ApiProperty({
+    default: true,
+    example: true,
+    description: 'User active status - admin only',
   })
   @IsBoolean()
   @IsOptional()

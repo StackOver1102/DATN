@@ -102,7 +102,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             <ModelGrid products={paginatedProducts?.items || []} />
 
             {/* Pagination */}
-            {paginatedProducts?.meta && (
+            {/* {paginatedProducts?.meta && (
               <div className="max-w-7xl mx-auto py-6">
                 <Pagination
                   currentPage={paginatedProducts.meta.currentPage}
@@ -110,7 +110,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                   currentPageHref={(page) => `?page=${page}`}
                 />
               </div>
-            )}
+            )} */}
 
             {/* Banner Ads */}
             <div className="max-w-7xl mx-auto py-6">

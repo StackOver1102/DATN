@@ -34,14 +34,18 @@ export class UsersController {
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
-  
+
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @Post('/dashboard')
-  async createFromDashboard(@Body() createDashboardUserDto: CreateDashboardUserDto) {
-    const result = await this.usersService.createFromDashboard(createDashboardUserDto);
-    
+  async createFromDashboard(
+    @Body() createDashboardUserDto: CreateDashboardUserDto,
+  ) {
+    const result = await this.usersService.createFromDashboard(
+      createDashboardUserDto,
+    );
+
     // Don't return the generated password in the response for security
     // Frontend should handle displaying it to the admin
     return {
@@ -93,7 +97,7 @@ export class UsersController {
   ) {
     return this.usersService.update(user.userId, updateUserDto);
   }
-  
+
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
@@ -104,7 +108,11 @@ export class UsersController {
     @CurrentUser() user: UserPayload,
   ) {
     // Prevent admin from changing their own role
-    if (id === user.userId && adminUpdateUserDto.role && adminUpdateUserDto.role !== UserRole.ADMIN) {
+    if (
+      id === user.userId &&
+      adminUpdateUserDto.role &&
+      adminUpdateUserDto.role !== UserRole.ADMIN
+    ) {
       throw new ForbiddenException('Admins cannot downgrade their own role');
     }
     return this.usersService.adminUpdate(id, adminUpdateUserDto);

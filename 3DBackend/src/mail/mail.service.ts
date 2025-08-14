@@ -200,7 +200,7 @@ export class MailService {
       },
     });
   }
-  
+
   /**
    * Send new user credentials to user created from dashboard
    */

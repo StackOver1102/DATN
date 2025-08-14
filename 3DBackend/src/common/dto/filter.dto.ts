@@ -10,7 +10,7 @@ export class FilterDto extends PaginationDto {
   @IsOptional()
   @IsString()
   search?: string;
-  
+
   @ApiPropertyOptional({
     description: 'Quick search term (alias for search)',
   })
