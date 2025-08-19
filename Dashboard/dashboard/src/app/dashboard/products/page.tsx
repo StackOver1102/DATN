@@ -1,6 +1,7 @@
 "use client";
 
 import { useApiQuery, useApiMutation } from "@/lib/hooks/useApi";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -54,9 +55,13 @@ export default function ProductsPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
+  // Set staleTime to 0 to always refetch when component mounts
   const { data, isLoading, error, refetch } = useApiQuery<
     ApiResponse<PaginatedResult<Product>>
-  >("products", "/products");
+  >("products", "/products", {
+    refetchOnMount: true,
+    staleTime: 0, // Consider data always stale
+  });
 
   // Delete mutation - will be called with proper endpoint
   const { mutate: deleteProduct, isPending: isDeleting } = useApiMutation<

@@ -52,6 +52,11 @@ export class RefundService {
     if (order.status === OrderStatus.CANCELLED) {
       throw new BadRequestException('Đơn hàng đã hủy không thể hoàn tiền');
     }
+    
+    const existingRefund = await this.refundModel.findOne({orderId: new Types.ObjectId(createRefundDto.orderId), status: RefundStatus.PENDING})
+    if (existingRefund) {
+      throw new BadRequestException('Đơn hàng này đã có yêu cầu hoàn tiền');
+    }
 
     // Create the refund request
     const refund = new this.refundModel({
@@ -68,6 +73,7 @@ export class RefundService {
         message: `New refund request from ${NotificationType.REFUND}`,
         originalId: savedRefund._id.toString(),
         originType: NotificationType.REFUND,
+        userId: new Types.ObjectId(userId),
       });
     }
 

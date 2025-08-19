@@ -81,10 +81,10 @@ function SignInForm() {
 
   return (
     <div className="flex min-h-screen">
-      {/* Left side - Form */}
-      <div className="flex-1 flex items-center justify-center px-8 sm:px-12 lg:px-16">
-        <div className="w-full max-w-md space-y-8">
-          <div className="text-center sm:text-left">
+      {/* Centered Form */}
+      <div className="w-full flex items-center justify-center px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-md space-y-8 py-12 px-6 sm:px-8 bg-white rounded-lg shadow-md">
+          <div className="text-center">
             <h1 className="text-3xl font-medium mb-2">Welcome back!</h1>
             <p className="text-base text-gray-700">
               Enter your credentials to access your account
@@ -138,7 +138,7 @@ function SignInForm() {
                 </label>
                 <Link
                   href="/forgot-password"
-                  className="text-xs text-[#0C2A92] hover:underline"
+                  className="text-xs text-yellow-400 hover:underline"
                 >
                   forgot password
                 </Link>
@@ -182,8 +182,8 @@ function SignInForm() {
             <div>
               <LoadingButton
                 type="submit"
-                isLoading={false} // Không cần isLoading ở đây vì chúng ta đã sử dụng Loading fullScreen
-                className="w-full py-2 px-4 border border-transparent text-sm font-bold rounded-lg text-white bg-[#3A5B22] hover:bg-[#2A4A12] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3A5B22]"
+                isLoading={loading}
+                className="w-full py-2 px-4 border border-transparent text-sm font-bold rounded-lg text-yellow-400 bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3A5B22]"
               >
                 Login
               </LoadingButton>
@@ -205,7 +205,7 @@ function SignInForm() {
               Don&apos;t have an account?{" "}
               <Link
                 href="/signup"
-                className="font-medium text-[#3A5B22] hover:underline"
+                className="font-medium text-yellow-400 hover:underline"
               >
                 Sign Up
               </Link>
@@ -230,12 +230,6 @@ function SignInForm() {
           </div>
         </div>
       </div>
-
-      {/* Right side - Image */}
-      <div
-        className="hidden md:block md:w-1/2 lg:w-1/2 bg-cover bg-center rounded-l-[45px]"
-        style={{ backgroundImage: "url('/assets/signup-background.jpg')" }}
-      ></div>
     </div>
   );
 }

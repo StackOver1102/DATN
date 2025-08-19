@@ -10,9 +10,8 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { CreateDashboardUserDto } from './dto/create-dashboard-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { UserDocument } from './types/user.types';
 import { Model } from 'mongoose';
-import { User } from './entities/user.entity';
+import { User, UserDocument } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { UserRole } from 'src/enum/user.enum';
 import { randomBytes } from 'crypto';
@@ -252,5 +251,20 @@ export class UsersService implements OnModuleInit {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
     await user.save();
+  }
+
+  /**
+   * Update user password without requiring old password
+   * Used for password reset functionality
+   */
+  async updatePassword(userId: string, newHashedPassword: string) {
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+    
+    user.password = newHashedPassword;
+    await user.save();
+    return { message: 'Password updated successfully' };
   }
 }

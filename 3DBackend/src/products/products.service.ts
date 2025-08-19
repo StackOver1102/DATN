@@ -66,16 +66,19 @@ export class ProductsService {
 
     const updateStt = Number(stt) < 10 ? `0${stt}` : stt;
 
+    console.log("updateStt", updateStt)
     const folderInfo = await this.googleDriveService.getFolderInfo(
       folderId,
       `${updateStt}. ${name}`,
     );
 
+    console.log("name", name)
+    console.log("folderInfo", folderInfo)
     const productData = {
       ...createProductDto,
       stt: Number(stt),
       images: (await imageUrl).url,
-      name: `${updateStt}. ${createProductDto.name}`,
+      name: `${updateStt}. Model ${createProductDto.name} 3dsmax`,
       urlDownload: folderInfo?.rar?.id
         ? `https://drive.google.com/uc?id=${folderInfo.rar.id}`
         : createProductDto.urlDownload || '',
@@ -289,11 +292,6 @@ export class ProductsService {
   ): Promise<PaginatedResult<ProductDocument>> {
     console.log('filterDto', filterDto);
 
-    // Log if q parameter is being used
-    if (filterDto.q) {
-      console.log('Using q parameter for search:', filterDto.q);
-    }
-
     return this.filterService.applyFilters(this.productModel, filterDto, {}, [
       'name',
       'description',
@@ -304,6 +302,7 @@ export class ProductsService {
       'render',
       'form',
       'color',
+      'isPro',
     ]);
   }
 

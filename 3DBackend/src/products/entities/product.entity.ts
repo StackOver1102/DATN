@@ -43,6 +43,9 @@ export class Product {
   @Prop({ default: false })
   isPro: boolean;
 
+  @Prop({ default: false })
+  isNew: boolean;
+
   @Prop({ default: 0 })
   size: number;
 
@@ -81,6 +84,9 @@ export class Product {
 
   @Prop({ type: Number })
   stt?: number;
+
+  @Prop({ type: String })
+  platform?: string;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

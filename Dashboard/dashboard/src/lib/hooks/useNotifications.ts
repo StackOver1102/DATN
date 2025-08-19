@@ -1,16 +1,21 @@
-import { useApiMutation, useApiQuery } from './useApi';
+import { useApiQuery } from './useApi';
+import { api } from '../api';
+import { useQueryClient } from '@tanstack/react-query';
 
 export interface Notification {
   _id: string;
   type: 'support' | 'refund';
   isRead: boolean;
   createdAt: string;
+  originalId?: string; // ID of the original item (support request, refund, etc.)
 }
 
 interface NotificationCounts {
   support: number | null;
   refund: number | null;
   total: number | null;
+  supportNoti?: Notification[];
+  refundNoti?: Notification[];
 }
 
 /**
@@ -22,30 +27,37 @@ export function useNotifications() {
   const { data, isLoading, error, refetch } = useApiQuery<{ data: NotificationCounts }>(
     'notifications',
     '/notifications/unread/count',
-    {
-      // Mock data for demonstration
-      enabled: false, // Disable actual API call for now
-      refetchInterval: 60000, // Refetch every minute in a real app
-    }
+
   );
+
 
   // Calculate notification counts
   const counts: NotificationCounts = {
     support: data?.data?.support || null, // Hardcoded for demo
     refund: data?.data?.refund || null, // Hardcoded for demo
     total: data?.data?.total || null, // Hardcoded for demo
-  };
-  
 
-   const {mutate: notification} = useApiMutation<{data: Notification}, {id: string}>(
-    'notifications-mark-as-read',
-    '/notifications/mark-as-read',
-    'patch'
-  );
-  
+  };
+
+  const supportNoti = data?.data?.supportNoti || [];
+  const refundNoti = data?.data?.refundNoti || [];
+
+
+  // We don't need this mutation anymore since we're using api.patch directly
+  // Keeping the query invalidation though
+  const queryClient = useQueryClient();
+
   const handleMarkAsRead = async (id: string) => {
-    await notification({id});
-    refetch();
+    try {
+      // Use the API utility from api.ts
+      await api.patch(`/notifications/mark-as-read/${id}`, {});
+      
+      // Invalidate and refetch notifications
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      refetch();
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
   };
 
   // In a real application, you would calculate these from the API response:
@@ -68,5 +80,7 @@ export function useNotifications() {
     error,
     refetch,
     handleMarkAsRead,
+    supportNoti,
+    refundNoti,
   };
 }

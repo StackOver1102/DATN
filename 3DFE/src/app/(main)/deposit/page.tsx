@@ -129,7 +129,7 @@ export default function DepositPage() {
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-full bg-gray-300 overflow-hidden">
                 <Image
-                  src="/logo/logo.png"
+                  src={profile?.avatar || "/logo/logo.png"}
                   alt="Profile avatar"
                   width={64}
                   height={64}
@@ -144,7 +144,8 @@ export default function DepositPage() {
                     <span className="inline-block w-16 h-4 bg-gray-200 animate-pulse rounded"></span>
                   ) : (
                     <span className="text-gray-800">
-                      {userBalance.toLocaleString()} coin
+                      {userBalance.toLocaleString()} 
+                      <CircleDollarSign className="w-4 h-4 text-yellow-500 ml-1 mt-[1px]" />
                     </span>
                   )}
                 </p>
@@ -153,7 +154,7 @@ export default function DepositPage() {
             <Link href="/profile" passHref>
               <Button
                 variant="outline"
-                className="bg-blue-500 hover:bg-blue-600 text-white border-none"
+                className="bg-black hover:bg-white text-yellow-400 border-none"
               >
                 View Profile
               </Button>

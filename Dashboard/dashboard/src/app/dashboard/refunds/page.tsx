@@ -57,6 +57,7 @@ import { User } from "../users/page";
 import { formatNumber } from "@/lib/formatMoney";
 import Image from "next/image";
 import { toast } from "sonner";
+import { useNotifications } from "@/lib/hooks/useNotifications";
 
 // Import RefundStatus enum from backend
 enum RefundStatus {
@@ -86,6 +87,7 @@ interface Refund {
   processedBy?: User;
   createdAt: string;
   updatedAt: string;
+  isUnread?: boolean; // Added to track if the refund request has unread notifications
 }
 
 export default function RefundsPage() {
@@ -97,6 +99,7 @@ export default function RefundsPage() {
   const [adminNotes, setAdminNotes] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
+  const {refundNoti, handleMarkAsRead} = useNotifications();
   const { data, isLoading, error, refetch } = useApiQuery<{
     data: Refund[];
   }>(
@@ -111,11 +114,18 @@ export default function RefundsPage() {
   >("refund", selectedRefund ? `/refunds/${selectedRefund._id}` : "", "patch");
 
   // Map refunds to include id field for DataTable
+  // Map refunds to include id field for DataTable and check if it's unread
   const refunds =
-    data?.data?.map((refund) => ({
-      ...refund,
-      id: refund._id,
-    })) || [];
+    data?.data?.map((refund) => {
+      // Check if this refund request has an unread notification
+      const isUnread = refundNoti?.some(noti => noti.originalId === refund._id && !noti.isRead);
+      
+      return {
+        ...refund,
+        id: refund._id,
+        isUnread: isUnread || false,
+      };
+    }) || [];
 
   // Define columns for the data table
   const columns: ColumnDef<Refund>[] = [
@@ -155,13 +165,19 @@ export default function RefundsPage() {
       header: "Đơn hàng",
       cell: ({ row }) => {
         const order = row.original.orderId;
+        const isUnread = row.original.isUnread;
         return (
-          <Link
-            href={`/dashboard/orders/${order._id}/view`}
-            className="text-blue-500 hover:underline"
-          >
-            {order.productId?.name || order._id}
-          </Link>
+          <div className={`${isUnread ? "font-bold" : ""}`}>
+            {isUnread && (
+              <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+            )}
+            <Link
+              href={`/dashboard/orders/${order._id}/view`}
+              className="text-blue-500 hover:underline"
+            >
+              {order.productId?.name || order._id}
+            </Link>
+          </div>
         );
       },
     },
@@ -273,6 +289,13 @@ export default function RefundsPage() {
               <DropdownMenuLabel>Hành động</DropdownMenuLabel>
               <DropdownMenuItem
                 onClick={() => {
+                  // Mark as read if unread
+                  if (refund.isUnread) {
+                    const notification = refundNoti?.find(noti => noti.originalId === refund._id && !noti.isRead);
+                    if (notification) {
+                      handleMarkAsRead(notification._id);
+                    }
+                  }
                   setSelectedRefund(refund);
                   setIsDetailModalOpen(true);
                   setAdminNotes("");
@@ -281,12 +304,22 @@ export default function RefundsPage() {
               >
                 <IconEye className="mr-2 h-4 w-4" />
                 Xem chi tiết
+                {refund.isUnread && (
+                  <span className="ml-2 w-2 h-2 bg-blue-500 rounded-full"></span>
+                )}
               </DropdownMenuItem>
               {refund.status === RefundStatus.PENDING && (
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => {
+                      // Mark as read if unread
+                      if (refund.isUnread) {
+                        const notification = refundNoti?.find(noti => noti.originalId === refund._id && !noti.isRead);
+                        if (notification) {
+                          handleMarkAsRead(notification._id);
+                        }
+                      }
                       setSelectedRefund(refund);
                       setIsDetailModalOpen(true);
                       setAdminNotes("");
@@ -296,6 +329,9 @@ export default function RefundsPage() {
                   >
                     <IconCheck className="mr-2 h-4 w-4" />
                     Xử lý yêu cầu
+                    {refund.isUnread && (
+                      <span className="ml-2 w-2 h-2 bg-blue-500 rounded-full"></span>
+                    )}
                   </DropdownMenuItem>
                 </>
               )}

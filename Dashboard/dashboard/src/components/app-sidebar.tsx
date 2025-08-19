@@ -80,9 +80,9 @@ const data = {
       // notifications: 5,
     },
     {
-      title: "Master Data",
+      title: "Content",
       url: "/dashboard/master-data",
-      icon: IconDatabase,
+      icon: IconFileDescription,
     },
   ],
   navClouds: [
@@ -215,7 +215,7 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  // Use Next.js usePathname hook to detect current path
+  // Use Next.js pathname hook to detect current path
   const pathname = usePathname();
 
   // Get notification counts
@@ -287,11 +287,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Update navMain items with isActive property and dynamic notifications
   const navMainWithActive = data.navMain.map((item, index) => {
     // Add dynamic notification counts based on item title
-    let notifications = undefined;
+    let notifications: number | undefined = undefined;
     if (item.title === "Support") {
-      notifications = counts.support;
+      notifications = counts.support || undefined;
     } else if (item.title === "Refunds") {
-      notifications = counts.refund;
+      notifications = counts.refund || undefined;
     }
 
     return {

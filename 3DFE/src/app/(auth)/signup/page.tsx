@@ -73,10 +73,10 @@ function SignUpForm() {
 
   return (
     <div className="flex min-h-screen">
-      {/* Left side - Form */}
-      <div className="flex-1 flex items-center justify-center px-8 sm:px-12 lg:px-16">
-        <div className="w-full max-w-md">
-          <div className="mb-10">
+      {/* Centered Form */}
+      <div className="w-full flex items-center justify-center px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-md space-y-8 py-12 px-6 sm:px-8 bg-white rounded-lg shadow-md">
+          <div className="text-center">
             <h2 className="text-3xl font-medium mb-2">Get Started Now</h2>
           </div>
 
@@ -181,7 +181,7 @@ function SignUpForm() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-12 bg-[#3A5B22] hover:bg-[#2A4A12] text-white rounded-lg font-bold"
+              className="w-full h-12 bg-black hover:bg-gray-800 text-yellow-400 rounded-lg font-bold"
             >
               {loading ? "Creating account..." : "Signup"}
             </Button>
@@ -197,16 +197,22 @@ function SignUpForm() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
-            <Link
-              href="/signin"
-              className="text-sm font-medium text-[#3A5B22] hover:underline"
-            >
-              Have an account? Sign In
-            </Link>
+          <div className="text-center mt-6">
+            <p className="text-sm">
+              Have an account?{" "}
+              <Link
+                href="/signin"
+                className="font-medium text-yellow-400 hover:underline"
+              >
+                Sign In
+              </Link>
+            </p>
+          </div>
+
+          <div className="flex items-center justify-center mt-6">
             <Link
               href="/"
-              className="flex items-center justify-center px-6 py-2 border border-[#3A5B22] rounded-md shadow-sm text-sm font-medium text-[#3A5B22] bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3A5B22]"
+              className="flex items-center justify-center px-6 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3A5B22]"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -221,12 +227,6 @@ function SignUpForm() {
           </div>
         </div>
       </div>
-
-      {/* Right side - Image */}
-      <div
-        className="hidden md:block md:w-1/2 lg:w-1/2 bg-cover bg-center rounded-l-[45px]"
-        style={{ backgroundImage: "url('/assets/signup-background.jpg')" }}
-      ></div>
     </div>
   );
 }

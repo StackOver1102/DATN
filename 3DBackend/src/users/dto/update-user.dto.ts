@@ -31,6 +31,11 @@ export class UpdateUserDto extends PartialType(
   @IsOptional()
   phone?: string;
 
+  @ApiProperty({ example: 'https://example.com/avatar.jpg' })
+  @IsString()
+  @IsOptional()
+  avatar?: string;
+
   // @ApiProperty({ example: 1000000 })
   // @IsNumber()
   // @IsOptional()

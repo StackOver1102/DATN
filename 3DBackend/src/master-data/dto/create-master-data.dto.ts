@@ -22,16 +22,12 @@ export class CreateMasterDataDto {
 
   @IsString()
   @IsOptional()
-  description?: string;
+  content?: string;
 
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
-
-  @IsObject()
-  @IsOptional()
-  metadata?: Record<string, any>;
-
+  
   @IsNumber()
   @IsOptional()
   order?: number;

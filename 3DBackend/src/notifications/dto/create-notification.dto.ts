@@ -1,4 +1,5 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Types } from 'mongoose';
 import { NotificationType } from 'src/types/notification';
 
 export class CreateNotificationDto {
@@ -14,7 +15,6 @@ export class CreateNotificationDto {
   @IsNotEmpty()
   originType: NotificationType;
 
-  @IsString()
-  @IsOptional()
-  userId?: string;
+  @IsMongoId()
+  userId?: Types.ObjectId;
 }

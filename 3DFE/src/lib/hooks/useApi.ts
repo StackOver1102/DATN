@@ -114,7 +114,6 @@ export function useFetchData<T>(
   }
 ) {
   // debugger;
-  console.log("endpoint", endpoint);
   const { data: session } = useSession();
   const token = session?.accessToken as string | undefined;
 

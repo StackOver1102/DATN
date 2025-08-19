@@ -54,6 +54,7 @@ import { useRouter } from "next/navigation";
 import { User } from "../users/page";
 import Image from "next/image";
 import { toast } from "sonner";
+import { useNotifications } from "@/lib/hooks/useNotifications";
 
 interface Support {
   _id: string;
@@ -70,6 +71,7 @@ interface Support {
   name?: string;
   email?: string; 
   phone?: string;
+  isUnread?: boolean; // Added to track if the support request has unread notifications
 }
 
 export default function SupportPage() {
@@ -80,6 +82,7 @@ export default function SupportPage() {
   const [adminResponse, setAdminResponse] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
+  const {supportNoti, handleMarkAsRead} = useNotifications();
   const router = useRouter();
   const { data, isLoading, error, refetch } = useApiQuery<{
     data: Support[];
@@ -94,12 +97,18 @@ export default function SupportPage() {
     { status: "resolved" | "rejected"; response?: string }
   >("support", selectedSupport ? `/support/${selectedSupport?._id}` : "", "patch");
 
-  // Map support requests to include id field for DataTable
+  // Map support requests to include id field for DataTable and check if it's unread
   const supportRequests =
-    data?.data?.map((support) => ({
-      ...support,
-      id: support?._id,
-    })) || [];
+    data?.data?.map((support) => {
+      // Check if this support request has an unread notification
+      const isUnread = supportNoti?.some(noti => noti.originalId === support._id && !noti.isRead);
+      
+      return {
+        ...support,
+        id: support?._id,
+        isUnread: isUnread || false,
+      };
+    }) || [];
 
   // Define columns for the data table
   const columns: ColumnDef<Support>[] = [
@@ -131,7 +140,17 @@ export default function SupportPage() {
           <IconArrowsUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
-      cell: ({ row }) => <div className="font-medium">{row.getValue("message")}</div>,
+      cell: ({ row }) => {
+        const isUnread = row.original.isUnread;
+        return (
+          <div className={`font-medium ${isUnread ? "font-bold" : ""}`}>
+            {isUnread && (
+              <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+            )}
+            {row.getValue("message")}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "name",
@@ -222,20 +241,44 @@ export default function SupportPage() {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Hành động</DropdownMenuLabel>
               <DropdownMenuItem
-                onClick={() => router.push(`/dashboard/support/${support._id}/view`)}
+                onClick={() => {
+                  // Mark as read if unread
+                  if (support.isUnread) {
+                    const notification = supportNoti?.find(noti => noti.originalId === support._id && !noti.isRead);
+                    if (notification) {
+                      handleMarkAsRead(notification._id);
+                    }
+                  }
+                  router.push(`/dashboard/support/${support._id}/view`);
+                }}
               >
                 <IconEye className="mr-2 h-4 w-4" />
                 Xem chi tiết
+                {support.isUnread && (
+                  <span className="ml-2 w-2 h-2 bg-blue-500 rounded-full"></span>
+                )}
               </DropdownMenuItem>
               {support.status === "pending" && (
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={() => router.push(`/dashboard/support/${support._id}`)}
+                    onClick={() => {
+                      // Mark as read if unread
+                      if (support.isUnread) {
+                        const notification = supportNoti?.find(noti => noti.originalId === support._id && !noti.isRead);
+                        if (notification) {
+                          handleMarkAsRead(notification._id);
+                        }
+                      }
+                      router.push(`/dashboard/support/${support._id}`);
+                    }}
                     className="text-green-600"
                   >
                     <IconCheck className="mr-2 h-4 w-4" />
                     Xử lý yêu cầu
+                    {support.isUnread && (
+                      <span className="ml-2 w-2 h-2 bg-blue-500 rounded-full"></span>
+                    )}
                   </DropdownMenuItem>
                 </>
               )}

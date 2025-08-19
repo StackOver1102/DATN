@@ -212,9 +212,27 @@ export class UploadService {
     }
   }
 
-  uploadLocalToR2(localPath: string) {
-    const buffer = fs.readFileSync(localPath);
-    const generateKey = `${Date.now()}-${uuidv4()}}`;
-    return this.uploadFile(buffer, generateKey, 'image/jpeg', 'products');
+  async uploadLocalToR2(localPath: string) {
+    try {
+      // Read the file
+      const buffer = fs.readFileSync(localPath);
+      const generateKey = `${Date.now()}-${uuidv4()}`;
+      
+      // Upload to R2
+      const result = await this.uploadFile(buffer, generateKey, 'image/jpeg', 'products');
+      
+      // Delete the local file after successful upload
+      try {
+        fs.unlinkSync(localPath);
+        console.log(`Successfully deleted local file: ${localPath}`);
+      } catch (deleteError) {
+        console.error(`Error deleting local file: ${localPath}`, deleteError);
+      }
+      
+      return result;
+    } catch (error) {
+      console.error(`Error uploading file ${localPath} to R2:`, error);
+      throw error;
+    }
   }
 }

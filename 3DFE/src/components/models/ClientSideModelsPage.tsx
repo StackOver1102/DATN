@@ -51,6 +51,8 @@ interface ApiFilterParams {
   sortDirection?: "asc" | "desc";
   page?: number;
   limit?: number;
+  isPro?: string;
+  price?: string;
 }
 
 export default function ClientSideModelsPage({
@@ -71,6 +73,7 @@ export default function ClientSideModelsPage({
   const [loading, setLoading] = useState(false);
   const [currentApiParams, setCurrentApiParams] =
     useState<ApiFilterParams | null>(null);
+  const [activeTab, setActiveTab] = useState<'all' | 'pro' | 'free'>('all');
 
   // Function to fetch models based on filter parameters
   const fetchModels = useCallback(
@@ -158,6 +161,31 @@ export default function ClientSideModelsPage({
     }
   };
 
+  // Handle tab change for All/Pro/Free filtering
+  const handleTabChange = (tab: 'all' | 'pro' | 'free') => {
+    setActiveTab(tab);
+    
+    // Create new API params based on current ones
+    const newParams: ApiFilterParams = { 
+      ...currentApiParams,
+      page: 1 // Reset to first page when changing tabs
+    };
+    
+    // Apply filter based on selected tab
+    if (tab === 'pro') {
+      newParams.isPro = 'true';
+      newParams.price = undefined; // Clear any price filter
+    } else if (tab === 'free') {
+      newParams.isPro = 'false';
+    } else {
+      // For 'all' tab, remove both filters
+      newParams.isPro = undefined;
+      newParams.price = undefined;
+    }
+    
+    fetchModels(newParams);
+  };
+
   // Initialize filters state
   // We're tracking the state but not directly using it in the render
   // Just keeping it in sync with URL parameters
@@ -237,9 +265,44 @@ export default function ClientSideModelsPage({
                   {showFilters ? "Hide Filters" : "Show Filters"}
                 </Button>
 
+
                 <span className="text-sm text-gray-600">
                   {count} models found
                 </span>
+                
+                {/* Filter tabs for All/Pro/Free */}
+                <div className="flex border border-gray-300 rounded-lg ml-4">
+                  <button
+                    className={`px-4 py-1 text-sm ${
+                      activeTab === 'all' 
+                        ? 'bg-black text-yellow-400 font-medium' 
+                        : 'bg-white text-gray-700'
+                    } rounded-l-lg transition-colors`}
+                    onClick={() => handleTabChange('all')}
+                  >
+                    All
+                  </button>
+                  <button
+                    className={`px-4 py-1 text-sm ${
+                      activeTab === 'pro' 
+                        ? 'bg-black text-yellow-400 font-medium' 
+                        : 'bg-white text-gray-700'
+                    } border-l border-r border-gray-300 transition-colors`}
+                    onClick={() => handleTabChange('pro')}
+                  >
+                    Pro
+                  </button>
+                  <button
+                    className={`px-4 py-1 text-sm ${
+                      activeTab === 'free' 
+                        ? 'bg-black text-yellow-400 font-medium' 
+                        : 'bg-white text-gray-700'
+                    } rounded-r-lg transition-colors`}
+                    onClick={() => handleTabChange('free')}
+                  >
+                    Free
+                  </button>
+                </div>
               </div>
 
               {models.length > 0 && (

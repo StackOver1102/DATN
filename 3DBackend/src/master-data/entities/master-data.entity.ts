@@ -15,13 +15,10 @@ export class MasterData {
   name: string;
 
   @Prop()
-  description?: string;
+  content?: string;
 
   @Prop({ default: true })
   isActive: boolean;
-
-  @Prop({ type: Object })
-  metadata?: Record<string, any>;
 
   @Prop({ default: 0 })
   order: number;

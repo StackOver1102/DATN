@@ -103,6 +103,10 @@ export class CreateProductDto {
   @IsOptional()
   @IsString()
   images?: string;
+
+  @IsOptional()
+  @IsString()
+  platform?: string;
 }
 
 export class CreateProductsDto {

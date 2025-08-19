@@ -15,6 +15,7 @@ export function useApiQuery<T>(
     refetchInterval?: number | false;
     onSuccess?: (data: T) => void;
     onError?: (error: Error) => void;
+    refetchOnMount?: boolean;
   }
 ) {
   return useQuery<T>({

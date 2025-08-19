@@ -3,7 +3,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { SupportRequestDocument } from 'src/support/entities/support.entity';
 import { OrderDocument } from 'src/orders/entities/order.entity';
 import { RefundDocument } from 'src/refund/entities/refund.entity';
-import { UserDocument } from 'src/users/types';
+import { UserDocument } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class MailService {
@@ -218,6 +218,25 @@ export class MailService {
         password: generatedPassword || 'Mật khẩu bạn đã đặt',
         frontendUrl: process.env.FRONTEND_URL || 'https://3dvn.org',
         year: new Date().getFullYear(),
+      },
+    });
+  }
+
+
+  async sendResetPasswordEmail(user: UserDocument, token: string): Promise<void> {
+    const resetUrl = `${process.env.FRONTEND_URL || 'https://3dvn.org'}/reset-password?token=${token}`;
+    
+    await this.mailerService.sendMail({
+      to: user.email,
+      subject: 'Đặt lại mật khẩu của bạn',
+      template: './reset-password',
+      context: {
+        name: user.fullName || user.email,
+        resetUrl,
+        email: user.email,
+        frontendUrl: process.env.FRONTEND_URL || 'https://3dvn.org',
+        year: new Date().getFullYear(),
+        expiresIn: '24 giờ', // Thời gian token hết hạn
       },
     });
   }

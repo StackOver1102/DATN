@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
 import { PaginationDto } from './pagination.dto';
 
 export class FilterDto extends PaginationDto {
@@ -103,4 +103,18 @@ export class FilterDto extends PaginationDto {
   @IsOptional()
   @IsString()
   color?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by isPro',
+  })
+  @IsOptional()
+  @IsString()
+  isPro?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by isFree',
+  })
+  @IsOptional()
+  @IsString()
+  isFree?: string;
 }

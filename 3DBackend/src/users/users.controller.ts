@@ -8,8 +8,10 @@ import {
   Delete,
   UseGuards,
   ForbiddenException,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { CreateDashboardUserDto } from './dto/create-dashboard-user.dto';
@@ -22,11 +24,16 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { UserPayload } from '../auth/types/auth.types';
 import { ChangePasswordDto } from './dto/change-pass.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { UploadService } from '../upload/upload.service';
 
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly uploadService: UploadService,
+  ) {}
 
   @Public()
   @Post()
@@ -89,6 +96,54 @@ export class UsersController {
       changePasswordDto.newPassword,
       user.userId,
     );
+  }
+
+  @Post('avatar')
+  @ApiBearerAuth()
+  @UseInterceptors(FileInterceptor('avatar'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        avatar: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  async uploadAvatar(
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: UserPayload,
+  ) {
+    try {
+      // Upload file to storage
+      const uploadResult = await this.uploadService.uploadFile(
+        file.buffer,
+        file.originalname,
+        file.mimetype,
+        'avatars',
+      );
+
+      // Update user's avatar in database
+      const updatedUser = await this.usersService.update(user.userId, {
+        avatar: uploadResult.url,
+      });
+
+      return {
+        success: true,
+        message: 'Avatar updated successfully',
+        data: {
+          avatar: updatedUser.avatar,
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message || 'Failed to update avatar',
+      };
+    }
   }
 
   @ApiBearerAuth()

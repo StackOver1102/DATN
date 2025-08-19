@@ -25,6 +25,9 @@ export class User {
 
   @Prop()
   phone: string;
+  
+  @Prop()
+  avatar: string;
 
   @Prop({ default: false })
   isDeleted: boolean;

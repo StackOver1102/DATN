@@ -109,6 +109,12 @@ export const authApi = {
   register: (name: string, email: string, password: string) => 
     apiRequest('auth/register', 'POST', { name, email, password }),
   
+  forgotPassword: (email: string) =>
+    apiRequest('auth/forgot-password', 'POST', { email }),
+    
+  resetPassword: (token: string, password: string) =>
+    apiRequest('auth/reset-password', 'POST', { token, password }),
+    
   me: (token: string) => 
     apiRequest('auth/me', 'GET', undefined, token)
 };
@@ -277,4 +283,4 @@ export const categoryApi = {
   getById: (id: string) => apiRequest(`categories/${id}`, 'GET'),
   
   getItems: (categoryId: string) => apiRequest(`categories/${categoryId}/items`, 'GET')
-}; 
+};

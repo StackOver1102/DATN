@@ -6,7 +6,7 @@ import {
   NotificationDocument,
 } from './entities/notification.entity';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 @Injectable()
 export class NotificationsService {
@@ -35,11 +35,13 @@ export class NotificationsService {
   }
 
   async getUnreadCount() {
+    const supportNoti = await this.notificationModel.find({isRead: false, originType: 'support'})
     const supportCount = await this.notificationModel.countDocuments({
       isRead: false,
       originType: 'support',
     });
 
+    const refundNoti = await this.notificationModel.find({isRead: false, originType: 'refund'})
     const refundCount = await this.notificationModel.countDocuments({
       isRead: false,
       originType: 'refund',
@@ -49,6 +51,8 @@ export class NotificationsService {
       support: supportCount,
       refund: refundCount,
       total: supportCount + refundCount,
+      supportNoti,
+      refundNoti,
     };
   }
 
@@ -70,11 +74,17 @@ export class NotificationsService {
 
   async markAsRead(id: string) {
     return this.notificationModel.findByIdAndUpdate(
-      id,
+      {_id:id},
       { isRead: true },
       {
         new: true,
       },
     );
+  }
+
+  async getNotificationsByUser(userId:string){
+    console.log(userId)
+    const notifications = await this.notificationModel.find({userId: new Types.ObjectId(userId), isWatching: false}).sort({createdAt: -1})
+    return notifications
   }
 }

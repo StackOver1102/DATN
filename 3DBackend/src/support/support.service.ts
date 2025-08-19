@@ -48,7 +48,8 @@ export class SupportService {
         message: `New support request: ${createSupportDto.name}`,
         originalId: savedRequest._id.toString(),
         originType: NotificationType.SUPPORT,
-        userId: userId || '',
+        userId: userId ? new Types.ObjectId(userId) : undefined,
+        // originType: NotificationType.SUPPORT 
       });
     } catch (error) {
       console.error('Failed to create notification:', error);

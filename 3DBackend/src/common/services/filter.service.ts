@@ -45,6 +45,7 @@ export class FilterService {
       color,
       price,
       discount,
+      isPro,
     } = filterDto;
 
     // Use q parameter as search if provided
@@ -56,7 +57,6 @@ export class FilterService {
     const orConditions: Record<string, any>[] = [];
     const andConditions: Record<string, any>[] = [];
 
-    console.log('searchFields', searchFields);
     // Add search conditions if provided
     if (searchTerm && searchFields.length > 0) {
       const searchRegex = new RegExp(searchTerm, 'i');
@@ -118,6 +118,11 @@ export class FilterService {
 
     if (discount !== undefined) {
       andConditions.push({ discount });
+    }
+
+    if (isPro) {
+      console.log('isPro', isPro);
+      andConditions.push({ isPro: isPro === 'true' });
     }
 
     // Kết hợp các điều kiện AND và OR

@@ -19,6 +19,7 @@ import { useState } from "react";
 import { Loading } from "./ui/loading";
 
 import { useAppSelector } from "@/lib/store/hooks";
+import { CircleDollarSign } from "lucide-react";
 
 export default function Header() {
   const { data: session, status } = useSession();
@@ -163,9 +164,14 @@ export default function Header() {
                 {showUserData ? (
                   <>
                     <div className="flex items-center bg-white text-[#3A5B22] px-2 py-0.5 rounded-full text-xs">
-                      <span className="font-medium">
-                        ${userProfile?.balance || session.user.balance || 0}
-                      </span>
+                      <Link href="/deposit" className="flex items-center">  
+                        <span className="font-medium">
+                          {userProfile?.balance || session.user.balance || 0}
+                        </span>
+                        <CircleDollarSign className="w-3 h-3 text-yellow-500" />
+                      </Link>
+
+
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -326,9 +332,14 @@ export default function Header() {
               {showUserData ? (
                 <>
                   <div className="flex items-center bg-white text-yellow-400 px-3 py-1 rounded-full">
-                    <span className="font-medium">
-                      ${userProfile?.balance || session.user.balance || 0}
-                    </span>
+                    <Link href="/deposit" className="flex items-center">
+                      <span className="font-medium">
+                        {userProfile?.balance || session.user.balance || 0}
+                      </span>
+                      <CircleDollarSign className="w-4 h-4 text-yellow-500 ml-1 mt-[1px]" />
+
+                    </Link>
+
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

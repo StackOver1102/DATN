@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -10,6 +11,7 @@ import { CreateUserDto } from '../users/dto/create-user.dto';
 import { JwtPayload, JwtToken } from './types/auth.types';
 import * as bcrypt from 'bcrypt';
 import { MailService } from 'src/mail/mail.service';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -42,7 +44,7 @@ export class AuthService {
     return {
       access_token: this.jwtService.sign(payload),
       user: {
-        _id: user._id,
+        _id: user._id.toString(),
         email: user.email,
         role: user.role,
         fullName: user.fullName,
@@ -72,6 +74,52 @@ export class AuthService {
       return user;
     } catch (error) {
       throw new BadRequestException(error);
+    }
+  }
+
+  async forgotPassword(email: string) {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const token = this.jwtService.sign(
+      { email, purpose: 'password_reset' },
+      { expiresIn: '24h' }
+    );
+    await this.mailService.sendResetPasswordEmail(user, token);
+    return { message: 'Reset password email sent' };
+  }
+
+  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    try {
+      // Verify and decode the token
+      const decoded = this.jwtService.verify(resetPasswordDto.token);
+      
+      // Check if token was issued for password reset
+      if (decoded.purpose !== 'password_reset') {
+        throw new UnauthorizedException('Invalid token purpose');
+      }
+      
+      // Find the user by email from token
+      const user = await this.usersService.findByEmail(decoded.email);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+      
+      // Hash the new password
+      const hashedPassword = await this.hashPassword(resetPasswordDto.password);
+      
+      // Update user's password
+      await this.usersService.updatePassword(user._id.toString(), hashedPassword);
+      
+      return { message: 'Password has been reset successfully' };
+    } catch (error) {
+      if (error.name === 'TokenExpiredError') {
+        throw new UnauthorizedException('Password reset token has expired');
+      } else if (error.name === 'JsonWebTokenError') {
+        throw new UnauthorizedException('Invalid password reset token');
+      }
+      throw error;
     }
   }
 }

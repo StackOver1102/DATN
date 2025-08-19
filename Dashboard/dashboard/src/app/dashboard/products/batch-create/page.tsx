@@ -125,6 +125,7 @@ const productSchema = z.object({
   render: z.string().optional(),
   form: z.string().optional(),
   color: z.string().optional(),
+  platform: z.string().optional(), // Added platform field
   urlDownload: z.string().optional(),
   categoryName: z.string().optional(),
   categoryPath: z.string().optional(),
@@ -141,6 +142,7 @@ type ProductForm = Omit<
   render: string[];
   form: string[];
   color: string[];
+  platform: string;
 };
 
 type CreateProductDto = z.infer<typeof productSchema>;
@@ -261,7 +263,7 @@ export default function BatchCreateProductPage() {
     }
 
     return {
-      name: categoryName ? `Model ${categoryName} 3dsmax` : "",
+      name: categoryName ? `${categoryName}` : "",
       description: "",
       price: 0,
       discount: 0,
@@ -272,6 +274,7 @@ export default function BatchCreateProductPage() {
       categoryPath: categoryPath,
       rootCategoryId: rootCategoryId,
       images: "",
+      platform: "3dsmax", // Default platform
       stt: 1,
       materials: [],
       style: [],
@@ -602,7 +605,6 @@ export default function BatchCreateProductPage() {
     const invalidProducts = products.filter(
       (product) =>
         !product.categoryId ||
-        product.price <= 0 ||
         !product.stt ||
         product.stt < 1
     );
@@ -642,7 +644,7 @@ export default function BatchCreateProductPage() {
       return {
         ...product,
         folderId: sharedFolderId,
-        name: `Model ${product.categoryName} 3dsmax`,
+        name: `${product.categoryName}`,
         images: imageUrl,
         materials,
         style,
@@ -658,7 +660,10 @@ export default function BatchCreateProductPage() {
       {
         onSuccess: () => {
           toast.success(`Đã tạo thành công ${products.length} sản phẩm`);
-          router.push("/dashboard/products");
+          
+          // Instead of trying to invalidate cache and navigate, use window.location
+          // This will cause a full page reload but guarantee fresh data
+          // window.location.href = '/dashboard/products';
         },
         onError: (error) => {
           toast.error(`Lỗi: ${error.message}`);
@@ -1055,27 +1060,53 @@ export default function BatchCreateProductPage() {
                       )}
                     </div>
 
-                    <div className="space-y-2 bg-gray-50 p-4 rounded-lg border border-gray-100 mb-4">
-                      <Label
-                        htmlFor={`name-${index}`}
-                        className="text-sm font-medium flex items-center"
-                      >
-                        <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                          2
-                        </span>
-                        Tên sản phẩm (tự động)
-                      </Label>
-                      <Input
-                        id={`name-${index}`}
-                        value={`Model ${
-                          product.categoryName || "[Chọn danh mục]"
-                        } 3dsmax`}
-                        disabled
-                        className="border-gray-300 bg-gray-50 text-gray-500 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Tên sản phẩm được tạo tự động dựa trên danh mục đã chọn
-                      </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2 bg-gray-50 p-4 rounded-lg border border-gray-100 mb-4">
+                        <Label
+                          htmlFor={`name-${index}`}
+                          className="text-sm font-medium flex items-center"
+                        >
+                          <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
+                            2
+                          </span>
+                          Tên sản phẩm (tự động)
+                        </Label>
+                        <Input
+                          id={`name-${index}`}
+                          value={`${
+                            product.categoryName || "[Chọn danh mục]"
+                          }`}
+                          disabled
+                          className="border-gray-300 bg-gray-50 text-gray-500 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Tên sản phẩm được tạo tự động dựa trên danh mục đã chọn
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-2 bg-gray-50 p-4 rounded-lg border border-gray-100 mb-4">
+                        <Label
+                          htmlFor={`platform-${index}`}
+                          className="text-sm font-medium flex items-center"
+                        >
+                          <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
+                            3
+                          </span>
+                          Platform
+                        </Label>
+                        <Input
+                          id={`platform-${index}`}
+                          value={product.platform}
+                          onChange={(e) =>
+                            handleChange(index, "platform", e.target.value)
+                          }
+                          placeholder="Nhập platform (ví dụ: 3dsmax, Cinema 4D, Blender...)"
+                          className="border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Platform mặc định là 3dsmax
+                        </p>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   User as UserIcon,
@@ -14,6 +14,12 @@ import {
   DollarSign,
   AlertTriangle,
   X,
+  Upload,
+  Camera,
+  CircleDollarSign,
+  Bell,
+  RefreshCcw,
+  LifeBuoy,
 } from "lucide-react";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
@@ -33,7 +39,7 @@ import Pagination from "@/components/Pagination";
 import { PaginatedResult } from "@/interface/pagination";
 import { Session } from "next-auth";
 
-type TabType = "info" | "password" | "purchases" | "payments";
+type TabType = "info" | "password" | "purchases" | "payments" | "refunds" | "support";
 
 interface UserInfo {
   fullName: string;
@@ -55,6 +61,8 @@ interface Purchase {
   downloadLink: string;
   image: string;
   productId: Product;
+  notificationId?: string;
+  isRead?: boolean;
 }
 
 interface Payment {
@@ -68,6 +76,31 @@ interface Payment {
   transactionCode: string;
   balanceAfter?: number;
   balanceBefore?: number;
+  notificationId?: string;
+  isRead?: boolean;
+}
+
+interface RefundRequest {
+  _id: string;
+  orderId: string;
+  description: string;
+  status: "pending" | "approved" | "rejected";
+  createdAt: string;
+  updatedAt: string;
+  order?: Purchase;
+  notificationId?: string;
+  isRead?: boolean;
+}
+
+interface SupportTicket {
+  _id: string;
+  subject: string;
+  message: string;
+  status: "open" | "in_progress" | "closed";
+  createdAt: string;
+  updatedAt: string;
+  notificationId?: string;
+  isRead?: boolean;
 }
 
 // Schema validation for user profile form
@@ -143,7 +176,9 @@ function ProfilePageContent({
   const [activeTab, setActiveTab] = useState<TabType>(
     tabParam === "purchases" ||
       tabParam === "payments" ||
-      tabParam === "password"
+      tabParam === "password" ||
+      tabParam === "refunds" ||
+      tabParam === "support"
       ? (tabParam as TabType)
       : "info"
   );
@@ -153,14 +188,25 @@ function ProfilePageContent({
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showRefundModal, setShowRefundModal] = useState(false);
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(
     null
   );
   const [refundReason, setRefundReason] = useState("");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Refund notification states
+  const [pendingRefunds, setPendingRefunds] = useState(0);
+  const [hasNewRefundUpdates, setHasNewRefundUpdates] = useState(false);
 
   // Pagination states
   const [purchasesPage, setPurchasesPage] = useState(1);
   const [paymentsPage, setPaymentsPage] = useState(1);
+  const [refundsPage, setRefundsPage] = useState(1);
+  const [supportPage, setSupportPage] = useState(1);
   const itemsPerPage = 5;
 
   const { data: purchasesData, isLoading: isLoadingPurchases } = useFetchData<
@@ -173,7 +219,7 @@ function ProfilePageContent({
     // }
   );
 
-  const { data: paymentsData, isLoading: isLoadingPayments } = useFetchData<
+    const { data: paymentsData, isLoading: isLoadingPayments } = useFetchData<
     PaginatedResult<Payment>
   >(
     `transactions/my-transactions?page=${paymentsPage}&limit=${itemsPerPage}`,
@@ -182,6 +228,40 @@ function ProfilePageContent({
     //   enabled: activeTab === "payments",
     // }
   );
+  
+  // Fetch refund requests
+  const { data: refundsData, isLoading: isLoadingRefundRequests } = useFetchData<
+    PaginatedResult<RefundRequest>
+  >(
+    `refunds/my-refunds?page=${refundsPage}&limit=${itemsPerPage}`,
+    ["refunds", refundsPage.toString()],
+    {
+      enabled: activeTab === "refunds",
+    }
+  );
+  
+  // Fetch support tickets
+  const { data: supportData, isLoading: isLoadingSupportTickets } = useFetchData<
+    PaginatedResult<SupportTicket>
+  >(
+    `support/my-tickets?page=${supportPage}&limit=${itemsPerPage}`,
+    ["support", supportPage.toString()],
+    {
+      enabled: activeTab === "support",
+    }
+  );
+  
+  // Fetch refund notifications
+  const { data: refundData, isLoading: isLoadingRefunds, refetch: refetchNotifications } = useFetchData<{
+    pendingCount: number;
+    hasNewUpdates: boolean;
+  }>(
+    `notifications/byUser`,
+    ["refundNotifications"],
+    {
+      refetchInterval: 30000, // Refresh every 30 seconds
+    }
+  );
 
   // Extract data from paginated responses
   const purchases = purchasesData?.items || [];
@@ -189,8 +269,78 @@ function ProfilePageContent({
 
   const payments = paymentsData?.items || [];
   const paymentsTotalPages = paymentsData?.meta.totalPages || 1;
+  
+  const refunds = refundsData?.items || [];
+  const refundsTotalPages = refundsData?.meta.totalPages || 1;
+  
+  const supportTickets = supportData?.items || [];
+  const supportTotalPages = supportData?.meta.totalPages || 1;
 
-  const { post } = useApi();
+  const { post, put } = useApi();
+
+  // Function to handle avatar file selection
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      setShowAvatarModal(true);
+    }
+  };
+
+  // Function to upload avatar
+  const handleAvatarUpload = async () => {
+    if (!avatarFile || !session?.user?.id) return;
+
+    try {
+      setIsUploadingAvatar(true);
+
+      // Create form data
+      const formData = new FormData();
+      formData.append("avatar", avatarFile);
+
+      // Upload avatar
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/avatar`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.accessToken}`,
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update user data with new avatar URL
+        setUserData({
+          ...userData,
+          avatar: data.data.avatar,
+        });
+
+        // Update Redux store
+        if (profile) {
+          dispatch(setProfile({
+            ...profile,
+            avatar: data.data.avatar,
+          }));
+        }
+
+        toast.success("Avatar updated successfully!");
+        setShowAvatarModal(false);
+      } else {
+        toast.error(data.message || "Failed to update avatar");
+      }
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      toast.error("An error occurred while uploading avatar");
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
 
   // User profile form
   const {
@@ -270,15 +420,57 @@ function ProfilePageContent({
     }
   }, [profile, setProfileValue, purchasesData]);
 
+  // Update refund notification states when refund data changes
+  useEffect(() => {
+    if (refundData) {
+      setPendingRefunds(refundData.pendingCount);
+      setHasNewRefundUpdates(refundData.hasNewUpdates);
+    }
+  }, [refundData]);
+
   const tabs = [
-    { id: "info" as TabType, label: "Personal Information", icon: UserIcon },
-    { id: "password" as TabType, label: "Change Password", icon: Lock },
+    {
+      id: "info" as TabType,
+      label: "Personal Information",
+      icon: UserIcon,
+      notifications: 0,
+      hasUpdates: false
+    },
+    {
+      id: "password" as TabType,
+      label: "Change Password",
+      icon: Lock,
+      notifications: 0,
+      hasUpdates: false
+    },
     {
       id: "purchases" as TabType,
       label: "Purchase History",
       icon: ShoppingBag,
+      notifications: pendingRefunds,
+      hasUpdates: hasNewRefundUpdates
     },
-    { id: "payments" as TabType, label: "Payment History", icon: CreditCard },
+    {
+      id: "payments" as TabType,
+      label: "Payment History",
+      icon: CreditCard,
+      notifications: 2,
+      hasUpdates: false
+    },
+    {
+      id: "refunds" as TabType,
+      label: "Refund Requests",
+      icon: RefreshCcw,
+      notifications: 0,
+      hasUpdates: false
+    },
+    {
+      id: "support" as TabType,
+      label: "Support Tickets",
+      icon: LifeBuoy,
+      notifications: 0,
+      hasUpdates: false
+    },
   ];
 
   // Update profile mutation
@@ -319,8 +511,7 @@ function ProfilePageContent({
       }
     } catch (error) {
       toast.error(
-        `An error occurred while updating information: ${
-          error instanceof Error ? error.message : "Unknown error"
+        `An error occurred while updating information: ${error instanceof Error ? error.message : "Unknown error"
         }`
       );
     }
@@ -363,16 +554,22 @@ function ProfilePageContent({
 
       if (response.success) {
         // Close modal and reset
-        setShowRefundModal(false);
-        setSelectedPurchase(null);
-        setRefundReason("");
+
         toast.success(
           "Refund request submitted! We will process it within 24-48 hours."
         );
       }
+      else {
+
+        toast.error(response.message);
+      }
     } catch (error) {
       console.error("Error submitting refund request:", error);
       toast.error("An error occurred while submitting the refund request!");
+    } finally {
+      setShowRefundModal(false);
+      setSelectedPurchase(null);
+      setRefundReason("");
     }
   };
 
@@ -419,7 +616,33 @@ function ProfilePageContent({
     return new Date(dateString).toLocaleDateString("vi-VN");
   };
 
-  if (isLoadingPurchases || isLoadingPayments || isLoadingStore) {
+  const formatNumber = (number: number) => {
+    return number.toLocaleString("vi-VN");
+  };
+  
+  // Function to mark a notification as read
+  const markNotificationAsRead = async (notificationId: string) => {
+    try {
+      const response = await put(`notifications/${notificationId}/read`, {});
+      if (response.success) {
+        // Refresh notification data and transaction/purchase lists
+        refetchNotifications();
+        
+        // Show subtle toast notification
+        toast.success("Notification marked as read", {
+          duration: 2000,
+          position: "bottom-right",
+        });
+      }
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      toast.error("Failed to mark notification as read");
+    }
+  };
+
+  if (isLoadingPurchases || isLoadingPayments || isLoadingStore || 
+      (activeTab === "refunds" && isLoadingRefundRequests) || 
+      (activeTab === "support" && isLoadingSupportTickets)) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Loading variant="spinner" size="lg" text="Loading information..." />
@@ -445,9 +668,17 @@ function ProfilePageContent({
                 <Button
                   size="sm"
                   className="absolute bottom-0 right-0 rounded-full w-8 h-8 p-0"
+                  onClick={() => fileInputRef.current?.click()}
                 >
                   <Edit3 className="w-4 h-4" />
                 </Button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                />
               </div>
 
               <div className="text-center md:text-left flex-1">
@@ -459,7 +690,10 @@ function ProfilePageContent({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-blue-50 rounded-lg p-4">
                     <div className="text-2xl font-bold text-blue-600">
-                      {formatCurrency(userData.balance)}
+                      <span className="flex items-center">
+                        {formatNumber(userData.balance)}
+                        <CircleDollarSign className="w-4 h-4 text-yellow-500 ml-1 mt-[1px]" />
+                      </span>
                     </div>
                     <div className="text-sm text-gray-600">Available Balance</div>
                   </div>
@@ -490,14 +724,31 @@ function ProfilePageContent({
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                        activeTab === tab.id
-                          ? "border-blue-500 text-blue-600"
-                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                      }`}
+                      className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
+                        ? "border-blue-500 text-blue-600"
+                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        } relative`}
                     >
-                      <Icon className="w-5 h-5" />
-                      {tab.label}
+                      <div className="relative">
+                        <Icon className="w-5 h-5" />
+                        {tab.notifications > 0 && (
+                          <div className="absolute -top-2 -right-2 flex items-center justify-center">
+                            <div className="relative">
+                              <Bell className="w-3 h-3 text-yellow-500" fill={tab.hasUpdates ? "#eab308" : "none"} />
+                              <span className="absolute top-0 right-0 flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                                {/* <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span> */}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <span>{tab.label}</span>
+                      {tab.notifications > 0 && (
+                        <span className="ml-1 px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                          {tab.notifications}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
@@ -540,11 +791,10 @@ function ProfilePageContent({
                       <input
                         {...registerProfile("fullName")}
                         disabled={!isEditing}
-                        className={`w-full px-4 py-3 border ${
-                          profileErrors.fullName
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500`}
+                        className={`w-full px-4 py-3 border ${profileErrors.fullName
+                          ? "border-red-500"
+                          : "border-gray-300"
+                          } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500`}
                       />
                       {profileErrors.fullName && (
                         <p className="mt-1 text-xs text-red-500">
@@ -560,11 +810,10 @@ function ProfilePageContent({
                       <input
                         {...registerProfile("email")}
                         disabled={!isEditing}
-                        className={`w-full px-4 py-3 border ${
-                          profileErrors.email
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500`}
+                        className={`w-full px-4 py-3 border ${profileErrors.email
+                          ? "border-red-500"
+                          : "border-gray-300"
+                          } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500`}
                       />
                       {profileErrors.email && (
                         <p className="mt-1 text-xs text-red-500">
@@ -580,11 +829,10 @@ function ProfilePageContent({
                       <input
                         {...registerProfile("phone")}
                         disabled={!isEditing}
-                        className={`w-full px-4 py-3 border ${
-                          profileErrors.phone
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500`}
+                        className={`w-full px-4 py-3 border ${profileErrors.phone
+                          ? "border-red-500"
+                          : "border-gray-300"
+                          } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500`}
                       />
                       {profileErrors.phone && (
                         <p className="mt-1 text-xs text-red-500">
@@ -601,11 +849,10 @@ function ProfilePageContent({
                         {...registerProfile("address")}
                         disabled={!isEditing}
                         rows={3}
-                        className={`w-full px-4 py-3 border ${
-                          profileErrors.address
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 resize-none`}
+                        className={`w-full px-4 py-3 border ${profileErrors.address
+                          ? "border-red-500"
+                          : "border-gray-300"
+                          } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 resize-none`}
                       />
                       {profileErrors.address && (
                         <p className="mt-1 text-xs text-red-500">
@@ -635,11 +882,10 @@ function ProfilePageContent({
                         <input
                           type={showOldPassword ? "text" : "password"}
                           {...registerPassword("oldPassword")}
-                          className={`w-full px-4 py-3 pr-12 border ${
-                            passwordErrors.oldPassword
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                          className={`w-full px-4 py-3 pr-12 border ${passwordErrors.oldPassword
+                            ? "border-red-500"
+                            : "border-gray-300"
+                            } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
                         />
                         <Button
                           type="button"
@@ -670,11 +916,10 @@ function ProfilePageContent({
                         <input
                           type={showNewPassword ? "text" : "password"}
                           {...registerPassword("newPassword")}
-                          className={`w-full px-4 py-3 pr-12 border ${
-                            passwordErrors.newPassword
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                          className={`w-full px-4 py-3 pr-12 border ${passwordErrors.newPassword
+                            ? "border-red-500"
+                            : "border-gray-300"
+                            } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
                         />
                         <Button
                           type="button"
@@ -705,11 +950,10 @@ function ProfilePageContent({
                         <input
                           type={showConfirmPassword ? "text" : "password"}
                           {...registerPassword("confirmPassword")}
-                          className={`w-full px-4 py-3 pr-12 border ${
-                            passwordErrors.confirmPassword
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                          className={`w-full px-4 py-3 pr-12 border ${passwordErrors.confirmPassword
+                            ? "border-red-500"
+                            : "border-gray-300"
+                            } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
                         />
                         <Button
                           type="button"
@@ -757,19 +1001,45 @@ function ProfilePageContent({
                         {purchases.map((purchase, index) => (
                           <div
                             key={index}
-                            className="bg-gray-50 rounded-lg p-4 flex items-center justify-between"
+                            className={`bg-gray-50 rounded-lg p-4 flex items-center justify-between
+                              ${purchase.notificationId && !purchase.isRead 
+                                ? "border-l-4 border-yellow-400" 
+                                : ""
+                              }
+                              ${purchase.notificationId 
+                                ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md" 
+                                : ""
+                              }`}
+                            onClick={() => {
+                              if (purchase.notificationId && !purchase.isRead) {
+                                markNotificationAsRead(purchase.notificationId);
+                              }
+                            }}
                           >
                             <div className="flex items-center gap-4">
-                              <Image
-                                src={purchase.productId.images}
-                                alt={purchase.productId.name}
-                                width={60}
-                                height={60}
-                                className="rounded-lg object-cover"
-                              />
+                              <div className="relative">
+                                <Image
+                                  src={purchase.productId.images}
+                                  alt={purchase.productId.name}
+                                  width={60}
+                                  height={60}
+                                  className="rounded-lg object-cover"
+                                />
+                                {purchase.notificationId && !purchase.isRead && (
+                                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
+                                  </span>
+                                )}
+                              </div>
                               <div>
-                                <h3 className="font-semibold text-gray-900">
+                                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                                   {purchase.productId.name}
+                                  {purchase.notificationId && !purchase.isRead && (
+                                    <span className="ml-2 px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                                      New
+                                    </span>
+                                  )}
                                 </h3>
                                 <p className="text-sm text-gray-600">
                                   #{purchase._id} •{" "}
@@ -789,28 +1059,23 @@ function ProfilePageContent({
                                 </div>
                               </div>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 items-center">
+                              {purchase.notificationId && !purchase.isRead && (
+                                <Bell className="w-5 h-5 text-yellow-500 mr-2" fill="#eab308" />
+                              )}
                               {purchase.status === "completed" && (
-                                <>
-                                  {/* <Button
+                                <Button
+                                  variant="outline"
                                   size="sm"
-                                  className="flex items-center gap-2"
+                                  onClick={(e) => {
+                                    e.stopPropagation(); // Prevent triggering the parent onClick
+                                    handleRefundRequest(purchase);
+                                  }}
+                                  className="flex items-center gap-2 text-yellow-400 bg-black"
                                 >
-                                  <Download className="w-4 h-4" />
-                                  Tải về
-                                </Button> */}
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                      handleRefundRequest(purchase)
-                                    }
-                                    className="flex items-center gap-2 text-yellow-400 bg-black"
-                                  >
-                                    <AlertTriangle className="w-4 h-4" />
-                                    Report
-                                  </Button>
-                                </>
+                                  <AlertTriangle className="w-4 h-4" />
+                                  Report
+                                </Button>
                               )}
                             </div>
                           </div>
@@ -864,27 +1129,50 @@ function ProfilePageContent({
                         {payments.map((payment, index) => (
                           <div
                             key={index}
-                            className="bg-gray-50 rounded-lg p-4 flex items-center justify-between"
+                            className={`bg-gray-50 rounded-lg p-4 flex items-center justify-between 
+                              ${payment.notificationId && !payment.isRead 
+                                ? "border-l-4 border-yellow-400" 
+                                : ""
+                              }
+                              ${payment.notificationId 
+                                ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md" 
+                                : ""
+                              }`}
+                            onClick={() => {
+                              if (payment.notificationId && !payment.isRead) {
+                                markNotificationAsRead(payment.notificationId);
+                              }
+                            }}
                           >
                             <div className="flex items-center gap-4">
                               <div
-                                className={`w-12 h-12 ${
-                                  payment.type === "payment"
-                                    ? "bg-red-100"
-                                    : "bg-green-100"
-                                } rounded-lg flex items-center justify-center`}
+                                className={`w-12 h-12 ${payment.type === "payment"
+                                  ? "bg-red-100"
+                                  : "bg-green-100"
+                                  } rounded-lg flex items-center justify-center relative`}
                               >
                                 {payment.type === "payment" ? (
                                   <ShoppingBag className="w-6 h-6 text-red-600" />
                                 ) : (
                                   <DollarSign className="w-6 h-6 text-green-600" />
                                 )}
+                                {payment.notificationId && !payment.isRead && (
+                                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
+                                  </span>
+                                )}
                               </div>
                               <div>
-                                <h3 className="font-semibold text-gray-900">
+                                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                                   {payment.type === "payment"
                                     ? "Order Payment"
                                     : payment.description}
+                                  {payment.notificationId && !payment.isRead && (
+                                    <span className="ml-2 px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                                      New
+                                    </span>
+                                  )}
                                 </h3>
                                 <p className="text-sm text-gray-600">
                                   #{payment.transactionCode} •{" "}
@@ -925,9 +1213,11 @@ function ProfilePageContent({
                                 </div>
                               </div>
                             </div>
-                            {/* <div className="text-right">
-                              <Calendar className="w-5 h-5 text-gray-400 ml-auto" />
-                            </div> */}
+                            {payment.notificationId && !payment.isRead && (
+                              <div className="text-right">
+                                <Bell className="w-5 h-5 text-yellow-500" fill="#eab308" />
+                              </div>
+                            )}
                           </div>
                         ))}
 
@@ -965,6 +1255,255 @@ function ProfilePageContent({
                             Shop
                           </Button>
                         </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {activeTab === "refunds" && (
+                <div className="space-y-6">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Refund Requests
+                  </h2>
+
+                  <div className="space-y-4">
+                    {isLoadingRefundRequests ? (
+                      <div className="flex justify-center py-10">
+                        <Loading />
+                      </div>
+                    ) : refunds?.length ? (
+                      <>
+                        {refunds.map((refund, index) => (
+                          <div
+                            key={index}
+                            className={`bg-gray-50 rounded-lg p-4 flex items-center justify-between
+                              ${refund.notificationId && !refund.isRead 
+                                ? "border-l-4 border-yellow-400" 
+                                : ""
+                              }
+                              ${refund.notificationId 
+                                ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md" 
+                                : ""
+                              }`}
+                            onClick={() => {
+                              if (refund.notificationId && !refund.isRead) {
+                                markNotificationAsRead(refund.notificationId);
+                              }
+                            }}
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className={`w-12 h-12 rounded-lg flex items-center justify-center relative
+                                ${refund.status === "pending" ? "bg-yellow-100" : 
+                                  refund.status === "approved" ? "bg-green-100" : "bg-red-100"}`}
+                              >
+                                <RefreshCcw className={`w-6 h-6 
+                                  ${refund.status === "pending" ? "text-yellow-600" : 
+                                    refund.status === "approved" ? "text-green-600" : "text-red-600"}`} 
+                                />
+                                {refund.notificationId && !refund.isRead && (
+                                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
+                                  </span>
+                                )}
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                                  Refund Request {refund.order && `for ${refund.order.productId.name}`}
+                                  {refund.notificationId && !refund.isRead && (
+                                    <span className="ml-2 px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                                      New
+                                    </span>
+                                  )}
+                                </h3>
+                                <p className="text-sm text-gray-600">
+                                  #{refund._id} • {formatDate(refund.createdAt)}
+                                </p>
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {refund.description.length > 80 
+                                    ? refund.description.substring(0, 80) + "..." 
+                                    : refund.description}
+                                </p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span
+                                    className={`px-2 py-1 rounded-full text-xs font-medium 
+                                      ${refund.status === "pending" 
+                                        ? "text-yellow-600 bg-yellow-100" 
+                                        : refund.status === "approved" 
+                                          ? "text-green-600 bg-green-100" 
+                                          : "text-red-600 bg-red-100"
+                                      }`}
+                                  >
+                                    {refund.status === "pending" 
+                                      ? "Pending" 
+                                      : refund.status === "approved" 
+                                        ? "Approved" 
+                                        : "Rejected"}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            {refund.notificationId && !refund.isRead && (
+                              <div className="text-right">
+                                <Bell className="w-5 h-5 text-yellow-500" fill="#eab308" />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+
+                        {/* Pagination for refunds */}
+                        <div className="mt-6 flex justify-center">
+                          <Pagination
+                            currentPage={refundsPage}
+                            totalPages={refundsTotalPages}
+                            onPageChange={(page) => setRefundsPage(page)}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center py-10">
+                        <div className="mb-4">
+                          <RefreshCcw className="w-12 h-12 mx-auto text-gray-400" />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900">
+                          No refund requests
+                        </h3>
+                        <p className="text-gray-500 mt-2">
+                          You haven&apos;t made any refund requests yet.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {activeTab === "support" && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      Support Tickets
+                    </h2>
+                    <Button
+                      onClick={() => router.push("/support")}
+                      className="flex items-center gap-2 text-yellow-400"
+                    >
+                      <LifeBuoy className="w-4 h-4" />
+                      New Ticket
+                    </Button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {isLoadingSupportTickets ? (
+                      <div className="flex justify-center py-10">
+                        <Loading />
+                      </div>
+                    ) : supportTickets?.length ? (
+                      <>
+                        {supportTickets.map((ticket, index) => (
+                          <div
+                            key={index}
+                            className={`bg-gray-50 rounded-lg p-4 flex items-center justify-between
+                              ${ticket.notificationId && !ticket.isRead 
+                                ? "border-l-4 border-yellow-400" 
+                                : ""
+                              }
+                              ${ticket.notificationId 
+                                ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md" 
+                                : ""
+                              }`}
+                            onClick={() => {
+                              if (ticket.notificationId && !ticket.isRead) {
+                                markNotificationAsRead(ticket.notificationId);
+                              }
+                            }}
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className={`w-12 h-12 rounded-lg flex items-center justify-center relative
+                                ${ticket.status === "open" ? "bg-blue-100" : 
+                                  ticket.status === "in_progress" ? "bg-yellow-100" : "bg-green-100"}`}
+                              >
+                                <LifeBuoy className={`w-6 h-6 
+                                  ${ticket.status === "open" ? "text-blue-600" : 
+                                    ticket.status === "in_progress" ? "text-yellow-600" : "text-green-600"}`} 
+                                />
+                                {ticket.notificationId && !ticket.isRead && (
+                                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
+                                  </span>
+                                )}
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                                  {ticket.subject}
+                                  {ticket.notificationId && !ticket.isRead && (
+                                    <span className="ml-2 px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                                      New
+                                    </span>
+                                  )}
+                                </h3>
+                                <p className="text-sm text-gray-600">
+                                  #{ticket._id} • {formatDate(ticket.createdAt)}
+                                </p>
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {ticket.message.length > 80 
+                                    ? ticket.message.substring(0, 80) + "..." 
+                                    : ticket.message}
+                                </p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span
+                                    className={`px-2 py-1 rounded-full text-xs font-medium 
+                                      ${ticket.status === "open" 
+                                        ? "text-blue-600 bg-blue-100" 
+                                        : ticket.status === "in_progress" 
+                                          ? "text-yellow-600 bg-yellow-100" 
+                                          : "text-green-600 bg-green-100"
+                                      }`}
+                                  >
+                                    {ticket.status === "open" 
+                                      ? "Open" 
+                                      : ticket.status === "in_progress" 
+                                        ? "In Progress" 
+                                        : "Closed"}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            {ticket.notificationId && !ticket.isRead && (
+                              <div className="text-right">
+                                <Bell className="w-5 h-5 text-yellow-500" fill="#eab308" />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+
+                        {/* Pagination for support tickets */}
+                        <div className="mt-6 flex justify-center">
+                          <Pagination
+                            currentPage={supportPage}
+                            totalPages={supportTotalPages}
+                            onPageChange={(page) => setSupportPage(page)}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center py-10">
+                        <div className="mb-4">
+                          <LifeBuoy className="w-12 h-12 mx-auto text-gray-400" />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900">
+                          No support tickets
+                        </h3>
+                        <p className="text-gray-500 mt-2">
+                          You haven&apos;t created any support tickets yet.
+                        </p>
+                        <Button
+                          className="mt-4 text-yellow-400"
+                          onClick={() => router.push("/support")}
+                        >
+                          Create Support Ticket
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -1067,6 +1606,87 @@ function ProfilePageContent({
                 className="flex-1 bg-red-600 hover:bg-red-700"
               >
                 Submit Request
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Avatar Upload Modal */}
+      {showAvatarModal && avatarPreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Camera className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Update Profile Picture
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Preview and confirm your new profile picture
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setShowAvatarModal(false);
+                  setAvatarPreview(null);
+                  setAvatarFile(null);
+                }}
+                className="p-2"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+
+            {/* Avatar Preview */}
+            <div className="flex justify-center mb-6">
+              <div className="relative w-40 h-40">
+                <Image
+                  src={avatarPreview}
+                  alt="Avatar Preview"
+                  fill
+                  className="rounded-full object-cover border-4 border-blue-100"
+                />
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowAvatarModal(false);
+                  setAvatarPreview(null);
+                  setAvatarFile(null);
+                }}
+                className="flex-1"
+                disabled={isUploadingAvatar}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleAvatarUpload}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                disabled={isUploadingAvatar}
+              >
+                {isUploadingAvatar ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                    <span>Uploading...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Upload className="w-4 h-4" />
+                    <span>Upload</span>
+                  </div>
+                )}
               </Button>
             </div>
           </div>
