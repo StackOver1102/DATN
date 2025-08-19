@@ -31,9 +31,20 @@ export class ProductsService {
   }
 
   async createProductAndAddURL(
-    createProductDto: CreateProductDto,
-  ): Promise<Product> {
-    const { name, folderId, stt, nameFolder } = createProductDto;
+    createProductDto: CreateProductDto | CreateProductDto[],
+  ): Promise<Product | Product[]> {
+    // Handle array of products
+    if (Array.isArray(createProductDto)) {
+      const productData = await Promise.all(
+        createProductDto.map(async (product) => {
+          return await this.createProductAndAddURL(product);
+        }),
+      );
+      return productData.flat();
+    }
+
+    // Handle single product
+    const { name, folderId, stt, images } = createProductDto;
 
     if (!name) {
       throw new BadRequestException('Name is required');
@@ -47,14 +58,24 @@ export class ProductsService {
       throw new BadRequestException('STT is required');
     }
 
+    if (!images) {
+      throw new BadRequestException('Images is required');
+    }
+
+    const imageUrl = this.uploadService.uploadLocalToR2(images);
+
+    const updateStt = Number(stt) < 10 ? `0${stt}` : stt;
+
     const folderInfo = await this.googleDriveService.getFolderInfo(
       folderId,
-      `${stt}. ${nameFolder}`,
+      `${updateStt}. ${name}`,
     );
 
     const productData = {
       ...createProductDto,
-      name: `${stt}. ${createProductDto.name}`,
+      stt: Number(stt),
+      images: (await imageUrl).url,
+      name: `${updateStt}. ${createProductDto.name}`,
       urlDownload: folderInfo?.rar?.id
         ? `https://drive.google.com/uc?id=${folderInfo.rar.id}`
         : createProductDto.urlDownload || '',
@@ -91,7 +112,7 @@ export class ProductsService {
     try {
       // Try to create product
       const createdProduct = await this.createProductAndAddURL(productData);
-      return createdProduct;
+      return createdProduct as Product;
     } catch (error) {
       // If there's an error and we have a file key, delete the uploaded image
       if (file.key) {
@@ -410,5 +431,47 @@ export class ProductsService {
 
   async findById(id: string): Promise<Product | null> {
     return this.productModel.findById(id).select('urlDownload price discount');
+  }
+
+  async getLastSttFromCategory(
+    rootCategoryId: string,
+    categoryId: string,
+  ): Promise<number> {
+    const rootCategory = await this.productModel
+      .findOne({
+        rootCategoryId: rootCategoryId,
+        categoryId: categoryId,
+        isActive: true,
+      })
+      .sort({ stt: -1 })
+      .exec();
+
+    return rootCategory?.stt || 0;
+  }
+
+  /**
+   * Tìm kiếm file hình ảnh theo tên và trả về URL trực tiếp
+   * @param searchTerm Từ khóa tìm kiếm
+   * @param folderId ID của thư mục cần tìm kiếm
+   * @returns Thông tin về file đã tìm thấy
+   */
+  async searchImageByName(
+    searchTerm: string,
+    folderId: string,
+  ): Promise<{ url: string; name: string; id: string }> {
+    try {
+      // Sử dụng phương thức searchImageByName từ GoogleDriveService
+      const result = await this.googleDriveService.searchImageByName(
+        searchTerm,
+        folderId,
+      );
+      return result;
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new BadRequestException(
+        `Không thể tìm kiếm hình ảnh: ${errorMessage}`,
+      );
+    }
   }
 }

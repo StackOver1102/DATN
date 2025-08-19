@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useApiMutation, useApiQuery } from "@/lib/hooks/useApi";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,74 +21,93 @@ import {
   BreadcrumbItem,
   BreadcrumbLink,
 } from "@/components/ui/breadcrumb";
-import {
-  IconHome,
-  IconPlus,
-  IconTrash,
-  IconUpload,
-  IconPhoto,
-  IconX,
-} from "@tabler/icons-react";
+import { IconHome, IconPlus, IconTrash } from "@tabler/icons-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApiResponse } from "@/interface/pagination";
-import * as z from "zod";
-import { PageLoading } from "@/components/ui/loading";
 import Image from "next/image";
 
-// Enums from the backend
-enum Material {
-  BRICK = "brick",
-  CERAMICS = "ceramics",
-  CONCRETE = "concrete",
-  FABRIC = "fabric",
-  FUR = "fur",
-  GLASS = "glass",
-  GYPSUM = "gypsum",
-  LEATHER = "leather",
-  LIQUID = "liquid",
-  METAL = "metal",
-  ORGANICS = "organics",
-  PAPER = "paper",
-  PLASTIC = "plastic",
-  RATTAN = "rattan",
-  STONE = "stone",
-  WOOD = "wood",
-}
+// Define API response types
 
-enum Style {
-  LUXURY = "luxury",
-  INDOCHINE = "indochine",
-  ETHNIC = "ethnic",
-  MODERN = "modern",
-  CLASSIC = "classic",
-}
+import * as z from "zod";
+import { PageLoading } from "@/components/ui/loading";
+// Image import removed as we're not displaying images anymore
 
-enum Render {
-  VRAY_CORONA = "vray+corona",
-  CORONA = "corona",
-  VRAY = "vray",
-  MENTAL_RAY = "mentalray",
-  STANDARD = "standard",
-}
+// Mảng các vật liệu
+const materials = [
+  { id: "brick", name: "Brick" },
+  { id: "ceramics", name: "Ceramics" },
+  { id: "concrete", name: "Concrete" },
+  { id: "fabric", name: "Fabric" },
+  { id: "fur", name: "Fur" },
+  { id: "glass", name: "Glass" },
+  { id: "gypsum", name: "Gypsum" },
+  { id: "leather", name: "Leather" },
+  { id: "liquid", name: "Liquid" },
+  { id: "metal", name: "Metal" },
+  { id: "organics", name: "Organics" },
+  { id: "paper", name: "Paper" },
+  { id: "plastic", name: "Plastic" },
+  { id: "rattan", name: "Rattan" },
+  { id: "stone", name: "Stone" },
+  { id: "wood", name: "Wood" },
+];
 
-enum Form {
-  SHAPE = "shape",
-  RHOMBUS = "rhombus",
-  LINE = "line",
-  STAR = "star",
-  HEXAGON = "hexagon",
-  TRIANGLE = "triangle",
-  RECTANGLE = "rectangle",
-  SQUARE = "square",
-  OVAL = "oval",
-  CIRCLE = "circle",
-}
+// Mảng các phong cách
+const styles = [
+  { id: "luxury", name: "Luxury" },
+  { id: "indochine", name: "Indochine" },
+  { id: "ethnic", name: "Ethnic" },
+  { id: "modern", name: "Modern" },
+  { id: "classic", name: "Classic" },
+];
+
+// Mảng các render engine
+const renderEngines = [
+  { id: "vray+corona", name: "Vray + Corona" },
+  { id: "corona", name: "Corona" },
+  { id: "vray", name: "Vray" },
+  { id: "mentalray", name: "Mental Ray" },
+  { id: "standard", name: "Standard" },
+];
+
+// Mảng các hình dạng
+const forms = [
+  { id: "shape", name: "Shape", shape: "◊" },
+  { id: "rhombus", name: "Rhombus", shape: "◇" },
+  { id: "line", name: "Line", shape: "—" },
+  { id: "star", name: "Star", shape: "☆" },
+  { id: "hexagon", name: "Hexagon", shape: "⬡" },
+  { id: "triangle", name: "Triangle", shape: "△" },
+  { id: "rectangle", name: "Rectangle", shape: "▭" },
+  { id: "square", name: "Square", shape: "□" },
+  { id: "oval", name: "Oval", shape: "⬭" },
+  { id: "circle", name: "Circle", shape: "○" },
+];
+
+// Mảng các màu sắc
+const colors = [
+  { hex: "#ffffff", name: "White" },
+  { hex: "#6b7280", name: "Gray" },
+  { hex: "#000000", name: "Black" },
+  { hex: "#8b4513", name: "Brown" },
+  { hex: "#dc2626", name: "Red" },
+  { hex: "#f97316", name: "Orange" },
+  { hex: "#eab308", name: "Yellow" },
+  { hex: "#f3e8d0", name: "Cream" },
+  { hex: "#fbb6ce", name: "Pink" },
+  { hex: "#d946ef", name: "Purple" },
+  { hex: "#8b5cf6", name: "Violet" },
+  { hex: "#3b82f6", name: "Blue" },
+  { hex: "#06b6d4", name: "Cyan" },
+  { hex: "#10b981", name: "Green" },
+  { hex: "#84cc16", name: "Lime" },
+  { hex: "#65a30d", name: "Olive" },
+];
 
 // Zod schema for product validation
 // eslint-disable-next-line
 const productSchema = z.object({
   name: z.string().min(1, "Tên sản phẩm không được để trống"),
-  nameFolder: z.string().optional(),
   description: z.string().optional(),
   price: z.number().min(0, "Giá không được âm"),
   discount: z
@@ -101,10 +120,10 @@ const productSchema = z.object({
   isPro: z.boolean().default(false),
   stt: z.number().min(1, "STT phải lớn hơn 0"),
   categoryId: z.string().min(1, "Vui lòng chọn danh mục"),
-  materials: z.nativeEnum(Material).optional(),
-  style: z.nativeEnum(Style).optional(),
-  render: z.nativeEnum(Render).optional(),
-  form: z.nativeEnum(Form).optional(),
+  materials: z.string().optional(),
+  style: z.string().optional(),
+  render: z.string().optional(),
+  form: z.string().optional(),
   color: z.string().optional(),
   urlDownload: z.string().optional(),
   categoryName: z.string().optional(),
@@ -113,7 +132,18 @@ const productSchema = z.object({
 });
 
 // Type for a single product form
-type ProductForm = z.infer<typeof productSchema>;
+type ProductForm = Omit<
+  z.infer<typeof productSchema>,
+  "materials" | "style" | "render" | "form" | "color"
+> & {
+  materials: string[];
+  style: string[];
+  render: string[];
+  form: string[];
+  color: string[];
+};
+
+type CreateProductDto = z.infer<typeof productSchema>;
 
 interface CategoryItem {
   _id: string;
@@ -127,19 +157,28 @@ interface CategoryGroup {
   items: CategoryItem[]; // Danh sách danh mục con
 }
 
-interface FileWithPreview extends File {
-  preview: string;
-}
+// FileWithPreview interface removed as we're not uploading images anymore
 
 export default function BatchCreateProductPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("0");
-  const [products, setProducts] = useState<ProductForm[]>([getEmptyProduct()]);
-  const [files, setFiles] = useState<(FileWithPreview | null)[]>([null]);
+  // Files are no longer needed since we're not uploading images
   const [sharedFolderId, setSharedFolderId] = useState("");
-  const [sharedFolderName, setSharedFolderName] = useState("");
-  // Simple ref for file input
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  // State để lưu trữ URL ảnh preview cho mỗi sản phẩm
+  const [previewImages, setPreviewImages] = useState<{ [key: string]: string }>(
+    {}
+  );
+  const urlBE = process.env.NEXT_PUBLIC_IMAGE;
+
+  // State để theo dõi sản phẩm nào đang tải ảnh
+  const [loadingImages, setLoadingImages] = useState<{
+    [key: string]: boolean;
+  }>({});
+
+  // State để theo dõi sản phẩm nào đã gặp lỗi khi tải ảnh
+  const [failedImages, setFailedImages] = useState<{
+    [key: string]: boolean;
+  }>({});
 
   // Fetch categories for dropdown
   const { data: categoriesData, isLoading: isLoadingCategories } = useApiQuery<
@@ -149,38 +188,266 @@ export default function BatchCreateProductPage() {
   // Create multiple products mutation
   const { mutate: createProducts, isPending: isCreating } = useApiMutation<
     { data: { success: boolean; message: string } },
-    FormData
+    { products: CreateProductDto[] }
   >("products", "/products/batch-with-images", "post");
+
+  const { mutate: searchImage } = useApiMutation<
+    { data: { url: string; name: string; id: string; localPath: string } },
+    { searchTerm: string; folderId: string }
+  >("products", "/products/search-image", "post");
+
+  const [selectedRootCategoryId, setSelectedRootCategoryId] = useState<
+    string | null
+  >(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    null
+  );
+
+  // Get the last STT when a category is selected
+  const {
+    data: lastSttData,
+    isLoading: isLoadingLastStt,
+    refetch: refetchLastStt,
+  } = useApiQuery<ApiResponse<number>>(
+    "products",
+    `/products/last-stt/${selectedRootCategoryId}/${selectedCategoryId}`,
+    {
+      enabled: !!selectedRootCategoryId && !!selectedCategoryId,
+    }
+  );
 
   // Function to get an empty product form
   function getEmptyProduct(): ProductForm {
+    // Tìm thông tin danh mục chung nếu đã chọn
+    let categoryId = "";
+    let categoryName = "";
+    let categoryPath = "";
+    let rootCategoryId = "";
+
+    if (selectedRootCategoryId) {
+      const apiData = categoriesData as unknown as ApiResponse<CategoryGroup[]>;
+      if (apiData?.data) {
+        let found = false;
+
+        // Tìm trong danh sách danh mục
+        for (const group of apiData.data) {
+          // Kiểm tra nếu là danh mục cha
+          if (group._id === selectedRootCategoryId) {
+            categoryId = selectedRootCategoryId;
+            categoryName = group.title;
+            categoryPath = group.title;
+            rootCategoryId = group._id;
+            found = true;
+            break;
+          }
+
+          // Kiểm tra trong danh mục con
+          if (!found) {
+            for (const category of group.items) {
+              if (category._id === selectedRootCategoryId) {
+                categoryId = selectedRootCategoryId;
+                categoryName = category.name;
+                categoryPath = group.title;
+                rootCategoryId = group._id;
+                found = true;
+                break;
+              }
+            }
+          }
+
+          if (found) break;
+        }
+      }
+    }
+
     return {
-      name: "",
-      nameFolder: "",
+      name: categoryName ? `Model ${categoryName} 3dsmax` : "",
       description: "",
       price: 0,
       discount: 0,
       isActive: true,
       isPro: false,
-      categoryId: "",
-      categoryName: "",
-      categoryPath: "",
-      rootCategoryId: "",
+      categoryId: categoryId,
+      categoryName: categoryName,
+      categoryPath: categoryPath,
+      rootCategoryId: rootCategoryId,
       images: "",
       stt: 1,
-      materials: undefined,
-      style: undefined,
-      render: undefined,
-      form: undefined,
-      color: "",
+      materials: [],
+      style: [],
+      render: [],
+      form: [],
+      color: [],
     };
   }
 
+  // Initialize products state with an empty product
+  const [products, setProducts] = useState<ProductForm[]>([getEmptyProduct()]);
+
+  // Hàm tải ảnh preview dựa trên tên và STT của sản phẩm
+  const loadPreviewImage = useCallback(
+    (index: number) => {
+      const product = products[index];
+
+      // Kiểm tra xem có đủ thông tin để tìm ảnh không
+      if (!sharedFolderId || !product?.stt || !product?.categoryName) {
+        return;
+      }
+
+      // Kiểm tra xem ảnh đã đang được tải hay chưa
+      if (loadingImages[index]) {
+        return;
+      }
+
+      // Kiểm tra xem ảnh đã từng gặp lỗi khi tải chưa
+      if (failedImages[index]) {
+        return;
+      }
+
+      // Tạo searchTerm dựa trên STT và tên danh mục
+      const updateStt =
+        Number(product.stt) < 10 ? `0${product.stt}` : `${product.stt}`;
+      const searchTerm = `${updateStt}. ${product.categoryName}`;
+
+      // Đánh dấu sản phẩm này đang tải ảnh
+      setLoadingImages((prev) => ({ ...prev, [index]: true }));
+
+      // Gọi API để tìm ảnh
+      searchImage(
+        { searchTerm, folderId: sharedFolderId },
+        {
+          onSuccess: (response) => {
+            // Lưu URL ảnh vào state
+            setPreviewImages((prev) => ({
+              ...prev,
+              [index]: response.data.localPath,
+            }));
+
+            // Đánh dấu đã tải xong
+            setLoadingImages((prev) => ({ ...prev, [index]: false }));
+
+            // Đánh dấu không còn lỗi nữa (nếu trước đó đã gặp lỗi)
+            if (failedImages[index]) {
+              setFailedImages((prev) => ({ ...prev, [index]: false }));
+            }
+          },
+          onError: (error) => {
+            console.error("Lỗi khi tải ảnh preview:", error);
+            toast.error(`Không thể tải ảnh preview: ${error.message}`);
+
+            // Đánh dấu đã tải xong
+            setLoadingImages((prev) => ({ ...prev, [index]: false }));
+
+            // Đánh dấu sản phẩm này đã gặp lỗi khi tải ảnh
+            setFailedImages((prev) => ({ ...prev, [index]: true }));
+          },
+        }
+      );
+    },
+    [products, sharedFolderId, searchImage, loadingImages, failedImages]
+  );
+
+  // Update the current product's STT when we get new data from the API
+  // Effect to update STT when lastSttData changes
+  useEffect(() => {
+    if (lastSttData?.data && activeTab) {
+      const index = parseInt(activeTab);
+      const lastStt = lastSttData.data;
+      const nextStt = lastStt + 1;
+
+      // Kiểm tra xem STT hiện tại có khác với STT mới không
+      const currentStt = products[index]?.stt;
+      if (currentStt !== nextStt) {
+        // Update the STT for the current product
+        setProducts((prevProducts) => {
+          const newProducts = [...prevProducts];
+          newProducts[index] = { ...newProducts[index], stt: nextStt };
+          return newProducts;
+        });
+
+        // Tự động tải ảnh preview sau khi STT được cập nhật - dùng requestAnimationFrame để đảm bảo state đã được cập nhật
+        if (sharedFolderId && !failedImages[index]) {
+          // Sử dụng ref để theo dõi việc tải ảnh
+          const timeoutId = setTimeout(() => {
+            requestAnimationFrame(() => {
+              loadPreviewImage(index);
+            });
+          }, 500);
+
+          // Cleanup function
+          return () => clearTimeout(timeoutId);
+        }
+      }
+    }
+  }, [
+    lastSttData,
+    activeTab,
+    sharedFolderId,
+    loadPreviewImage,
+    products,
+    failedImages,
+  ]);
+
+  // Effect để tải ảnh preview khi sharedFolderId thay đổi
+  useEffect(() => {
+    // Chỉ chạy khi sharedFolderId thay đổi, không phải khi activeTab hoặc products thay đổi
+    if (sharedFolderId && products.length > 0) {
+      // Sử dụng ref để kiểm tra xem đây có phải là lần đầu tiên sharedFolderId thay đổi không
+      const currentIndex = parseInt(activeTab);
+      const product = products[currentIndex];
+
+      // Chỉ tải ảnh nếu sản phẩm hiện tại chưa có ảnh và có đủ thông tin
+      if (
+        product &&
+        product.stt &&
+        product.categoryName &&
+        !previewImages[currentIndex] &&
+        !loadingImages[currentIndex] &&
+        !failedImages[currentIndex] // Không tải lại nếu đã từng gặp lỗi
+      ) {
+        // Sử dụng requestAnimationFrame để đảm bảo state đã được cập nhật
+        const timeoutId = setTimeout(() => {
+          requestAnimationFrame(() => {
+            loadPreviewImage(currentIndex);
+          });
+        }, 300);
+
+        // Cleanup function
+        return () => clearTimeout(timeoutId);
+      }
+    }
+  }, [
+    sharedFolderId,
+    activeTab,
+    loadPreviewImage,
+    loadingImages,
+    previewImages,
+    products,
+    failedImages, // Thêm failedImages vào dependencies
+  ]);
+
+  // Effect to refetch last STT when selectedCategoryId changes
+  useEffect(() => {
+    if (selectedRootCategoryId && selectedCategoryId) {
+      refetchLastStt();
+    }
+  }, [selectedCategoryId, selectedRootCategoryId, refetchLastStt]);
+
   // Handle adding a new product form
   const handleAddProduct = (): void => {
-    const newProducts = [...products, getEmptyProduct()];
+    // Get the last product's STT and increment it for the new product
+    const lastProductStt =
+      products.length > 0 ? products[products.length - 1].stt : 0;
+    console.log("lastProductStt", lastProductStt);
+    const newProductStt = lastProductStt + 1;
+
+    // Create new product with incremented STT
+    const newProduct = getEmptyProduct();
+    newProduct.stt = newProductStt;
+
+    console.log("newProduct", newProduct);
+    const newProducts = [...products, newProduct];
     setProducts(newProducts);
-    setFiles([...files, null]);
 
     // Switch to the new tab - use flushSync to ensure DOM updates are synchronized
     const newTabIndex = (newProducts.length - 1).toString();
@@ -194,18 +461,9 @@ export default function BatchCreateProductPage() {
       return;
     }
 
-    // Clean up file preview if exists
-    if (files[index]) {
-      URL.revokeObjectURL(files[index]!.preview);
-    }
-
     const newProducts = [...products];
     newProducts.splice(index, 1);
     setProducts(newProducts);
-
-    const newFiles = [...files];
-    newFiles.splice(index, 1);
-    setFiles(newFiles);
 
     // If we removed the active tab, switch to the previous tab
     if (parseInt(activeTab) >= newProducts.length) {
@@ -213,54 +471,13 @@ export default function BatchCreateProductPage() {
     }
   };
 
-  // Handle file selection
-  const handleFileChange = (
-    index: number,
-    e: React.ChangeEvent<HTMLInputElement>
-  ): void => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const fileWithPreview = Object.assign(file, {
-        preview: URL.createObjectURL(file),
-      });
-
-      const newFiles = [...files];
-      newFiles[index] = fileWithPreview;
-      setFiles(newFiles);
-
-      // Clear the input value to allow selecting the same file again
-      e.target.value = "";
-    }
-  };
-
-  // Handle file removal
-  const handleFileRemove = (index: number): void => {
-    if (files[index]) {
-      URL.revokeObjectURL(files[index]!.preview);
-    }
-
-    const newFiles = [...files];
-    newFiles[index] = null;
-    setFiles(newFiles);
-
-    // Clear the file input safely
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
-  // Trigger file input click
-  const triggerFileInput = (): void => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
+  // File handling functions removed as we're not uploading images anymore
 
   // Handle form change for a specific product
   const handleChange = (
     index: number,
     field: keyof ProductForm,
-    value: unknown
+    value: string | number | boolean | string[]
   ): void => {
     const newProducts = [...products];
     newProducts[index] = { ...newProducts[index], [field]: value };
@@ -276,7 +493,64 @@ export default function BatchCreateProductPage() {
           categoryPath: selectedCategory.path,
           rootCategoryId: selectedCategory.rootId,
         };
+
+        // Set the selected category ID to trigger the API call for last STT
+        setSelectedRootCategoryId(value);
+        setSelectedCategoryId(selectedCategory.rootId);
       }
+    }
+
+    setProducts(newProducts);
+
+    // Nếu thay đổi STT hoặc categoryId, thử tải lại ảnh preview
+    if ((field === "stt" || field === "categoryId") && sharedFolderId) {
+      // Sử dụng debounce để tránh gọi quá nhiều lần
+      const product = newProducts[index];
+      if (
+        product &&
+        product.stt &&
+        product.categoryName &&
+        !loadingImages[index] &&
+        !failedImages[index] // Không tải lại nếu đã từng gặp lỗi
+      ) {
+        // Nếu field là categoryId, reset failedImages cho index này để thử lại
+        if (field === "categoryId") {
+          setFailedImages((prev) => ({ ...prev, [index]: false }));
+        }
+
+        // Đợi một chút để state được cập nhật và sử dụng requestAnimationFrame
+        setTimeout(() => {
+          requestAnimationFrame(() => {
+            if (!loadingImages[index]) {
+              loadPreviewImage(index);
+            }
+          });
+        }, 500);
+
+        // Không cần cleanup vì hàm này không phải là useEffect
+      }
+    }
+  };
+
+  // Hàm xử lý checkbox cho materials, style, render, form, color
+  // Chỉ cho phép chọn 1 giá trị duy nhất
+  const handleCheckboxChange = (
+    index: number,
+    field: "materials" | "style" | "render" | "form" | "color",
+    itemId: string,
+    checked: boolean
+  ): void => {
+    const newProducts = [...products];
+
+    // Nếu đang bỏ chọn một giá trị đã chọn, không làm gì cả
+    if (!checked && newProducts[index][field]?.includes(itemId)) {
+      return;
+    }
+
+    // Nếu đang chọn một giá trị mới
+    if (checked) {
+      // Thay thế giá trị cũ bằng giá trị mới (chỉ cho phép 1 giá trị)
+      newProducts[index] = { ...newProducts[index], [field]: [itemId] };
     }
 
     setProducts(newProducts);
@@ -284,9 +558,12 @@ export default function BatchCreateProductPage() {
 
   // Helper function to find category by ID
   const findCategoryById = (categoryId: string) => {
-    if (!categoriesData?.data) return null;
+    if (!categoriesData) return null;
 
-    for (const group of categoriesData.data) {
+    const apiData = categoriesData as unknown as ApiResponse<CategoryGroup[]>;
+    if (!apiData?.data) return null;
+
+    for (const group of apiData.data) {
       // Check if it's a parent category
       if (group._id === categoryId) {
         return {
@@ -320,19 +597,14 @@ export default function BatchCreateProductPage() {
       return;
     }
 
-    if (!sharedFolderName.trim()) {
-      toast.error("Vui lòng nhập tên folder trên Drive");
-      return;
-    }
-
+    console.log("products", products);
     // Validate required fields
     const invalidProducts = products.filter(
-      (product, index) =>
+      (product) =>
         !product.categoryId ||
         product.price <= 0 ||
         !product.stt ||
-        product.stt < 1 ||
-        !files[index]
+        product.stt < 1
     );
 
     if (invalidProducts.length > 0) {
@@ -343,40 +615,64 @@ export default function BatchCreateProductPage() {
     }
 
     // Apply shared folder ID and folder name to all products, and generate product names
-    const productsWithFolderId = products.map((product) => ({
-      ...product,
-      folderId: sharedFolderId,
-      nameFolder: sharedFolderName,
-      name: `Model ${product.categoryName} 3dmax`,
-    }));
+    const productsWithFolderId = products.map((product, index) => {
+      // Sử dụng URL ảnh từ previewImages nếu có
+      const imageUrl = previewImages[index] || product.images;
 
-    // Create FormData to send files and product data
-    const formData = new FormData();
+      // Chuyển đổi mảng thành giá trị đơn lẻ cho API
+      const materials =
+        product.materials && product.materials.length > 0
+          ? product.materials[0]
+          : undefined;
+      const style =
+        product.style && product.style.length > 0
+          ? product.style[0]
+          : undefined;
+      const render =
+        product.render && product.render.length > 0
+          ? product.render[0]
+          : undefined;
+      const form =
+        product.form && product.form.length > 0 ? product.form[0] : undefined;
+      const colorValue =
+        product.color && product.color.length > 0
+          ? product.color[0]
+          : undefined;
 
-    // Add each product as a JSON string
-    formData.append("products", JSON.stringify(productsWithFolderId));
+      return {
+        ...product,
+        folderId: sharedFolderId,
+        name: `Model ${product.categoryName} 3dsmax`,
+        images: imageUrl,
+        materials,
+        style,
+        render,
+        form,
+        color: colorValue,
+      };
+    });
 
-    // Add each file with index as key
-    files.forEach((file, index) => {
-      if (file) {
-        formData.append(`file-${index}`, file);
+    // Send products data directly as JSON
+    createProducts(
+      { products: productsWithFolderId },
+      {
+        onSuccess: () => {
+          toast.success(`Đã tạo thành công ${products.length} sản phẩm`);
+          router.push("/dashboard/products");
+        },
+        onError: (error) => {
+          toast.error(`Lỗi: ${error.message}`);
+        },
       }
-    });
-
-    createProducts(formData, {
-      onSuccess: () => {
-        toast.success(`Đã tạo thành công ${products.length} sản phẩm`);
-        router.push("/dashboard/products");
-      },
-      onError: (error) => {
-        toast.error(`Lỗi: ${error.message}`);
-      },
-    });
+    );
   };
 
   // Loading state
-  if (isLoadingCategories) {
-    return <PageLoading text="Đang tải danh mục..." />;
+  if (isLoadingCategories || isLoadingLastStt) {
+    const text = isLoadingCategories
+      ? "Đang tải danh mục..."
+      : "Đang tải STT cuối cùng...";
+    return <PageLoading text={text} />;
   }
 
   return (
@@ -478,30 +774,118 @@ export default function BatchCreateProductPage() {
 
                 <div className="space-y-2">
                   <Label
-                    htmlFor="shared-folder-name"
+                    htmlFor="shared-category"
                     className="text-sm font-medium flex items-center"
                   >
                     <span className="bg-orange-100 text-orange-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                      📦
+                      📂
                     </span>
-                    Tên folder trên Drive (dùng chung)
+                    Danh mục (dùng chung)
                   </Label>
-                  <div className="relative">
-                    <Input
-                      id="shared-folder-name"
-                      value={sharedFolderName}
-                      onChange={(e) => setSharedFolderName(e.target.value)}
-                      placeholder="Nhập tên folder trên Drive (sẽ áp dụng cho tất cả sản phẩm)"
-                      className="pl-9 border-gray-300 focus:border-orange-500 focus:ring focus:ring-orange-200 focus:ring-opacity-50"
-                    />
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                      📦
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-500">
-                    Tên folder này sẽ được áp dụng cho tất cả {products.length}{" "}
-                    sản phẩm
-                  </p>
+                  <Select
+                    value={selectedRootCategoryId || ""}
+                    onValueChange={(value) => {
+                      setSelectedRootCategoryId(value);
+
+                      // Tìm category được chọn
+                      const apiData = categoriesData as unknown as ApiResponse<
+                        CategoryGroup[]
+                      >;
+                      if (apiData?.data) {
+                        let found = false;
+
+                        // Kiểm tra xem đây là danh mục cha
+                        for (const group of apiData.data) {
+                          if (group._id === value) {
+                            setSelectedCategoryId(group._id);
+
+                            // Cập nhật tất cả sản phẩm với danh mục cha
+                            setProducts((prevProducts) => {
+                              return prevProducts.map((product) => ({
+                                ...product,
+                                categoryId: value,
+                                categoryName: group.title,
+                                categoryPath: group.title,
+                                rootCategoryId: group._id,
+                              }));
+                            });
+                            found = true;
+                            break;
+                          }
+
+                          // Kiểm tra xem đây là danh mục con
+                          if (!found) {
+                            for (const category of group.items) {
+                              if (category._id === value) {
+                                setSelectedCategoryId(group._id);
+
+                                // Cập nhật tất cả sản phẩm với danh mục con
+                                setProducts((prevProducts) => {
+                                  return prevProducts.map((product) => ({
+                                    ...product,
+                                    categoryId: value,
+                                    categoryName: category.name,
+                                    categoryPath: `${group.title}`,
+                                    rootCategoryId: group._id,
+                                  }));
+                                });
+                                found = true;
+                                break;
+                              }
+                            }
+                          }
+
+                          if (found) break;
+                        }
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-full border-gray-300 focus:border-orange-500 focus:ring focus:ring-orange-200 focus:ring-opacity-50">
+                      <SelectValue placeholder="Chọn danh mục chung" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-80 w-full">
+                      {categoriesData &&
+                        (
+                          (
+                            categoriesData as unknown as ApiResponse<
+                              CategoryGroup[]
+                            >
+                          )?.data || []
+                        ).map((group: CategoryGroup) => (
+                          <div key={group._id} className="mb-2">
+                            {/* Danh mục cha */}
+                            <SelectItem
+                              key={`parent-${group._id}`}
+                              value={group._id}
+                              className="bg-muted font-semibold"
+                            >
+                              {group.title}
+                            </SelectItem>
+
+                            {/* Danh mục con - hiển thị thụt vào */}
+                            <div className="pl-4">
+                              {group.items.map((category: CategoryItem) => (
+                                <SelectItem
+                                  key={category._id}
+                                  value={category._id}
+                                  className="text-sm"
+                                >
+                                  {category.name}
+                                </SelectItem>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedRootCategoryId && (
+                    <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded-md">
+                      <div className="text-xs text-orange-600 font-medium">
+                        Danh mục đã chọn sẽ áp dụng cho tất cả {products.length}{" "}
+                        sản phẩm
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -549,13 +933,135 @@ export default function BatchCreateProductPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6 pt-6">
+                    {/* Phần hiển thị ảnh preview */}
+                    <div className="space-y-2 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                      <div className="flex justify-between items-center">
+                        <Label className="text-sm font-medium flex items-center">
+                          <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
+                            1
+                          </span>
+                          Ảnh preview
+                        </Label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            // Reset failed state khi người dùng click tải lại
+                            if (failedImages[index]) {
+                              setFailedImages((prev) => ({
+                                ...prev,
+                                [index]: false,
+                              }));
+                            }
+                            loadPreviewImage(index);
+                          }}
+                          disabled={
+                            loadingImages[index] ||
+                            !sharedFolderId ||
+                            !product.stt ||
+                            !product.categoryName
+                          }
+                          className="text-xs h-8"
+                        >
+                          {loadingImages[index] ? "Đang tải..." : "Tải lại ảnh"}
+                        </Button>
+                      </div>
+
+                      <div className="mt-2 border border-blue-200 rounded-md overflow-hidden bg-white">
+                        {loadingImages[index] ? (
+                          <div className="flex items-center justify-center h-[200px] bg-gray-50">
+                            <div className="text-center">
+                              <svg
+                                className="animate-spin h-8 w-8 text-blue-500 mx-auto"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
+                              </svg>
+                              <p className="mt-2 text-sm text-gray-500">
+                                Đang tải ảnh...
+                              </p>
+                            </div>
+                          </div>
+                        ) : previewImages[index] ? (
+                          <div className="relative">
+                            <Image
+                              src={`${urlBE}/${previewImages[index]}`}
+                              alt={`Preview ${product.name}`}
+                              className="w-full h-[200px] object-contain"
+                              width={400}
+                              height={200}
+                              unoptimized
+                            />
+                            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 text-white text-xs p-1 text-center">
+                              {product.stt < 10
+                                ? `0${product.stt}`
+                                : product.stt}
+                              . {product.categoryName}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center h-[200px] bg-gray-50">
+                            <div className="text-center">
+                              <svg
+                                className="h-12 w-12 text-gray-300 mx-auto"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={1}
+                                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                />
+                              </svg>
+                              <p className="mt-2 text-sm text-gray-500">
+                                {!sharedFolderId
+                                  ? "Nhập ID Folder Google Drive trước"
+                                  : !product.categoryName
+                                  ? "Chọn danh mục trước"
+                                  : !product.stt
+                                  ? "Nhập STT trước"
+                                  : failedImages[index]
+                                  ? "Không tìm thấy ảnh. Nhấn 'Tải lại ảnh' để thử lại."
+                                  : "Chưa có ảnh preview"}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {previewImages[index] && (
+                        <p className="text-xs text-blue-600">
+                          Đã tải ảnh preview thành công. URL ảnh sẽ được lưu
+                          cùng sản phẩm.
+                        </p>
+                      )}
+                    </div>
+
                     <div className="space-y-2 bg-gray-50 p-4 rounded-lg border border-gray-100 mb-4">
                       <Label
                         htmlFor={`name-${index}`}
                         className="text-sm font-medium flex items-center"
                       >
                         <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                          1
+                          2
                         </span>
                         Tên sản phẩm (tự động)
                       </Label>
@@ -563,7 +1069,7 @@ export default function BatchCreateProductPage() {
                         id={`name-${index}`}
                         value={`Model ${
                           product.categoryName || "[Chọn danh mục]"
-                        } 3dmax`}
+                        } 3dsmax`}
                         disabled
                         className="border-gray-300 bg-gray-50 text-gray-500 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                       />
@@ -579,7 +1085,7 @@ export default function BatchCreateProductPage() {
                           className="text-sm font-medium flex items-center"
                         >
                           <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                            2
+                            1
                           </span>
                           STT
                         </Label>
@@ -597,71 +1103,13 @@ export default function BatchCreateProductPage() {
                         />
                       </div>
 
-                      <div className="space-y-2 w-full">
-                        <Label
-                          htmlFor={`categoryId-${index}`}
-                          className="text-sm font-medium flex items-center"
-                        >
-                          <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                            3
-                          </span>
-                          Danh mục
-                        </Label>
-                        <Select
-                          value={product.categoryId || ""}
-                          onValueChange={(value) =>
-                            handleChange(index, "categoryId", value)
-                          }
-                        >
-                          <SelectTrigger className="w-full border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                            <SelectValue placeholder="Chọn danh mục" />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-80 w-full">
-                            {categoriesData?.data.map((group) => (
-                              <div key={group._id} className="mb-2">
-                                {/* Danh mục cha */}
-                                <SelectItem
-                                  key={`parent-${group._id}`}
-                                  value={group._id}
-                                  className="bg-muted font-semibold"
-                                >
-                                  {group.title}
-                                </SelectItem>
-
-                                {/* Danh mục con - hiển thị thụt vào */}
-                                <div className="pl-4">
-                                  {group.items.map((category) => (
-                                    <SelectItem
-                                      key={category._id}
-                                      value={category._id}
-                                      className="text-sm"
-                                    >
-                                      {category.name}
-                                    </SelectItem>
-                                  ))}
-                                </div>
-                              </div>
-                            ))}
-                          </SelectContent>
-                        </Select>
-
-                        {/* Display selected category info */}
-                        {product.categoryPath && (
-                          <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
-                            <div className="text-xs text-blue-600 font-medium">
-                              Đã chọn: {product.categoryPath}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
                       <div className="space-y-2 bg-gray-50 p-4 rounded-lg border border-gray-100">
                         <Label
                           htmlFor={`description-${index}`}
                           className="text-sm font-medium flex items-center"
                         >
                           <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                            4
+                            2
                           </span>
                           Mô tả
                         </Label>
@@ -791,225 +1239,216 @@ export default function BatchCreateProductPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-green-50 p-4 rounded-lg border border-green-100">
                       <div className="space-y-2">
-                        <Label
-                          htmlFor={`materials-${index}`}
-                          className="text-sm font-medium flex items-center"
-                        >
+                        <Label className="text-sm font-medium flex items-center">
                           <span className="bg-green-100 text-green-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
                             7
                           </span>
                           Chất liệu
                         </Label>
-                        <Select
-                          value={product.materials || ""}
-                          onValueChange={(value) =>
-                            handleChange(index, "materials", value)
-                          }
-                        >
-                          <SelectTrigger className="border-gray-300 w-full focus:border-green-500 focus:ring focus:ring-green-200 focus:ring-opacity-50">
-                            <SelectValue placeholder="Chọn chất liệu" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(Material).map(([key, value]) => (
-                              <SelectItem key={key} value={value}>
-                                {key.charAt(0) +
-                                  key.slice(1).toLowerCase().replace("_", " ")}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="grid grid-cols-2 gap-2 p-3 border rounded-md border-gray-200 bg-white">
+                          {materials.map((material) => (
+                            <label
+                              key={material.id}
+                              className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded"
+                            >
+                              <input
+                                type="radio"
+                                name={`materials-${index}`}
+                                checked={(product.materials || []).includes(
+                                  material.id
+                                )}
+                                onChange={(e) =>
+                                  handleCheckboxChange(
+                                    index,
+                                    "materials",
+                                    material.id,
+                                    e.target.checked
+                                  )
+                                }
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded-full focus:ring-blue-500"
+                              />
+                              <span className="text-sm text-gray-700">
+                                {material.name}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
                       </div>
 
                       <div className="space-y-2">
-                        <Label
-                          htmlFor={`style-${index}`}
-                          className="text-sm font-medium flex items-center"
-                        >
+                        <Label className="text-sm font-medium flex items-center">
                           <span className="bg-green-100 text-green-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
                             8
                           </span>
                           Phong cách
                         </Label>
-                        <Select
-                          value={product.style || ""}
-                          onValueChange={(value) =>
-                            handleChange(index, "style", value)
-                          }
-                        >
-                          <SelectTrigger className="border-gray-300 w-full focus:border-green-500 focus:ring focus:ring-green-200 focus:ring-opacity-50">
-                            <SelectValue placeholder="Chọn phong cách" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(Style).map(([key, value]) => (
-                              <SelectItem key={key} value={value}>
-                                {key.charAt(0) +
-                                  key.slice(1).toLowerCase().replace("_", " ")}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="grid grid-cols-2 gap-2 p-3 border rounded-md border-gray-200 bg-white">
+                          {styles.map((style) => (
+                            <label
+                              key={style.id}
+                              className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded"
+                            >
+                              <input
+                                type="radio"
+                                name={`style-${index}`}
+                                checked={(product.style || []).includes(
+                                  style.id
+                                )}
+                                onChange={(e) =>
+                                  handleCheckboxChange(
+                                    index,
+                                    "style",
+                                    style.id,
+                                    e.target.checked
+                                  )
+                                }
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded-full focus:ring-blue-500"
+                              />
+                              <span className="text-sm text-gray-700">
+                                {style.name}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-yellow-50 p-4 rounded-lg border border-yellow-100">
                       <div className="space-y-2">
-                        <Label
-                          htmlFor={`render-${index}`}
-                          className="text-sm font-medium flex items-center"
-                        >
+                        <Label className="text-sm font-medium flex items-center">
                           <span className="bg-yellow-100 text-yellow-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
                             9
                           </span>
                           Render
                         </Label>
-                        <Select
-                          value={product.render || ""}
-                          onValueChange={(value) =>
-                            handleChange(index, "render", value)
-                          }
-                        >
-                          <SelectTrigger className="border-gray-300 w-full focus:border-yellow-500 focus:ring focus:ring-yellow-200 focus:ring-opacity-50">
-                            <SelectValue placeholder="Chọn loại render" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(Render).map(([key, value]) => (
-                              <SelectItem key={key} value={value}>
-                                {key.charAt(0) +
-                                  key
-                                    .slice(1)
-                                    .toLowerCase()
-                                    .replace("_", " ")
-                                    .replace("+", " + ")}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="grid grid-cols-2 gap-2 p-3 border rounded-md border-gray-200 bg-white">
+                          {renderEngines.map((engine) => (
+                            <label
+                              key={engine.id}
+                              className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded"
+                            >
+                              <input
+                                type="radio"
+                                name={`render-${index}`}
+                                checked={(product.render || []).includes(
+                                  engine.id
+                                )}
+                                onChange={(e) =>
+                                  handleCheckboxChange(
+                                    index,
+                                    "render",
+                                    engine.id,
+                                    e.target.checked
+                                  )
+                                }
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded-full focus:ring-blue-500"
+                              />
+                              <span className="text-sm text-gray-700">
+                                {engine.name}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
                       </div>
 
                       <div className="space-y-2">
-                        <Label
-                          htmlFor={`form-${index}`}
-                          className="text-sm font-medium flex items-center"
-                        >
+                        <Label className="text-sm font-medium flex items-center">
                           <span className="bg-yellow-100 text-yellow-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                            11
+                            10
                           </span>
                           Hình dạng
                         </Label>
-                        <Select
-                          value={product.form || ""}
-                          onValueChange={(value) =>
-                            handleChange(index, "form", value)
-                          }
-                        >
-                          <SelectTrigger className="border-gray-300 w-full focus:border-yellow-500 focus:ring focus:ring-yellow-200 focus:ring-opacity-50">
-                            <SelectValue placeholder="Chọn hình dạng" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(Form).map(([key, value]) => (
-                              <SelectItem key={key} value={value}>
-                                {key.charAt(0) +
-                                  key.slice(1).toLowerCase().replace("_", " ")}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="grid grid-cols-5 gap-2 p-3 border rounded-md border-gray-200 bg-white">
+                          {forms.map((form) => (
+                            <div key={form.id} className="text-center">
+                              <label className="flex flex-col items-center space-y-1 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                                <input
+                                  type="radio"
+                                  name={`form-${index}`}
+                                  checked={(product.form || []).includes(
+                                    form.id
+                                  )}
+                                  onChange={(e) =>
+                                    handleCheckboxChange(
+                                      index,
+                                      "form",
+                                      form.id,
+                                      e.target.checked
+                                    )
+                                  }
+                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded-full focus:ring-blue-500"
+                                />
+                                <span className="text-xl">{form.shape}</span>
+                                <span className="text-xs text-gray-700">
+                                  {form.name}
+                                </span>
+                              </label>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
 
                     <div className="space-y-2 bg-purple-50 p-4 rounded-lg border border-purple-100">
-                      <Label
-                        htmlFor={`color-${index}`}
-                        className="text-sm font-medium flex items-center"
-                      >
+                      <Label className="text-sm font-medium flex items-center">
                         <span className="bg-purple-100 text-purple-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
                           11
                         </span>
                         Màu sắc
                       </Label>
-                      <div className="relative">
-                        <Input
-                          id={`color-${index}`}
-                          value={product.color || ""}
-                          onChange={(e) =>
-                            handleChange(index, "color", e.target.value)
-                          }
-                          placeholder="Nhập màu sắc"
-                          className="pl-9 border-gray-300 focus:border-purple-500 focus:ring focus:ring-purple-200 focus:ring-opacity-50"
-                        />
-                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                          🎨
-                        </span>
+                      <div className="grid grid-cols-4 gap-2 p-3 border rounded-md border-gray-200 bg-white">
+                        {colors.map((color) => (
+                          <div key={color.hex} className="relative group">
+                            <label className="flex flex-col items-center cursor-pointer">
+                              <div
+                                className={`w-8 h-8 rounded-full border-2 transition-all ${
+                                  (product.color || []).includes(color.hex)
+                                    ? "border-gray-800 scale-110"
+                                    : "border-gray-300 hover:border-gray-400"
+                                } ${
+                                  color.hex === "#ffffff"
+                                    ? "border-gray-400"
+                                    : ""
+                                }`}
+                                style={{ backgroundColor: color.hex }}
+                              >
+                                <input
+                                  type="radio"
+                                  name={`color-${index}`}
+                                  className="opacity-0 absolute"
+                                  checked={(product.color || []).includes(
+                                    color.hex
+                                  )}
+                                  onChange={(e) =>
+                                    handleCheckboxChange(
+                                      index,
+                                      "color",
+                                      color.hex,
+                                      e.target.checked
+                                    )
+                                  }
+                                />
+                                {(product.color || []).includes(color.hex) && (
+                                  <span
+                                    className={`absolute inset-0 flex items-center justify-center text-xs ${
+                                      color.hex === "#ffffff" ||
+                                      color.hex === "#f3e8d0" ||
+                                      color.hex === "#fbb6ce"
+                                        ? "text-black"
+                                        : "text-white"
+                                    }`}
+                                  >
+                                    ✓
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-xs mt-1 text-gray-600">
+                                {color.name}
+                              </span>
+                            </label>
+                          </div>
+                        ))}
                       </div>
-                    </div>
-
-                    <div className="space-y-2 bg-indigo-50 p-4 rounded-lg border border-indigo-100">
-                      <Label className="text-sm font-medium flex items-center">
-                        <span className="bg-indigo-100 text-indigo-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                          12
-                        </span>
-                        Hình ảnh sản phẩm
-                      </Label>
-
-                      <input
-                        type="file"
-                        id={`file-input-${index}`}
-                        accept="image/*"
-                        onChange={(e) => handleFileChange(index, e)}
-                        className="hidden"
-                        ref={fileInputRef}
-                      />
-
-                      {!files[index] ? (
-                        <div
-                          onClick={() => triggerFileInput()}
-                          className="border-2 border-dashed border-indigo-300 rounded-lg p-8 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-indigo-100/50 transition-colors"
-                        >
-                          <IconUpload className="h-10 w-10 text-indigo-500" />
-                          <div className="text-center">
-                            <p className="font-medium text-indigo-600">
-                              Nhấn để tải lên hình ảnh
-                            </p>
-                            <p className="text-sm text-gray-500 mt-1">
-                              PNG, JPG hoặc GIF (tối đa 5MB)
-                            </p>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="relative">
-                          <div className="rounded-lg overflow-hidden border border-indigo-200">
-                            <Image
-                              src={files[index]!.preview}
-                              alt="Preview"
-                              className="w-full h-48 object-contain"
-                              width={100}
-                              height={100}
-                            />
-                          </div>
-                          <div className="absolute top-2 right-2 flex gap-2">
-                            <button
-                              type="button"
-                              onClick={() => triggerFileInput()}
-                              className="bg-indigo-500 hover:bg-indigo-600 text-white rounded-full p-1.5 shadow-sm transition-colors"
-                              title="Thay đổi hình ảnh"
-                            >
-                              <IconPhoto className="h-4 w-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleFileRemove(index)}
-                              className="bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-sm transition-colors"
-                              title="Xóa hình ảnh"
-                            >
-                              <IconX className="h-4 w-4" />
-                            </button>
-                          </div>
-                          <div className="mt-2 text-sm text-gray-500">
-                            {files[index]!.name} (
-                            {(files[index]!.size / 1024 / 1024).toFixed(2)}MB)
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </CardContent>
                 </Card>

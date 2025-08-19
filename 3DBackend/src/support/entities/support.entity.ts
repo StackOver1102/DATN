@@ -45,6 +45,12 @@ export class SupportRequest {
 
   @Prop()
   adminResponse?: string;
+
+  @Prop({ default: false })
+  isWatchingByAdmin: boolean;
+
+  @Prop({ default: false })
+  isWatchingByUser: boolean;
 }
 
 export const SupportRequestSchema =

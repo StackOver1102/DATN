@@ -22,10 +22,15 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { UserRole } from 'src/enum/user.enum';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
-import { SupportStatus } from './entities/support.entity';
+import {
+  SupportRequestDocument,
+  SupportStatus,
+} from './entities/support.entity';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { UploadService } from 'src/upload/upload.service';
+import { NotificationsService } from 'src/notifications/notifications.service';
+import { NotificationType } from 'src/types/notification';
 
 interface UserWithId {
   _id: string;
@@ -42,6 +47,7 @@ export class SupportController {
   constructor(
     private readonly supportService: SupportService,
     private readonly uploadService: UploadService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   @Post()
@@ -51,7 +57,6 @@ export class SupportController {
     @Body() createSupportDto: CreateSupportDto,
     @UploadedFiles() files?: FileWithBuffer[],
   ) {
-    console.log(files);
     // Upload files if any
     let attachments: string[] = [];
     if (files && files.length > 0) {
@@ -61,10 +66,20 @@ export class SupportController {
       });
     }
 
-    return this.supportService.create({
+    const support: SupportRequestDocument = await this.supportService.create({
       ...createSupportDto,
       attachments: [...(createSupportDto.attachments || []), ...attachments],
     });
+
+    if (support && support._id) {
+      await this.notificationsService.create({
+        message: `New support request from ${createSupportDto.name}`,
+        originalId: support._id.toString(),
+        originType: NotificationType.SUPPORT,
+      });
+    }
+
+    return support;
   }
 
   @Post('user-request')

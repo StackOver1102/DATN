@@ -1,7 +1,14 @@
 // drive/google-drive.service.ts
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { google, drive_v3 } from 'googleapis';
 import * as path from 'path';
+import * as fs from 'fs';
+import * as util from 'util';
+import { v4 as uuidv4 } from 'uuid';
+
+// Chuyển đổi các hàm callback của fs thành Promise
+const writeFileAsync = util.promisify(fs.writeFile);
+const mkdirAsync = util.promisify(fs.mkdir);
 
 interface DriveFile {
   id: string;
@@ -221,6 +228,163 @@ export class GoogleDriveService {
       throw new Error('Could not extract ID from URL');
     } catch {
       throw new Error(`Invalid Google Drive URL: ${url}`);
+    }
+  }
+
+  getImageUrl(fileId: string, name: string): string {
+    return `https://drive.google.com/uc?id=${fileId}&export=view&name=${name}`;
+  }
+
+  /**
+   * Đảm bảo thư mục tồn tại, nếu không thì tạo mới
+   * @param dirPath Đường dẫn thư mục cần kiểm tra/tạo
+   */
+  private async ensureDirectoryExists(dirPath: string): Promise<void> {
+    try {
+      await fs.promises.access(dirPath);
+    } catch {
+      // Thư mục không tồn tại, tạo mới
+      await mkdirAsync(dirPath, { recursive: true });
+    }
+  }
+
+  /**
+   * Kiểm tra xem file đã có quyền public chưa
+   * @param fileId ID của file cần kiểm tra
+   * @returns true nếu file đã có quyền public, false nếu chưa
+   */
+  async hasPublicPermission(fileId: string): Promise<boolean> {
+    try {
+      const response = await this.drive.permissions.list({
+        fileId,
+        fields: 'permissions(id,type,role)',
+      });
+
+      const permissions = response.data.permissions || [];
+      return permissions.some(
+        (p) => p.type === 'anyone' && p.role === 'reader',
+      );
+    } catch (error) {
+      console.error('Lỗi khi kiểm tra quyền truy cập:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Thêm quyền truy cập public cho file nếu chưa có
+   * @param fileId ID của file cần thêm quyền
+   */
+  async makeFilePublic(fileId: string): Promise<void> {
+    try {
+      // Kiểm tra xem file đã có quyền public chưa
+      const isPublic = await this.hasPublicPermission(fileId);
+      if (isPublic) {
+        console.log(`File ${fileId} đã có quyền public.`);
+        return;
+      }
+
+      // Thêm quyền truy cập public cho file
+      await this.drive.permissions.create({
+        fileId,
+        requestBody: {
+          role: 'reader',
+          type: 'anyone',
+        },
+        fields: 'id',
+      });
+
+      console.log(`Đã thêm quyền public cho file ${fileId}`);
+    } catch (error) {
+      console.error('Lỗi khi thêm quyền public:', error);
+      throw new Error(
+        `Không thể thêm quyền public: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
+      );
+    }
+  }
+
+  /**
+   * Tìm kiếm file theo tên, tải về thư mục local và trả về đường dẫn
+   * @param searchTerm Từ khóa tìm kiếm
+   * @param folderId ID của thư mục cần tìm kiếm
+   * @param localDir Thư mục local để lưu file (mặc định là 'uploads/images')
+   * @returns Thông tin về file đã tìm thấy và đường dẫn local
+   */
+  async searchImageByName(
+    searchTerm: string,
+    folderId: string,
+    localDir: string = 'uploads/images',
+  ): Promise<{ url: string; localPath: string; name: string; id: string }> {
+    // Tìm kiếm file theo tên
+    const files = await this.listFiles(folderId, searchTerm);
+
+    // Lọc ra các file hình ảnh
+    const imageFiles = files.filter((file) => {
+      const name = file.name.toLowerCase();
+      return (
+        name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png')
+      );
+    });
+
+    if (imageFiles.length === 0) {
+      throw new Error(
+        `Không tìm thấy file hình ảnh nào với từ khóa: ${searchTerm}`,
+      );
+    }
+
+    // Lấy file đầu tiên tìm thấy
+    const imageFile = imageFiles[0];
+
+    try {
+      // Thêm quyền truy cập public cho file
+      await this.makeFilePublic(imageFile.id);
+
+      // Tạo URL trực tiếp từ Google Drive
+      const url = this.getImageUrl(imageFile.id, imageFile.name);
+
+      // Tạo tên file duy nhất để tránh trùng lặp
+      const fileExtension = path.extname(imageFile.name);
+      const fileName = `${uuidv4()}${fileExtension}`;
+
+      // Đảm bảo thư mục tồn tại
+      const fullDirPath = path.resolve(process.cwd(), localDir);
+      await this.ensureDirectoryExists(fullDirPath);
+
+      // Đường dẫn đầy đủ đến file
+      const localFilePath = path.join(fullDirPath, fileName);
+
+      // Tải file từ Google Drive
+      const response = await this.drive.files.get(
+        { fileId: imageFile.id, alt: 'media' },
+        { responseType: 'arraybuffer' },
+      );
+
+      // Lưu file vào thư mục local
+      await writeFileAsync(
+        localFilePath,
+        Buffer.from(response.data as ArrayBuffer),
+      );
+
+      // Tạo đường dẫn tương đối để trả về
+      const relativePath = path.join(localDir, fileName);
+
+      console.log(`Đã tải file ${imageFile.name} về ${localFilePath}`);
+
+      return {
+        url, // URL Google Drive (vẫn giữ để tương thích ngược)
+        localPath: relativePath.replace(/\\/g, '/'), // Đường dẫn local (thêm mới)
+        name: imageFile.name,
+        id: imageFile.id,
+      };
+    } catch (error) {
+      console.error('Lỗi khi tìm kiếm file hoặc tải về local:', error);
+      throw new HttpException(
+        `Không thể tìm kiếm file hoặc tải về local: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 }

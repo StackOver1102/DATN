@@ -4,9 +4,11 @@ import {
   NotFoundException,
   UnauthorizedException,
   UseGuards,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import mongoose, { Model, Types } from 'mongoose';
 import {
   Transaction,
   TransactionDocument,
@@ -89,6 +91,7 @@ export class TransactionsService {
   constructor(
     @InjectModel(Transaction.name)
     private transactionModel: Model<TransactionDocument>,
+    @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
     private configService: ConfigService,
     private filterService: FilterService,
@@ -955,5 +958,28 @@ export class TransactionsService {
       .sort((a, b) => a.date.localeCompare(b.date));
 
     return { data: result };
+  }
+
+  /**
+   * Tính tổng số tiền đã tiêu của người dùng (tổng các giao dịch PAYMENT thành công)
+   * @param userId ID của người dùng
+   * @returns Tổng số tiền đã tiêu
+   */
+  async getTotalSpentByUser(userId: string): Promise<number> {
+    // Tìm tất cả giao dịch PAYMENT thành công của người dùng
+    const transactions = await this.transactionModel
+      .find({
+        userId: new mongoose.Types.ObjectId(userId),
+        type: TransactionType.PAYMENT,
+        status: TransactionStatus.SUCCESS,
+      })
+      .exec();
+
+    // Tính tổng số tiền
+    const totalSpent = transactions.reduce((total, transaction) => {
+      return total + transaction.amount;
+    }, 0);
+
+    return totalSpent;
   }
 }

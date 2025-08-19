@@ -7,9 +7,12 @@ import { AppModule } from './app.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
+import * as fs from 'fs';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
 
   app.enableCors({
@@ -38,6 +41,23 @@ async function bootstrap() {
 
   // Apply exception filter globally
   app.useGlobalFilters(new HttpExceptionFilter());
+
+  // Tạo thư mục uploads nếu chưa tồn tại
+  const uploadsDir = join(process.cwd(), 'uploads');
+  const imagesDir = join(uploadsDir, 'images');
+
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
+  if (!fs.existsSync(imagesDir)) {
+    fs.mkdirSync(imagesDir, { recursive: true });
+  }
+
+  // Phục vụ các file tĩnh từ thư mục uploads
+  app.useStaticAssets(uploadsDir, {
+    prefix: '/uploads',
+  });
 
   // Swagger/OpenAPI configuration
   const config = new DocumentBuilder()

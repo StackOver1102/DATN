@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { SupportService } from './support.service';
 import { SupportController } from './support.controller';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -11,13 +11,14 @@ import { UploadModule } from 'src/upload/upload.module';
 import { MailModule } from 'src/mail/mail.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { UploadService } from 'src/upload/upload.service';
+import { NotificationsModule } from 'src/notifications/notifications.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: SupportRequest.name, schema: SupportRequestSchema },
     ]),
-    UsersModule,
+    forwardRef(() => UsersModule),
     UploadModule,
     MulterModule.registerAsync({
       imports: [UploadModule],
@@ -27,6 +28,7 @@ import { UploadService } from 'src/upload/upload.service';
       inject: [UploadService],
     }),
     MailModule,
+    NotificationsModule,
   ],
   controllers: [SupportController],
   providers: [SupportService],

@@ -17,6 +17,8 @@ import {
 } from './entities/support.entity';
 import { UsersService } from 'src/users/users.service';
 import { MailService } from 'src/mail/mail.service';
+import { NotificationsService } from 'src/notifications/notifications.service';
+import { NotificationType } from 'src/types/notification';
 
 @Injectable()
 export class SupportService {
@@ -25,12 +27,13 @@ export class SupportService {
     private supportRequestModel: Model<SupportRequestDocument>,
     private usersService: UsersService,
     private mailService: MailService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async create(
     createSupportDto: CreateSupportDto,
     userId?: string,
-  ): Promise<SupportRequest> {
+  ): Promise<SupportRequestDocument> {
     const supportRequest = new this.supportRequestModel({
       ...createSupportDto,
       status: SupportStatus.PENDING,
@@ -38,6 +41,18 @@ export class SupportService {
     });
 
     const savedRequest = await supportRequest.save();
+
+    // Create notification for admin
+    try {
+      await this.notificationsService.create({
+        message: `New support request: ${createSupportDto.name}`,
+        originalId: savedRequest._id.toString(),
+        originType: NotificationType.SUPPORT,
+        userId: userId || '',
+      });
+    } catch (error) {
+      console.error('Failed to create notification:', error);
+    }
 
     // Send confirmation email
     try {

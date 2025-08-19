@@ -12,7 +12,7 @@ import * as multerS3 from 'multer-s3';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { imageFileFilter } from './r2-config.provider';
-
+import * as fs from 'fs';
 interface UploadResult {
   key: string;
   url: string;
@@ -210,5 +210,11 @@ export class UploadService {
       console.error('Error extracting key from URL:', error);
       return null;
     }
+  }
+
+  uploadLocalToR2(localPath: string) {
+    const buffer = fs.readFileSync(localPath);
+    const generateKey = `${Date.now()}-${uuidv4()}}`;
+    return this.uploadFile(buffer, generateKey, 'image/jpeg', 'products');
   }
 }

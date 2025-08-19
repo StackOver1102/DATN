@@ -77,10 +77,10 @@ export class Product {
   urlDownload?: string;
 
   @Prop({ type: String })
-  q?: string;
-
-  @Prop({ type: String })
   nameFolder?: string;
+
+  @Prop({ type: Number })
+  stt?: number;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

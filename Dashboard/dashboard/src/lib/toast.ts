@@ -79,6 +79,7 @@ export const userToasts = {
   created: () => showSuccessToast("Người dùng đã được tạo thành công"),
   updated: () => showSuccessToast("Người dùng đã được cập nhật thành công"),
   deleted: () => showSuccessToast("Người dùng đã được xóa thành công"),
+  success: (message: string) => showSuccessToast(message),
   error: (message: string) => showErrorToast("Lỗi người dùng", message),
 };
 

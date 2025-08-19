@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
 import { TransactionsService } from './transactions.service';
@@ -12,7 +12,7 @@ import { CommonModule } from 'src/common/common.module';
     MongooseModule.forFeature([
       { name: Transaction.name, schema: TransactionSchema },
     ]),
-    UsersModule,
+    forwardRef(() => UsersModule),
     ConfigModule,
     CommonModule,
   ],

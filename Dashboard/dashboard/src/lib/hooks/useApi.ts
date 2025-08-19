@@ -1,10 +1,26 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  QueryOptions,
+} from "@tanstack/react-query";
 import { api } from "../api";
 
-export function useApiQuery<T>(key: string | string[], endpoint: string) {
+export function useApiQuery<T>(
+  key: string | string[],
+  endpoint: string,
+  options?: {
+    enabled?: boolean;
+    staleTime?: number;
+    refetchInterval?: number | false;
+    onSuccess?: (data: T) => void;
+    onError?: (error: Error) => void;
+  }
+) {
   return useQuery<T>({
     queryKey: Array.isArray(key) ? key : [key],
     queryFn: () => api.get(endpoint),
+    ...options,
   });
 }
 
@@ -14,7 +30,7 @@ export function useApiMutation<T, R>(
   method: "post" | "put" | "delete" | "patch" = "post"
 ) {
   const queryClient = useQueryClient();
-  
+
   return useMutation<T, Error, R>({
     mutationFn: (data: R) => {
       if (method === "delete") {
@@ -23,10 +39,14 @@ export function useApiMutation<T, R>(
       if (method === "patch") {
         return api.patch(endpoint, data);
       }
-      return method === "post" ? api.post(endpoint, data) : api.put(endpoint, data);
+      return method === "post"
+        ? api.post(endpoint, data)
+        : api.put(endpoint, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: Array.isArray(key) ? key : [key] });
+      queryClient.invalidateQueries({
+        queryKey: Array.isArray(key) ? key : [key],
+      });
     },
   });
 }

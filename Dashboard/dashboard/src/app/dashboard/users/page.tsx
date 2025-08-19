@@ -15,7 +15,9 @@ import {
   IconPlus,
   IconTrash,
   IconUser,
+  IconFileSpreadsheet,
 } from "@tabler/icons-react";
+import * as XLSX from "xlsx";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +38,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 import { userToasts } from "@/lib/toast";
 import { PageLoading, Loading } from "@/components/ui/loading";
+import { CircleDollarSign } from "lucide-react";
 
 export interface User {
   _id: string;
@@ -44,6 +47,8 @@ export interface User {
   role: string;
   balance: number;
   isActive: boolean;
+  isDeleted?: boolean;
+  totalSpent?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -52,10 +57,11 @@ export default function UsersPage() {
   const router = useRouter();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data, isLoading, error, refetch } = useApiQuery<ApiResponse<User[]>>(
     "users",
-    "/users"
+    "/users/with-spent"
   );
 
   // Delete mutation
@@ -94,6 +100,49 @@ export default function UsersPage() {
   const handleDeleteCancel = () => {
     setDeleteModalOpen(false);
     setUserToDelete(null);
+  };
+
+  // Hàm xuất danh sách email người dùng ra file Excel
+  const exportEmailsToExcel = () => {
+    if (!data?.data?.length) return;
+
+    setIsExporting(true);
+
+    try {
+      // Tạo mảng dữ liệu cho file Excel
+      const emailList = data.data.map((user, index) => ({
+        STT: index + 1,
+        "Họ và tên": user.fullName,
+        Email: user.email,
+        "Vai trò": user.role === "admin" ? "Quản trị viên" : "Người dùng",
+        "Số dư": user.balance,
+        "Số tiền đã tiêu": user.totalSpent || 0,
+        "Trạng thái": user.isDeleted ? "Đã xóa" : "Hoạt động",
+      }));
+
+      // Tạo workbook và worksheet
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(emailList);
+
+      // Thêm worksheet vào workbook
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Danh sách email");
+
+      // Tạo tên file với timestamp để tránh trùng lặp
+      const fileName = `danh_sach_email_nguoi_dung_${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`;
+
+      // Xuất file Excel
+      XLSX.writeFile(workbook, fileName);
+
+      // Hiển thị thông báo thành công
+      userToasts.success("Xuất danh sách email thành công!");
+    } catch (error) {
+      console.error("Lỗi khi xuất file Excel:", error);
+      userToasts.error("Có lỗi xảy ra khi xuất file Excel");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   // Custom filter function to handle boolean values
@@ -169,8 +218,21 @@ export default function UsersPage() {
       cell: ({ row }) => {
         const balance = parseFloat(row.getValue("balance"));
         return (
+          <div className="font-mono flex items-center gap-1">
+            {balance.toLocaleString("vi-VN")}
+            <CircleDollarSign className="w-5 h-5 text-yellow-500" />
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "totalSpent",
+      header: "Số tiền đã tiêu",
+      cell: ({ row }) => {
+        const totalSpent = parseFloat(row.getValue("totalSpent"));
+        return (
           <div className="font-mono">
-            {balance.toLocaleString("vi-VN")} coin
+            {totalSpent.toLocaleString("vi-VN")} coin
           </div>
         );
       },
@@ -266,6 +328,18 @@ export default function UsersPage() {
       <div className="flex items-center justify-between px-4 lg:px-6">
         <h1 className="text-2xl font-bold">Người dùng</h1>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={exportEmailsToExcel}
+            disabled={isExporting || isLoading || !data?.data?.length}
+          >
+            {isExporting ? (
+              <Loading size="sm" variant="spinner" className="mr-1" />
+            ) : (
+              <IconFileSpreadsheet className="h-4 w-4 mr-1" />
+            )}
+            {isExporting ? "Đang xuất..." : "Xuất email"}
+          </Button>
           <Button
             variant="outline"
             onClick={() => router.push("/dashboard/users/create")}

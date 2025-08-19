@@ -17,12 +17,15 @@ import * as bcrypt from 'bcrypt';
 import { UserRole } from 'src/enum/user.enum';
 import { randomBytes } from 'crypto';
 import { MailService } from 'src/mail/mail.service';
+import { TransactionsService } from 'src/transactions/transactions.service';
 
 @Injectable()
 export class UsersService implements OnModuleInit {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @Inject(forwardRef(() => MailService)) private mailService: MailService,
+    @Inject(forwardRef(() => TransactionsService))
+    private transactionsService: TransactionsService,
   ) {}
 
   async onModuleInit() {
@@ -131,6 +134,27 @@ export class UsersService implements OnModuleInit {
     return this.userModel.find();
   }
 
+  /**
+   * Lấy danh sách tất cả người dùng kèm theo số tiền đã tiêu
+   * @returns Danh sách người dùng và số tiền đã tiêu
+   */
+  async findAllWithSpentAmount() {
+    const users = await this.userModel.find().select('-password');
+    const usersWithSpent = await Promise.all(
+      users.map(async (user) => {
+        const totalSpent = await this.transactionsService.getTotalSpentByUser(
+          user._id.toString(),
+        );
+        return {
+          ...user.toObject(),
+          totalSpent,
+        };
+      }),
+    );
+
+    return usersWithSpent;
+  }
+
   async findOne(id: string, isSelectPassword = false) {
     const user = await this.userModel.findOne(
       { _id: id },
@@ -140,6 +164,21 @@ export class UsersService implements OnModuleInit {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
     return user;
+  }
+
+  /**
+   * Lấy thông tin người dùng kèm theo số tiền đã tiêu
+   * @param id ID của người dùng
+   * @returns Thông tin người dùng và số tiền đã tiêu
+   */
+  async getUserWithSpentAmount(id: string) {
+    const user = await this.findOne(id);
+    const totalSpent = await this.transactionsService.getTotalSpentByUser(id);
+
+    return {
+      ...user.toObject(),
+      totalSpent,
+    };
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {

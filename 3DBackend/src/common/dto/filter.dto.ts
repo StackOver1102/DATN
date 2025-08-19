@@ -1,7 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNumber, IsOptional, IsString } from 'class-validator';
 import { PaginationDto } from './pagination.dto';
-import { Transform } from 'class-transformer';
 
 export class FilterDto extends PaginationDto {
   @ApiPropertyOptional({
@@ -16,7 +15,6 @@ export class FilterDto extends PaginationDto {
   })
   @IsOptional()
   @IsString()
-  @Transform(({ value }) => value)
   q?: string;
 
   @ApiPropertyOptional({

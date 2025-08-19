@@ -6,6 +6,7 @@ import { Refund, RefundSchema } from './entities/refund.entity';
 import { OrdersModule } from 'src/orders/orders.module';
 import { TransactionsModule } from 'src/transactions/transactions.module';
 import { UsersModule } from 'src/users/users.module';
+import { NotificationsModule } from 'src/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { UsersModule } from 'src/users/users.module';
     OrdersModule,
     TransactionsModule,
     UsersModule,
+    NotificationsModule,
   ],
   controllers: [RefundController],
   providers: [RefundService],

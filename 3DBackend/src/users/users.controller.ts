@@ -7,7 +7,6 @@ import {
   Param,
   Delete,
   UseGuards,
-  Put,
   ForbiddenException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -63,6 +62,15 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  // @UseGuards(RolesGuard)
+  // @Roles(UserRole.ADMIN)
+  // @ApiBearerAuth()
+  @Public()
+  @Get('/with-spent')
+  findAllWithSpentAmount() {
+    return this.usersService.findAllWithSpentAmount();
+  }
+
   @ApiBearerAuth()
   @Get('profile')
   async getProfile(@CurrentUser() user: UserPayload) {
@@ -87,6 +95,11 @@ export class UsersController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
+  }
+
+  @Get(':id/with-spent')
+  getUserWithSpentAmount(@Param('id') id: string) {
+    return this.usersService.getUserWithSpentAmount(id);
   }
 
   @ApiBearerAuth()

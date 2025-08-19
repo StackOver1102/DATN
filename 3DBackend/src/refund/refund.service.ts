@@ -12,6 +12,8 @@ import { OrdersService } from 'src/orders/orders.service';
 import { TransactionsService } from 'src/transactions/transactions.service';
 import { OrderStatus } from 'src/orders/entities/order.entity';
 import { TransactionStatus, TransactionType } from 'src/enum/transactions.enum';
+import { NotificationsService } from 'src/notifications/notifications.service';
+import { NotificationType } from 'src/types/notification';
 
 @Injectable()
 export class RefundService {
@@ -19,12 +21,13 @@ export class RefundService {
     @InjectModel(Refund.name) private refundModel: Model<RefundDocument>,
     private ordersService: OrdersService,
     private transactionsService: TransactionsService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async create(
     createRefundDto: CreateRefundDto,
     userId: string,
-  ): Promise<Refund> {
+  ): Promise<RefundDocument> {
     // Check if order exists and belongs to the user
     const order = await this.ordersService.findOne(createRefundDto.orderId);
 
@@ -58,7 +61,17 @@ export class RefundService {
       amount: order.totalAmount,
     });
 
-    return refund.save();
+    const savedRefund: RefundDocument = await refund.save();
+
+    if (savedRefund) {
+      await this.notificationsService.create({
+        message: `New refund request from ${NotificationType.REFUND}`,
+        originalId: savedRefund._id.toString(),
+        originType: NotificationType.REFUND,
+      });
+    }
+
+    return savedRefund;
   }
 
   async findAll(): Promise<Refund[]> {

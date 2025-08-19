@@ -152,7 +152,6 @@ export default function ProductDetailPage() {
   } = useApiQuery<{ data: Product }>(
     ["product", id as string],
     `/products/${id}`,
-    // @ts-expect-error - The useQuery hook accepts this option
     { enabled: !isCreating && !!id }
   );
 
@@ -474,97 +473,170 @@ export default function ProductDetailPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="materials">Chất liệu</Label>
-                    <Select
-                      key={`materials-${formData.materials || ""}`}
-                      value={formData.materials || ""}
-                      onValueChange={handleMaterialsChange}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Chọn chất liệu" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(Material).map(([key, value]) => (
-                          <SelectItem key={key} value={value}>
+                    <div className="grid grid-cols-2 gap-2 p-3 border rounded-md border-gray-200 bg-white">
+                      {Object.entries(Material).map(([key, value]) => (
+                        <label
+                          key={key}
+                          className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded"
+                        >
+                          <input
+                            type="radio"
+                            name="materials"
+                            checked={formData.materials === value}
+                            onChange={() => handleMaterialsChange(value)}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded-full focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-700">
                             {key.charAt(0) +
                               key.slice(1).toLowerCase().replace("_", " ")}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="style">Phong cách</Label>
-                    <Select
-                      key={`style-${formData.style || ""}`}
-                      value={formData.style || ""}
-                      onValueChange={handleStyleChange}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Chọn phong cách" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(Style).map(([key, value]) => (
-                          <SelectItem key={key} value={value}>
+                    <div className="grid grid-cols-2 gap-2 p-3 border rounded-md border-gray-200 bg-white">
+                      {Object.entries(Style).map(([key, value]) => (
+                        <label
+                          key={key}
+                          className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded"
+                        >
+                          <input
+                            type="radio"
+                            name="style"
+                            checked={formData.style === value}
+                            onChange={() => handleStyleChange(value)}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded-full focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-700">
                             {key.charAt(0) +
                               key.slice(1).toLowerCase().replace("_", " ")}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="render">Render</Label>
-                    <Select
-                      key={`render-${formData.render || ""}`}
-                      value={formData.render || ""}
-                      onValueChange={handleRenderChange}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Chọn render" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(Render).map(([key, value]) => (
-                          <SelectItem key={key} value={value}>
+                    <div className="grid grid-cols-2 gap-2 p-3 border rounded-md border-gray-200 bg-white">
+                      {Object.entries(Render).map(([key, value]) => (
+                        <label
+                          key={key}
+                          className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded"
+                        >
+                          <input
+                            type="radio"
+                            name="render"
+                            checked={formData.render === value}
+                            onChange={() => handleRenderChange(value)}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded-full focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-700">
                             {key
                               .replace("_", " ")
                               .replace(/([A-Z])/g, " $1")
                               .trim()}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="form">Hình dạng</Label>
-                    <Select
-                      key={`form-${formData.form || ""}`}
-                      value={formData.form || ""}
-                      onValueChange={handleFormChange}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Chọn hình dạng" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(Form).map(([key, value]) => (
-                          <SelectItem key={key} value={value}>
+                    <div className="grid grid-cols-5 gap-2 p-3 border rounded-md border-gray-200 bg-white">
+                      {Object.entries(Form).map(([key, value]) => (
+                        <label
+                          key={key}
+                          className="flex flex-col items-center justify-center space-y-1 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                        >
+                          <input
+                            type="radio"
+                            name="form"
+                            checked={formData.form === value}
+                            onChange={() => handleFormChange(value)}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded-full focus:ring-blue-500"
+                          />
+                          <span className="w-6 h-6 border border-gray-300 rounded-md flex items-center justify-center text-xs">
+                            {value.charAt(0).toUpperCase()}
+                          </span>
+                          <span className="text-xs text-gray-700 text-center">
                             {key.charAt(0) +
                               key.slice(1).toLowerCase().replace("_", " ")}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="color">Màu sắc</Label>
-                    <Input
-                      id="color"
-                      value={formData.color || ""}
-                      onChange={(e) => handleChange("color", e.target.value)}
-                    />
+                    <div className="grid grid-cols-4 gap-2 p-3 border rounded-md border-gray-200 bg-white">
+                      {[
+                        { hex: "#ffffff", name: "White" },
+                        { hex: "#6b7280", name: "Gray" },
+                        { hex: "#ef4444", name: "Red" },
+                        { hex: "#f59e0b", name: "Orange" },
+                        { hex: "#eab308", name: "Yellow" },
+                        { hex: "#10b981", name: "Green" },
+                        { hex: "#3b82f6", name: "Blue" },
+                        { hex: "#8b5cf6", name: "Purple" },
+                        { hex: "#ec4899", name: "Pink" },
+                        { hex: "#000000", name: "Black" },
+                        { hex: "#7c2d12", name: "Brown" },
+                        { hex: "#0d9488", name: "Teal" },
+                      ].map((color) => (
+                        <label
+                          key={color.hex}
+                          className="flex flex-col items-center space-y-1 cursor-pointer hover:bg-gray-50 p-1 rounded"
+                        >
+                          <input
+                            type="radio"
+                            name="color"
+                            checked={
+                              formData.color === color.name.toLowerCase()
+                            }
+                            onChange={() =>
+                              handleChange("color", color.name.toLowerCase())
+                            }
+                            className="sr-only"
+                          />
+                          <div
+                            className={`w-8 h-8 rounded-full border ${
+                              formData.color === color.name.toLowerCase()
+                                ? "ring-2 ring-blue-500"
+                                : "border-gray-300"
+                            }`}
+                            style={{ backgroundColor: color.hex }}
+                          >
+                            {formData.color === color.name.toLowerCase() && (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 20 20"
+                                fill={
+                                  color.hex === "#ffffff"
+                                    ? "#000000"
+                                    : "#ffffff"
+                                }
+                                className="w-full h-full p-1.5"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            )}
+                          </div>
+                          <span className="text-xs text-gray-700">
+                            {color.name}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </CardContent>

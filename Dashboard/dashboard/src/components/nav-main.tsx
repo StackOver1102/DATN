@@ -18,8 +18,10 @@ export function NavMain({
     url: string;
     icon?: Icon;
     isActive?: boolean;
+    notifications?: number;
   }[];
 }) {
+  console.log(items[5]?.notifications && !items[5]?.notifications);
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
@@ -56,6 +58,11 @@ export function NavMain({
                 <Link href={item.url}>
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>
+                  {item.notifications && item.notifications > 0 && (
+                    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-medium text-white">
+                      {item.notifications}
+                    </span>
+                  )}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

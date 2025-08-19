@@ -26,6 +26,7 @@ export class TransformInterceptor<T>
   ): Observable<ApiResponse<T>> {
     const ctx = context.switchToHttp();
     const response = ctx.getResponse<Response>();
+
     const statusCode = response.statusCode || HttpStatus.OK;
 
     return next.handle().pipe(
@@ -33,9 +34,9 @@ export class TransformInterceptor<T>
         const transformedResponse: ApiResponse<T> = {
           success: statusCode < 400,
           message: data?.message || 'Thành công',
-          data: (data?.data || data) as unknown as T,
           timestamp: new Date().getTime(),
           statusCode,
+          data: (data?.data || data) as unknown as T,
         };
         return transformedResponse;
       }),

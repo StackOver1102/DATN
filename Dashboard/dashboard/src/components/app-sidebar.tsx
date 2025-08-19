@@ -15,6 +15,7 @@ import {
   IconUsers,
   IconCoin,
 } from "@tabler/icons-react";
+import { useNotifications } from "@/lib/hooks/useNotifications";
 
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
@@ -70,11 +71,13 @@ const data = {
       title: "Refunds",
       url: "/dashboard/refunds",
       icon: IconCoin,
+      // notifications: 3,
     },
     {
       title: "Support",
       url: "/dashboard/support",
       icon: IconHelp,
+      // notifications: 5,
     },
     {
       title: "Master Data",
@@ -190,11 +193,13 @@ const data = {
       name: "Refunds",
       url: "/dashboard/refunds",
       icon: IconCoin,
+      // notifications: 3,
     },
     {
       name: "Support",
       url: "/dashboard/support",
       icon: IconHelp,
+      // notifications: 5,
     },
     // {
     //   name: "Comments",
@@ -212,6 +217,9 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Use Next.js usePathname hook to detect current path
   const pathname = usePathname();
+
+  // Get notification counts
+  const { counts } = useNotifications();
 
   // Helper function to check if a path matches a menu item URL
   const isPathActive = (itemUrl: string, currentPath: string) => {
@@ -276,20 +284,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const bestMatch = findBestMatch();
 
-  // Update navMain items with isActive property
-  const navMainWithActive = data.navMain.map((item, index) => ({
-    ...item,
-    isActive: bestMatch.type === "main" && bestMatch.index === index,
-  }));
+  // Update navMain items with isActive property and dynamic notifications
+  const navMainWithActive = data.navMain.map((item, index) => {
+    // Add dynamic notification counts based on item title
+    let notifications = undefined;
+    if (item.title === "Support") {
+      notifications = counts.support;
+    } else if (item.title === "Refunds") {
+      notifications = counts.refund;
+    }
+
+    return {
+      ...item,
+      isActive: bestMatch.type === "main" && bestMatch.index === index,
+      notifications,
+    };
+  });
 
   // We can implement nested navigation in the future if needed
   // For now, we're using the flat navigation structure
-
-  // Update documents items with isActive property
-  const documentsWithActive = data.documents.map((item, index) => ({
-    ...item,
-    isActive: bestMatch.type === "documents" && bestMatch.index === index,
-  }));
 
   // Update secondary nav items with isActive property
   const secondaryWithActive = data.navSecondary.map((item, index) => ({

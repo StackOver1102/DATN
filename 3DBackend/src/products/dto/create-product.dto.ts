@@ -83,6 +83,26 @@ export class CreateProductDto {
   @IsOptional()
   @IsString()
   nameFolder?: string;
+
+  @IsOptional()
+  @IsString()
+  categoryId?: string;
+
+  @IsOptional()
+  @IsString()
+  categoryName?: string;
+
+  @IsOptional()
+  @IsString()
+  rootCategoryId?: string;
+
+  @IsOptional()
+  @IsString()
+  categoryPath?: string;
+
+  @IsOptional()
+  @IsString()
+  images?: string;
 }
 
 export class CreateProductsDto {

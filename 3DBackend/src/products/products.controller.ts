@@ -8,26 +8,23 @@ import {
   Delete,
   UseInterceptors,
   UploadedFile,
-  UploadedFiles,
   Query,
   HttpStatus,
+  HttpException,
+  HttpCode,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { FileInterceptor, AnyFilesInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { FilterDto } from 'src/common/dto/filter.dto';
-import { ApiOperation, ApiTags, ApiConsumes } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/auth/decorators/public.decorator';
-import { Product } from './entities/product.entity';
-import { BaseController } from 'src/common/base/base.controller';
 
 @ApiTags('products')
 @Controller('products')
-export class ProductsController extends BaseController {
-  constructor(private readonly productsService: ProductsService) {
-    super();
-  }
+export class ProductsController {
+  constructor(private readonly productsService: ProductsService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create multiple products' })
@@ -43,94 +40,50 @@ export class ProductsController extends BaseController {
 
   @Public()
   @Post('batch-with-images')
-  @ApiOperation({ summary: 'Create multiple products with individual images' })
-  @ApiConsumes('multipart/form-data')
-  @UseInterceptors(AnyFilesInterceptor())
-  async createBatchWithImages(
-    @Body() body: { products: string },
-    @UploadedFiles() files: Express.Multer.File[],
-  ) {
+  @ApiOperation({
+    summary: 'Create multiple products without images',
+  })
+  async createBatchWithImages(@Body() body: { products: CreateProductDto[] }) {
     try {
-      // Parse the products JSON string with type assertion
-      const products = JSON.parse(body.products) as CreateProductDto[];
-
-      if (!files || files.length === 0) {
-        return this.error('No image files uploaded', HttpStatus.BAD_REQUEST, [
-          'At least one image file is required',
-        ]);
-      }
-
-      // Check if we have enough files for all products
-      if (files.length < products.length) {
-        return this.error(
-          `Not enough files uploaded. Expected ${products.length} files but got ${files.length}`,
+      if (
+        !body.products ||
+        !Array.isArray(body.products) ||
+        body.products.length === 0
+      ) {
+        throw new HttpException(
+          {
+            success: false,
+            message: 'No products provided',
+            errors: ['At least one product is required'],
+          },
           HttpStatus.BAD_REQUEST,
-          [`Expected ${products.length} files but got ${files.length}`],
         );
       }
 
-      // Create a map of files by their field name (e.g., "file-0", "file-1")
-      const fileMap = new Map<string, Express.Multer.File>();
-      files.forEach((file) => {
-        fileMap.set(file.fieldname, file);
-      });
-
-      // Create products with the uploaded images
-      const createdProducts: Product[] = [];
-      const errors: string[] = [];
-
-      for (let i = 0; i < products.length; i++) {
-        const product = products[i];
-        const file = fileMap.get(`file-${i}`);
-
-        if (!file) {
-          errors.push(`No image found for product at index ${i}`);
-          continue;
-        }
-
-        try {
-          // Use the same logic as createWithImage for each product with its own image
-          const createdProduct =
-            await this.productsService.createProductWithImageUpload(
-              product,
-              file,
-            );
-
-          createdProducts.push(createdProduct);
-        } catch (error) {
-          console.log(error);
-          errors.push(`Failed to create product at index ${i}`);
-        }
-      }
-
-      if (createdProducts.length === 0) {
-        return this.error(
-          'Failed to create any products',
-          HttpStatus.BAD_REQUEST,
-          errors,
-        );
-      }
-
-      return this.success(
-        createdProducts,
-        `Successfully created ${createdProducts.length} products with images`,
+      // Create products without images
+      const createdProducts = await this.productsService.createProductAndAddURL(
+        body.products,
       );
+      return createdProducts;
     } catch (error: any) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
-      return {
-        success: false,
-        message: 'Error processing request',
-        errors: [errorMessage],
-      };
+      throw new HttpException(
+        {
+          success: false,
+          message: 'Error processing request',
+          errors: [errorMessage],
+        },
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 
-  @Post('with-url')
-  @ApiOperation({ summary: 'Create a product with download URL' })
-  createWithURL(@Body() createProductDto: CreateProductDto) {
-    return this.productsService.createProductAndAddURL(createProductDto);
-  }
+  // @Post('with-url')
+  // @ApiOperation({ summary: 'Create a product with download URL' })
+  // createWithURL(@Body() createProductDto: CreateProductDto) {
+  //   return this.productsService.createProductAndAddURL(createProductDto);
+  // }
 
   @Public()
   @Post('with-image')
@@ -179,5 +132,43 @@ export class ProductsController extends BaseController {
   @ApiOperation({ summary: 'Delete a product' })
   remove(@Param('id') id: string) {
     return this.productsService.remove(id);
+  }
+
+  @Public()
+  @Get('last-stt/:categoryId/:rootCategoryId')
+  @ApiOperation({ summary: 'Get last stt from category' })
+  getLastSttFromCategory(
+    @Param('rootCategoryId') rootCategoryId: string,
+    @Param('categoryId') categoryId: string,
+  ) {
+    return this.productsService.getLastSttFromCategory(
+      rootCategoryId,
+      categoryId,
+    );
+  }
+
+  @Public()
+  @Post('search-image')
+  @ApiOperation({
+    summary: 'Tìm kiếm hình ảnh theo tên và trả về URL trực tiếp',
+  })
+  @HttpCode(HttpStatus.OK)
+  async searchImageByName(
+    @Body() body: { searchTerm: string; folderId: string },
+  ) {
+    try {
+      const result = await this.productsService.searchImageByName(
+        body.searchTerm,
+        body.folderId,
+      );
+      return result;
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      // Sử dụng HttpException để ném lỗi với status code và message
+      throw new HttpException(
+        { message: 'Lỗi khi tìm kiếm hình ảnh', data: [msg] },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 }

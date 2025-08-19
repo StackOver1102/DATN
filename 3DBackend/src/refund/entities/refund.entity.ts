@@ -47,6 +47,12 @@ export class Refund {
 
   @Prop()
   updatedAt: Date;
+
+  @Prop({ default: false })
+  isWatchingByAdmin: boolean;
+
+  @Prop({ default: false })
+  isWatchingByUser: boolean;
 }
 
 export const RefundSchema = SchemaFactory.createForClass(Refund);
