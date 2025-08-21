@@ -47,12 +47,20 @@ export class NotificationsService {
       originType: 'refund',
     });
 
+    const commentNoti = await this.notificationModel.find({isRead: false, originType: 'comment'})
+    const commentCount = await this.notificationModel.countDocuments({
+      isRead: false,
+      originType: 'comment',
+    });
+
     return {
       support: supportCount,
       refund: refundCount,
       total: supportCount + refundCount,
       supportNoti,
       refundNoti,
+      commentNoti,
+      comment: commentCount,
     };
   }
 
@@ -83,8 +91,17 @@ export class NotificationsService {
   }
 
   async getNotificationsByUser(userId:string){
-    console.log(userId)
     const notifications = await this.notificationModel.find({userId: new Types.ObjectId(userId), isWatching: false}).sort({createdAt: -1})
     return notifications
+  }
+
+  async markAsWatching(id: string) {
+    return this.notificationModel.findByIdAndUpdate(
+      {_id:id},
+      { isWatching: true },
+      {
+        new: true,
+      },
+    );
   }
 }

@@ -22,8 +22,9 @@ export default function DepositPage() {
   const [returnUrl, setReturnUrl] = useState<string>("");
   const [cancelUrl, setCancelUrl] = useState<string>("");
 
-  // Payment methods
+  // Payment methods and region
   const [paymentMethod, setPaymentMethod] = useState<string>("paypal");
+  const [paymentRegion, setPaymentRegion] = useState<string>("international"); // "international" or "vietnam"
 
   // Use Redux store
   const dispatch = useAppDispatch();
@@ -114,9 +115,23 @@ export default function DepositPage() {
     setIsLoading(false);
   };
 
-  // Calculate USD amount from coin amount
-  const getUsdAmount = (): number => {
-    return coinAmount ? parseFloat((coinAmount * 0.01).toFixed(2)) : 0;
+  // Calculate payment amount based on region and coin amount
+  const getPaymentAmount = (): number => {
+    if (paymentRegion === "international") {
+      // International: 50 xu = 5$, so 1 xu = 0.1$
+      return coinAmount ? parseFloat((coinAmount * 0.1).toFixed(2)) : 0;
+    } else {
+      // Vietnam: 50 xu = 50k, so 1 xu = 1k
+      return coinAmount ? coinAmount * 1000 : 0;
+    }
+  };
+
+  const getPaymentCurrency = (): string => {
+    return paymentRegion === "international" ? "USD" : "VND";
+  };
+
+  const getMinimumAmount = (): number => {
+    return 50; // Both regions have minimum 50 xu
   };
 
   return (
@@ -143,9 +158,9 @@ export default function DepositPage() {
                   {isLoadingStore ? (
                     <span className="inline-block w-16 h-4 bg-gray-200 animate-pulse rounded"></span>
                   ) : (
-                    <span className="text-gray-800">
+                    <span className="text-gray-800 inline-flex items-center">
                       {userBalance.toLocaleString()} 
-                      <CircleDollarSign className="w-4 h-4 text-yellow-500 ml-1 mt-[1px]" />
+                      <CircleDollarSign className="w-4 h-4 text-yellow-500 ml-1" />
                     </span>
                   )}
                 </p>
@@ -161,9 +176,51 @@ export default function DepositPage() {
             </Link>
           </div>
 
-          {/* Purchase Options */}
+          {/* Payment Region Selection */}
           <div className="bg-white rounded-lg p-6 space-y-6 shadow-md">
             <div>
+              <h3 className="font-medium text-gray-800 mb-4">Choose Payment Region:</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <button
+                  onClick={() => {
+                    setPaymentRegion("international");
+                    setPaymentMethod("paypal");
+                    setCoinAmount(0);
+                  }}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    paymentRegion === "international"
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 hover:border-blue-300"
+                  }`}
+                >
+                  <div className="text-center">
+                    <h4 className="font-semibold text-gray-800 mb-2">International Payment</h4>
+                    <p className="text-sm text-gray-600 mb-2">PayPal Payment</p>
+                    <p className="text-xs text-blue-600 font-medium flex items-center justify-center">50 <CircleDollarSign className="w-4 h-4 text-yellow-500 ml-1" /> = $5 USD</p>
+                  </div>
+                </button>
+                <button
+                  onClick={() => {
+                    setPaymentRegion("vietnam");
+                    setPaymentMethod("momo");
+                    setCoinAmount(0);
+                  }}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    paymentRegion === "vietnam"
+                      ? "border-green-500 bg-green-50"
+                      : "border-gray-200 hover:border-green-300"
+                  }`}
+                >
+                  <div className="text-center">
+                    <h4 className="font-semibold text-gray-800 mb-2">Vietnam Payment</h4>
+                    <p className="text-sm text-gray-600 mb-2">Momo / Banking</p>
+                    <p className="text-xs text-green-600 font-medium flex items-center justify-center">50 <CircleDollarSign className="w-4 h-4 text-yellow-500 ml-1" /> = 50,000 VND</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* <div>
               <h3 className="font-medium text-gray-800 mb-2">Deposit:</h3>
               <div className="flex items-center gap-4 mb-4">
                 <span className="text-gray-700">Add coin:</span>
@@ -173,6 +230,8 @@ export default function DepositPage() {
                     value={coinAmount}
                     onChange={(e) => setCoinAmount(Number(e.target.value))}
                     className="border-0 bg-transparent focus:ring-0"
+                    min={getMinimumAmount()}
+                    step={10}
                   />
                   <div className="px-3">
                     <CircleDollarSign className="w-5 h-5 text-yellow-500" />  
@@ -182,16 +241,14 @@ export default function DepositPage() {
                 <div className="w-32">
                   <Input
                     type="number"
-                    value={getUsdAmount()}
-                    onChange={(e) =>
-                      setCoinAmount(Number(e.target.value) / 0.01)
-                    }
-                    className="bg-transparent border border-gray-300"
+                    value={getPaymentAmount()}
+                    readOnly
+                    className="bg-gray-50 border border-gray-300"
                   />
                 </div>
-                <span className="text-gray-700">USD</span>
+                <span className="text-gray-700">{getPaymentCurrency()}</span>
               </div>
-            </div>
+            </div> */}
 
             <div className="border-t border-gray-200 pt-6">
               <h3 className="font-medium text-gray-800 mb-4">
@@ -211,72 +268,17 @@ export default function DepositPage() {
                   </div>
                   <div className="text-sm text-gray-500">
                     Equivalent to{" "}
-                    <span className="font-semibold text-blue-600">
-                      ${getUsdAmount()}
+                    <span className={`font-semibold ${paymentRegion === "international" ? "text-blue-600" : "text-green-600"}`}>
+                      {getPaymentAmount().toLocaleString()} {getPaymentCurrency()}
                     </span>
                   </div>
-                </div>
-              </div>
-
-              {/* Quick Selection Options */}
-              <div className="mt-6">
-                <h4 className="text-sm font-medium text-gray-700 mb-3">
-                  Quick Coin Package Selection:
-                </h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {[
-                    { amount: 1000, price: 10, name: "Basic Package" },
-                    { amount: 2000, price: 20, name: "Standard Package" },
-                    { amount: 5000, price: 50, name: "Advanced Package" },
-                    { amount: 10000, price: 100, name: "VIP Package" },
-                    {
-                      amount: 20000,
-                      price: 180,
-                      name: "Super VIP Package",
-                      discount: "10%",
-                    },
-                    {
-                      amount: 50000,
-                      price: 400,
-                      name: "Pro Package",
-                      discount: "20%",
-                    },
-                  ].map((option) => (
-                    <button
-                      key={option.amount}
-                      onClick={() => setCoinAmount(option.amount)}
-                      className={`flex flex-col items-center justify-center p-4 rounded-lg border transition-all ${
-                        coinAmount === option.amount
-                          ? "border-yellow-400 bg-yellow-50 shadow-md"
-                          : "border-gray-200 bg-white hover:border-yellow-200 hover:bg-yellow-50"
-                      } relative`}
-                    >
-                      {option.discount && (
-                        <div className="absolute -top-3 -right-3 bg-red-500 text-white text-xs font-bold rounded-full w-12 h-12 flex items-center justify-center transform rotate-12 shadow-md">
-                          -{option.discount}
-                        </div>
-                      )}
-                      <div className="text-sm font-medium text-gray-600 mb-1">
-                        {option.name}
-                      </div>
-                      <div className="flex items-center gap-1 font-bold text-lg">
-                        {option.amount}
-                        <span className="ml-1">
-                          <CircleDollarSign className="w-4 h-4 text-yellow-500" />
-                        </span>
-                      </div>
-                      <div className="text-blue-600 font-medium mt-1">
-                        ${option.price}
-                      </div>
-                    </button>
-                  ))}
                 </div>
               </div>
 
               {/* Custom Amount */}
               <div className="mt-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <h4 className="text-sm font-medium text-gray-700 mb-2">
-                  Or enter custom amount:
+                  Enter coin amount:
                 </h4>
                 <div className="flex flex-col md:flex-row items-center gap-3">
                   <div className="relative flex-1 w-full">
@@ -289,8 +291,8 @@ export default function DepositPage() {
                       }}
                       className="pr-12 border-gray-300"
                       placeholder="Enter coin amount"
-                      min={1000}
-                      step={100}
+                      min={getMinimumAmount()}
+                      step={10}
                     />
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                       <span>
@@ -303,8 +305,8 @@ export default function DepositPage() {
                       onClick={() =>
                         setCoinAmount(
                           Math.max(
-                            1000,
-                            Math.round(coinAmount / 1000) * 1000
+                            getMinimumAmount(),
+                            Math.round(coinAmount / 50) * 50
                           )
                         )
                       }
@@ -316,21 +318,21 @@ export default function DepositPage() {
                     <Button
                       onClick={() => {
                         const currentValue = coinAmount || 0;
-                        setCoinAmount(Math.max(1000, currentValue + 1000));
+                        setCoinAmount(Math.max(getMinimumAmount(), currentValue + 50));
                       }}
                       variant="outline"
                       className="flex-1 md:flex-none"
                     >
-                      +1000
+                      +50
                     </Button>
                   </div>
                 </div>
                 <div className="flex justify-between mt-3">
                   <p className="text-xs text-gray-500">
-                    Minimum amount: 1,000 coin
+                    Minimum amount: {getMinimumAmount()} coin
                   </p>
-                  <p className="text-xs font-medium text-blue-600">
-                    = ${getUsdAmount()}
+                  <p className={`text-xs font-medium ${paymentRegion === "international" ? "text-blue-600" : "text-green-600"}`}>
+                    = {getPaymentAmount().toLocaleString()} {getPaymentCurrency()}
                   </p>
                 </div>
               </div>
@@ -343,73 +345,77 @@ export default function DepositPage() {
               </h3>
 
               <div className="space-y-4">
-                <label className="flex items-center gap-2 text-gray-700 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="payment"
-                    value="paypal"
-                    checked={paymentMethod === "paypal"}
-                    onChange={() => setPaymentMethod("paypal")}
-                  />
-                  Pay with PayPal
-                  <Image
-                    src="/icons/paypal.svg"
-                    alt="PayPal"
-                    width={24}
-                    height={24}
-                    className="ml-auto"
-                  />
-                </label>
+                {paymentRegion === "international" ? (
+                  <label className="flex items-center gap-2 text-gray-700 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="paypal"
+                      checked={paymentMethod === "paypal"}
+                      onChange={() => setPaymentMethod("paypal")}
+                    />
+                    Pay with PayPal
+                    <Image
+                      src="/icons/paypal.svg"
+                      alt="PayPal"
+                      width={24}
+                      height={24}
+                      className="ml-auto"
+                    />
+                  </label>
+                ) : (
+                  <>
+                    <label className="flex items-center gap-2 text-gray-700 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="payment"
+                        value="momo"
+                        checked={paymentMethod === "momo"}
+                        onChange={() => setPaymentMethod("momo")}
+                      />
+                      Pay with Momo
+                      <div className="flex ml-auto">
+                        <Image
+                          src="/icons/momo.svg"
+                          alt="Momo"
+                          width={24}
+                          height={24}
+                        />
+                      </div>
+                    </label>
 
-                {/* <label className="flex items-center gap-2 text-gray-700 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="payment"
-                    value="momo"
-                    checked={paymentMethod === "momo"}
-                    onChange={() => setPaymentMethod("momo")}
-                  />
-                  Pay with Momo
-                  <div className="flex ml-auto">
-                    <Image
-                      src="/icons/momo.svg"
-                      alt="Momo"
-                      width={24}
-                      height={24}
-                    />
-                  </div>
-                </label>
-
-                <label className="flex items-center gap-2 text-gray-700 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="payment"
-                    value="atm"
-                    checked={paymentMethod === "atm"}
-                    onChange={() => setPaymentMethod("atm")}
-                  />
-                  Pay with ATM
-                  <div className="flex gap-1 ml-auto">
-                    <Image
-                      src="/icons/vietcombank.png"
-                      alt="Vietcombank"
-                      width={24}
-                      height={24}
-                    />
-                    <Image
-                      src="/icons/agribank.png"
-                      alt="Agribank"
-                      width={24}
-                      height={24}
-                    />
-                    <Image
-                      src="/icons/tpbank.png"
-                      alt="TPBank"
-                      width={24}
-                      height={24}
-                    />
-                  </div>
-                </label> */}
+                    <label className="flex items-center gap-2 text-gray-700 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="payment"
+                        value="banking"
+                        checked={paymentMethod === "banking"}
+                        onChange={() => setPaymentMethod("banking")}
+                      />
+                      Pay with Banking
+                      <div className="flex gap-1 ml-auto">
+                        <Image
+                          src="/icons/vietcombank.png"
+                          alt="Vietcombank"
+                          width={24}
+                          height={24}
+                        />
+                        <Image
+                          src="/icons/agribank.png"
+                          alt="Agribank"
+                          width={24}
+                          height={24}
+                        />
+                        <Image
+                          src="/icons/tpbank.png"
+                          alt="TPBank"
+                          width={24}
+                          height={24}
+                        />
+                      </div>
+                    </label>
+                  </>
+                )}
               </div>
             </div>
 
@@ -419,8 +425,8 @@ export default function DepositPage() {
                 Payment Amount:
               </h3>
 
-              <div className="text-5xl font-bold text-teal-600 text-center">
-                {getUsdAmount()}$
+              <div className={`text-5xl font-bold text-center ${paymentRegion === "international" ? "text-blue-600" : "text-green-600"}`}>
+                {getPaymentAmount().toLocaleString()} {getPaymentCurrency()}
               </div>
 
               <div className="text-xs text-gray-500 mt-4">
@@ -434,18 +440,18 @@ export default function DepositPage() {
                 </Link>
               </div>
 
-              {paymentMethod === "paypal" && (
+              {paymentMethod === "paypal" && paymentRegion === "international" && (
                 <div className="mt-4">
-                  {coinAmount < 1000 ? (
+                  {coinAmount < getMinimumAmount() ? (
                     <Button
                       className="w-full bg-gray-400 text-white py-3 text-lg font-medium cursor-not-allowed"
                       disabled={true}
                     >
-                      Minimum amount is 1,000 coin
+                      Minimum amount is {getMinimumAmount()} coin
                     </Button>
                   ) : (
                     <PayPalButton
-                      amount={getUsdAmount()}
+                      amount={getPaymentAmount()}
                       onSuccess={() => handlePaymentSuccess()}
                       onError={handlePaymentError}
                       description={`Purchase ${coinAmount.toLocaleString()} coin`}
@@ -457,14 +463,14 @@ export default function DepositPage() {
                 </div>
               )}
 
-              {paymentMethod !== "paypal" && (
+              {paymentRegion === "vietnam" && (
                 <div className="mt-4">
                   <Button
-                    className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 text-lg font-medium"
-                    disabled={isLoading || coinAmount < 1000}
+                    className="w-full bg-green-500 hover:bg-green-600 text-white py-3 text-lg font-medium"
+                    disabled={isLoading || coinAmount < getMinimumAmount()}
                   >
-                    {coinAmount < 1000
-                      ? "Minimum amount is 1,000 coin"
+                    {coinAmount < getMinimumAmount()
+                      ? `Minimum amount is ${getMinimumAmount()} coin`
                       : "PAY NOW"}
                   </Button>
                 </div>
@@ -483,47 +489,51 @@ export default function DepositPage() {
             <div className="space-y-6 text-sm">
               <div>
                 <p className="text-gray-700 mb-1">
-                  1. The minimum purchase amount is 1000 coin
+                  1. The minimum purchase amount is {getMinimumAmount()} coin
                 </p>
               </div>
 
               <div>
                 <p className="text-gray-700 mb-1">
-                  2. coin are one-time purchases with unlimited download time.
+                  2. Exchange rate:
+                </p>
+                <div className="ml-4 text-xs">
+                  <p className="text-blue-600">• International: 50 coin = $5 USD</p>
+                  <p className="text-green-600">• Vietnam: 50 coin = 50,000 VND</p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-gray-700 mb-1">
+                  3. coin are one-time purchases with unlimited download time.
                 </p>
               </div>
 
               <div>
                 <p className="text-gray-700 mb-1">
-                  3. After payment confirmation, coin will be immediately added to
+                  4. After payment confirmation, coin will be immediately added to
                   your account.
                 </p>
               </div>
 
               <div>
                 <p className="text-gray-700 mb-1">
-                  4. In case of lost models or unsuccessful downloads, you can
+                  5. In case of lost models or unsuccessful downloads, you can
                   recover them in your Purchase History.
                 </p>
               </div>
 
               <div>
                 <p className="text-gray-700 mb-1">
-                  5. If you already have access, any additional purchases will
+                  6. If you already have access, any additional purchases will
                   be added to your existing transaction.
                 </p>
               </div>
 
               <div>
                 <p className="text-gray-700 mb-1">
-                  6. When contacting Customer Service, always quote your
+                  7. When contacting Customer Service, always quote your
                   order number.
-                </p>
-              </div>
-
-              <div>
-                <p className="text-gray-700 mb-1">
-                  7. coin are sold individually.
                 </p>
               </div>
             </div>

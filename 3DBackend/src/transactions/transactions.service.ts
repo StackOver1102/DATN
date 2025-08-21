@@ -444,7 +444,6 @@ export class TransactionsService {
     payload: Record<string, any>,
     headers: Record<string, string>,
   ): Promise<Record<string, any>> {
-    console.log('Received PayPal webhook:', payload.event_type);
 
     // 1. Xác thực webhook từ PayPal (kiểm tra chữ ký)
     try {

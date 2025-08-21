@@ -44,7 +44,7 @@ export class UsersService implements OnModuleInit {
           password: adminPassword,
           role: UserRole.ADMIN,
         });
-        console.log('Admin user created successfully');
+        
       } else {
         console.log('Admin user already exists');
       }

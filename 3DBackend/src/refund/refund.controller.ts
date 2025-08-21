@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { RefundService } from './refund.service';
 import { CreateRefundDto } from './dto/create-refund.dto';
@@ -17,6 +18,7 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { UserRole } from 'src/enum/user.enum';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { UserPayload } from 'src/auth/types';
+import { FilterDto } from 'src/common/dto/filter.dto';
 
 @Controller('refunds')
 export class RefundController {
@@ -39,8 +41,8 @@ export class RefundController {
 
   @Get('my-refunds')
   @UseGuards(JwtAuthGuard)
-  findMyRefunds(@CurrentUser() user: UserPayload) {
-    return this.refundService.findByUserId(user.userId);
+  findMyRefunds(@CurrentUser() user: UserPayload, @Query() filterDto: FilterDto) {
+    return this.refundService.findByUserId(user.userId, filterDto);
   }
 
   @Get(':id')

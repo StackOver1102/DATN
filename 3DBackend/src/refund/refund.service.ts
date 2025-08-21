@@ -14,6 +14,9 @@ import { OrderStatus } from 'src/orders/entities/order.entity';
 import { TransactionStatus, TransactionType } from 'src/enum/transactions.enum';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { NotificationType } from 'src/types/notification';
+import { FilterDto } from 'src/common/dto/filter.dto';
+import { FilterService } from 'src/common/services/filter.service';
+import { PaginatedResult } from 'src/common/interfaces/pagination.interface';
 
 @Injectable()
 export class RefundService {
@@ -22,6 +25,7 @@ export class RefundService {
     private ordersService: OrdersService,
     private transactionsService: TransactionsService,
     private notificationsService: NotificationsService,
+    private filterService: FilterService,
   ) {}
 
   async create(
@@ -87,11 +91,19 @@ export class RefundService {
       .exec();
   }
 
-  async findByUserId(userId: string): Promise<Refund[]> {
-    return this.refundModel
-      .find({ userId: new Types.ObjectId(userId) })
-      .sort({ createdAt: -1 })
-      .exec();
+  async findByUserId(userId: string, filterDto: FilterDto): Promise<PaginatedResult<RefundDocument>> {
+    return this.filterService.applyFilters<RefundDocument>(this.refundModel, filterDto, { userId: new Types.ObjectId(userId) }, [
+      'name',
+      'description',
+      'categoryName',
+      'categoryPath',
+      'style',
+      'materials',
+      'render',
+      'form',
+      'color',
+      'isPro',
+    ]);
   }
 
   async findOne(id: string): Promise<RefundDocument> {

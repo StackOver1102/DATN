@@ -33,11 +33,12 @@ import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { setProfile, setHasLoadedProfile } from "@/lib/store/userSlice";
-import { User } from "@/lib/types";
+import { User, Notification } from "@/lib/types";
 import { Product } from "@/interface/product";
 import Pagination from "@/components/Pagination";
 import { PaginatedResult } from "@/interface/pagination";
 import { Session } from "next-auth";
+import { getMatchingNotification } from "@/utils/notificationHelper";
 
 type TabType = "info" | "password" | "purchases" | "payments" | "refunds" | "support";
 
@@ -251,18 +252,15 @@ function ProfilePageContent({
     }
   );
   
-  // Fetch refund notifications
-  const { data: refundData, isLoading: isLoadingRefunds, refetch: refetchNotifications } = useFetchData<{
-    pendingCount: number;
-    hasNewUpdates: boolean;
-  }>(
+  // Fetch all notifications
+  const { data: notificationData, isLoading: isLoadingNotifications, refetch: refetchNotifications } = useFetchData<Notification[]>(
     `notifications/byUser`,
-    ["refundNotifications"],
+    ["notifications"],
     {
       refetchInterval: 30000, // Refresh every 30 seconds
     }
   );
-
+  
   // Extract data from paginated responses
   const purchases = purchasesData?.items || [];
   const purchasesTotalPages = purchasesData?.meta.totalPages || 1;
@@ -275,8 +273,11 @@ function ProfilePageContent({
   
   const supportTickets = supportData?.items || [];
   const supportTotalPages = supportData?.meta.totalPages || 1;
+  
+  // Extract notifications
+  const notifications = notificationData || [];
 
-  const { post, put } = useApi();
+  const { post, patch } = useApi();
 
   // Function to handle avatar file selection
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -420,13 +421,25 @@ function ProfilePageContent({
     }
   }, [profile, setProfileValue, purchasesData]);
 
-  // Update refund notification states when refund data changes
+  // Update refund notification states when notification data changes
   useEffect(() => {
-    if (refundData) {
-      setPendingRefunds(refundData.pendingCount);
-      setHasNewRefundUpdates(refundData.hasNewUpdates);
+    if (notifications) {
+      setPendingRefunds(notifications.length || 0);
+      setHasNewRefundUpdates(notifications.length > 0 || false);
     }
-  }, [refundData]);
+  }, [notifications]);
+
+  // Calculate notification counts for each tab
+  const getTabNotificationCount = (type: 'refund' | 'support') => {
+    // console.log(notifications);
+    if (!notifications || notifications.length === 0) return 0;
+    return notifications.filter(notification => 
+      notification.originType === type && !notification.isWatching
+    ).length;
+  };
+
+  const refundNotificationCount = getTabNotificationCount('refund');
+  const supportNotificationCount = getTabNotificationCount('support');
 
   const tabs = [
     {
@@ -447,29 +460,29 @@ function ProfilePageContent({
       id: "purchases" as TabType,
       label: "Purchase History",
       icon: ShoppingBag,
-      notifications: pendingRefunds,
-      hasUpdates: hasNewRefundUpdates
+      notifications: 0,
+      hasUpdates: false
     },
     {
       id: "payments" as TabType,
       label: "Payment History",
       icon: CreditCard,
-      notifications: 2,
+      notifications: 0,
       hasUpdates: false
     },
     {
       id: "refunds" as TabType,
       label: "Refund Requests",
       icon: RefreshCcw,
-      notifications: 0,
-      hasUpdates: false
+      notifications: refundNotificationCount,
+      hasUpdates: refundNotificationCount > 0
     },
     {
       id: "support" as TabType,
       label: "Support Tickets",
       icon: LifeBuoy,
-      notifications: 0,
-      hasUpdates: false
+      notifications: supportNotificationCount,
+      hasUpdates: supportNotificationCount > 0
     },
   ];
 
@@ -623,16 +636,13 @@ function ProfilePageContent({
   // Function to mark a notification as read
   const markNotificationAsRead = async (notificationId: string) => {
     try {
-      const response = await put(`notifications/${notificationId}/read`, {});
+      const response = await patch(`notifications/mark-as-watching/${notificationId}`, {});
       if (response.success) {
         // Refresh notification data and transaction/purchase lists
         refetchNotifications();
         
         // Show subtle toast notification
-        toast.success("Notification marked as read", {
-          duration: 2000,
-          position: "bottom-right",
-        });
+        toast.success("Notification marked as read");
       }
     } catch (error) {
       console.error("Error marking notification as read:", error);
@@ -640,7 +650,7 @@ function ProfilePageContent({
     }
   };
 
-  if (isLoadingPurchases || isLoadingPayments || isLoadingStore || 
+  if (isLoadingPurchases || isLoadingPayments || isLoadingStore || isLoadingNotifications ||
       (activeTab === "refunds" && isLoadingRefundRequests) || 
       (activeTab === "support" && isLoadingSupportTickets)) {
     return (
@@ -1011,7 +1021,7 @@ function ProfilePageContent({
                                 : ""
                               }`}
                             onClick={() => {
-                              if (purchase.notificationId && !purchase.isRead) {
+                              if (purchase.notificationId ) {
                                 markNotificationAsRead(purchase.notificationId);
                               }
                             }}
@@ -1183,12 +1193,12 @@ function ProfilePageContent({
                                     <div>
                                       <p className="text-xs text-gray-500">
                                         Balance before transaction:{" "}
-                                        {formatCurrency(payment.balanceBefore)}
+                                        {formatNumber(payment.balanceBefore)}
                                       </p>
 
                                       <p className="text-xs text-gray-500">
                                         Balance after transaction:{" "}
-                                        {formatCurrency(payment.balanceAfter)}
+                                        {formatNumber(payment.balanceAfter)}
                                       </p>
                                     </div>
                                   )}
@@ -1201,7 +1211,7 @@ function ProfilePageContent({
                                     }
                                   >
                                     {payment.type === "payment" ? "-" : "+"}
-                                    {formatCurrency(payment.amount)}
+                                    {formatNumber(payment.amount)}
                                   </span>
                                   <span
                                     className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
@@ -1274,21 +1284,26 @@ function ProfilePageContent({
                       </div>
                     ) : refunds?.length ? (
                       <>
-                        {refunds.map((refund, index) => (
+                        {refunds.map((refund, index) => {
+                          const matchingNotification = getMatchingNotification(notifications, refund._id, 'refund');
+                          const hasNotification = !!matchingNotification;
+                          const isUnread = matchingNotification && !matchingNotification.isWatching;
+                          
+                          return (
                           <div
                             key={index}
                             className={`bg-gray-50 rounded-lg p-4 flex items-center justify-between
-                              ${refund.notificationId && !refund.isRead 
+                              ${isUnread 
                                 ? "border-l-4 border-yellow-400" 
                                 : ""
                               }
-                              ${refund.notificationId 
+                              ${hasNotification 
                                 ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md" 
                                 : ""
                               }`}
                             onClick={() => {
-                              if (refund.notificationId && !refund.isRead) {
-                                markNotificationAsRead(refund.notificationId);
+                              if (matchingNotification && !matchingNotification.isWatching) {
+                                markNotificationAsRead(matchingNotification._id);
                               }
                             }}
                           >
@@ -1301,7 +1316,7 @@ function ProfilePageContent({
                                   ${refund.status === "pending" ? "text-yellow-600" : 
                                     refund.status === "approved" ? "text-green-600" : "text-red-600"}`} 
                                 />
-                                {refund.notificationId && !refund.isRead && (
+                                {isUnread && (
                                   <span className="absolute -top-1 -right-1 flex h-3 w-3">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
@@ -1311,7 +1326,7 @@ function ProfilePageContent({
                               <div>
                                 <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                                   Refund Request {refund.order && `for ${refund.order.productId.name}`}
-                                  {refund.notificationId && !refund.isRead && (
+                                  {isUnread && (
                                     <span className="ml-2 px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
                                       New
                                     </span>
@@ -1344,13 +1359,14 @@ function ProfilePageContent({
                                 </div>
                               </div>
                             </div>
-                            {refund.notificationId && !refund.isRead && (
+                            {isUnread && (
                               <div className="text-right">
                                 <Bell className="w-5 h-5 text-yellow-500" fill="#eab308" />
                               </div>
                             )}
                           </div>
-                        ))}
+                          );
+                        })}
 
                         {/* Pagination for refunds */}
                         <div className="mt-6 flex justify-center">
@@ -1400,21 +1416,26 @@ function ProfilePageContent({
                       </div>
                     ) : supportTickets?.length ? (
                       <>
-                        {supportTickets.map((ticket, index) => (
+                        {supportTickets.map((ticket, index) => {
+                          const matchingNotification = getMatchingNotification(notifications, ticket._id, 'support');
+                          const hasNotification = !!matchingNotification;
+                          const isUnread = matchingNotification && !matchingNotification.isRead;
+                          
+                          return (
                           <div
                             key={index}
                             className={`bg-gray-50 rounded-lg p-4 flex items-center justify-between
-                              ${ticket.notificationId && !ticket.isRead 
+                              ${isUnread 
                                 ? "border-l-4 border-yellow-400" 
                                 : ""
                               }
-                              ${ticket.notificationId 
+                              ${hasNotification 
                                 ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md" 
                                 : ""
                               }`}
                             onClick={() => {
-                              if (ticket.notificationId && !ticket.isRead) {
-                                markNotificationAsRead(ticket.notificationId);
+                              if (matchingNotification && !matchingNotification.isRead) {
+                                markNotificationAsRead(matchingNotification._id);
                               }
                             }}
                           >
@@ -1427,7 +1448,7 @@ function ProfilePageContent({
                                   ${ticket.status === "open" ? "text-blue-600" : 
                                     ticket.status === "in_progress" ? "text-yellow-600" : "text-green-600"}`} 
                                 />
-                                {ticket.notificationId && !ticket.isRead && (
+                                {isUnread && (
                                   <span className="absolute -top-1 -right-1 flex h-3 w-3">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
@@ -1437,7 +1458,7 @@ function ProfilePageContent({
                               <div>
                                 <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                                   {ticket.subject}
-                                  {ticket.notificationId && !ticket.isRead && (
+                                  {isUnread && (
                                     <span className="ml-2 px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
                                       New
                                     </span>
@@ -1470,13 +1491,14 @@ function ProfilePageContent({
                                 </div>
                               </div>
                             </div>
-                            {ticket.notificationId && !ticket.isRead && (
+                            {isUnread && (
                               <div className="text-right">
                                 <Bell className="w-5 h-5 text-yellow-500" fill="#eab308" />
                               </div>
                             )}
                           </div>
-                        ))}
+                          );
+                        })}
 
                         {/* Pagination for support tickets */}
                         <div className="mt-6 flex justify-center">

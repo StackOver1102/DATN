@@ -2,8 +2,9 @@ import { Suspense } from "react";
 import ModelGrid from "@/components/ModelGrid";
 import CategorySidebar from "@/components/CategorySidebar";
 import { Loading } from "@/components/ui/loading";
-import Pagination from "@/components/Pagination";
 import { CategorySection } from "@/lib/types";
+import Image from "next/image";
+import { Banner } from "@/interface/banner";
 
 async function getProducts(page = 1, limit = 12) {
   const res = await fetch(
@@ -35,6 +36,21 @@ async function getCategories() {
   return res.json();
 }
 
+export async function getBanners(): Promise<{ data: Banner[] }> {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL_SSR}/banners/position/home`,
+    {
+      next: { revalidate: 1 },
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch banners");
+  }
+
+  return res.json();
+}
+
 interface HomePageProps {
   searchParams: Promise<{ page?: string }>;
 }
@@ -55,9 +71,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const itemsPerPage = 12;
 
   // Fetch data in parallel
-  const [paginatedProductsData, categoriesData] = await Promise.all([
+  const [paginatedProductsData, categoriesData, bannersData] = await Promise.all([
     getProducts(currentPage, itemsPerPage),
     getCategories(),
+    getBanners(),
   ]);
 
   // console.log(categoriesData);
@@ -114,12 +131,19 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
             {/* Banner Ads */}
             <div className="max-w-7xl mx-auto py-6">
-              <div className="w-full h-16 bg-gray-200 border-2 border-solid border-gray-400 rounded-lg flex items-center justify-center">
-                <div className="text-center text-gray-500">
-                  <div className="text-lg font-medium mb-1">
-                    Advertisement Banner
+              <div className="w-full h-20 bg-gray-200 border-2 border-solid border-gray-400 rounded-lg flex items-center justify-center overflow-hidden">
+                {bannersData.data.map((banner: any) => (
+                  <div key={banner._id} className="h-full">
+                    <Image 
+                      src={banner.imageUrl} 
+                      alt={banner.title} 
+                      width={0}
+                      height={0}
+                      sizes="100vw"
+                      className="w-full h-full object-cover"
+                    />
                   </div>
-                </div>
+                ))}
               </div>
             </div>
 

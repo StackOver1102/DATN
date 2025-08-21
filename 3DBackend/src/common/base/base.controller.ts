@@ -40,7 +40,6 @@ export abstract class BaseController {
     statusCode = HttpStatus.BAD_REQUEST,
     data: T = null as unknown as T,
   ): ApiResponse<T> {
-    console.log('statusCode', statusCode);
     return {
       success: false,
       message,

@@ -121,7 +121,6 @@ export class FilterService {
     }
 
     if (isPro) {
-      console.log('isPro', isPro);
       andConditions.push({ isPro: isPro === 'true' });
     }
 
@@ -146,7 +145,6 @@ export class FilterService {
       ? { [sortBy]: sortDirection === 'asc' ? 1 : -1 }
       : { createdAt: -1 };
 
-    console.log('query', query);
     // Execute queries
     let findQuery = model.find(query).sort(sort).skip(skip).limit(limit);
 

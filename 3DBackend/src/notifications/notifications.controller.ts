@@ -70,4 +70,8 @@ export class NotificationsController {
   }
 
 
+  @Patch('mark-as-watching/:id')
+  markAsWatching(@Param('id') id: string) {
+    return this.notificationsService.markAsWatching(id);
+  }
 }

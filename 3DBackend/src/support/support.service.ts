@@ -19,6 +19,9 @@ import { UsersService } from 'src/users/users.service';
 import { MailService } from 'src/mail/mail.service';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { NotificationType } from 'src/types/notification';
+import { FilterDto } from 'src/common/dto/filter.dto';
+import { FilterService } from 'src/common/services/filter.service';
+import { PaginatedResult } from 'src/common/interfaces/pagination.interface';
 
 @Injectable()
 export class SupportService {
@@ -28,6 +31,7 @@ export class SupportService {
     private usersService: UsersService,
     private mailService: MailService,
     private notificationsService: NotificationsService,
+    private filterService: FilterService,
   ) {}
 
   async create(
@@ -79,11 +83,23 @@ export class SupportService {
       .exec();
   }
 
-  async findByUserId(userId: string): Promise<SupportRequest[]> {
-    return this.supportRequestModel
-      .find({ userId: new Types.ObjectId(userId) })
-      .sort({ createdAt: -1 })
-      .exec();
+  async findByUserId(userId: string, filterDto: FilterDto): Promise<PaginatedResult<SupportRequestDocument>> {
+    const baseQuery = { userId: new Types.ObjectId(userId) };
+    
+    return this.filterService.applyFilters<SupportRequestDocument>(
+      this.supportRequestModel, 
+      filterDto, 
+      baseQuery, 
+      [
+        'name',
+        'message',
+        'email',
+      ]
+    );
+    // return this.supportRequestModel
+    //   .find({ userId: new Types.ObjectId(userId) })
+    //   .sort({ createdAt: -1 })
+    //   .exec();
   }
 
   async findOne(id: string): Promise<SupportRequestDocument> {

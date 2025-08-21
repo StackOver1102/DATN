@@ -12,6 +12,7 @@ import { MailModule } from 'src/mail/mail.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { UploadService } from 'src/upload/upload.service';
 import { NotificationsModule } from 'src/notifications/notifications.module';
+import { FilterService } from 'src/common/services/filter.service';
 
 @Module({
   imports: [
@@ -29,9 +30,10 @@ import { NotificationsModule } from 'src/notifications/notifications.module';
     }),
     MailModule,
     NotificationsModule,
+
   ],
   controllers: [SupportController],
-  providers: [SupportService],
+  providers: [SupportService, FilterService],
   exports: [SupportService],
 })
 export class SupportModule {}

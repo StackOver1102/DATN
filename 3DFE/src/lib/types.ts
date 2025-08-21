@@ -94,4 +94,19 @@ export interface CustomSession {
   user: SessionUser;
   accessToken?: string;
   expires: string;
-} 
+}
+
+/**
+ * Notification interface
+ */
+export interface Notification {
+  _id: string;
+  message: string;
+  createdAt: string;
+  isRead: boolean;
+  isWatching: boolean;
+  originalId: string;
+  originType: 'refund' | 'support' | 'order' | 'transaction' | string;
+  userId: string;
+  updatedAt: string;
+}

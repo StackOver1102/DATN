@@ -31,6 +31,7 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { UploadService } from 'src/upload/upload.service';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { NotificationType } from 'src/types/notification';
+import { FilterDto } from 'src/common/dto/filter.dto';
 
 interface UserWithId {
   _id: string;
@@ -127,8 +128,8 @@ export class SupportController {
 
   @Get('my-requests')
   @UseGuards(JwtAuthGuard)
-  findMyRequests(@CurrentUser() user: UserWithId) {
-    return this.supportService.findByUserId(user._id);
+  findMyRequests(@CurrentUser() user: UserWithId,@Query() filterDto: FilterDto) {
+    return this.supportService.findByUserId(user._id, filterDto);
   }
 
   @Get(':id')

@@ -7,6 +7,7 @@ import { OrdersModule } from 'src/orders/orders.module';
 import { TransactionsModule } from 'src/transactions/transactions.module';
 import { UsersModule } from 'src/users/users.module';
 import { NotificationsModule } from 'src/notifications/notifications.module';
+import { FilterService } from 'src/common/services/filter.service';
 
 @Module({
   imports: [
@@ -17,7 +18,7 @@ import { NotificationsModule } from 'src/notifications/notifications.module';
     NotificationsModule,
   ],
   controllers: [RefundController],
-  providers: [RefundService],
+  providers: [RefundService, FilterService],
   exports: [RefundService],
 })
 export class RefundModule {}

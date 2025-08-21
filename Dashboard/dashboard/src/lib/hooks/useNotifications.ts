@@ -4,18 +4,20 @@ import { useQueryClient } from '@tanstack/react-query';
 
 export interface Notification {
   _id: string;
-  type: 'support' | 'refund';
+  type: 'support' | 'refund' | 'comment';
   isRead: boolean;
   createdAt: string;
-  originalId?: string; // ID of the original item (support request, refund, etc.)
+  originalId: string; // ID of the original item (support request, refund, comment, etc.)
 }
 
 interface NotificationCounts {
   support: number | null;
   refund: number | null;
+  comment: number | null;
   total: number | null;
   supportNoti?: Notification[];
   refundNoti?: Notification[];
+  commentNoti?: Notification[];
 }
 
 /**
@@ -35,13 +37,14 @@ export function useNotifications() {
   const counts: NotificationCounts = {
     support: data?.data?.support || null, // Hardcoded for demo
     refund: data?.data?.refund || null, // Hardcoded for demo
+    comment: data?.data?.comment || null, // Hardcoded for demo
     total: data?.data?.total || null, // Hardcoded for demo
 
   };
 
   const supportNoti = data?.data?.supportNoti || [];
   const refundNoti = data?.data?.refundNoti || [];
-
+  const commentNoti = data?.data?.commentNoti || [];
 
   // We don't need this mutation anymore since we're using api.patch directly
   // Keeping the query invalidation though
@@ -82,5 +85,6 @@ export function useNotifications() {
     handleMarkAsRead,
     supportNoti,
     refundNoti,
+    commentNoti
   };
 }

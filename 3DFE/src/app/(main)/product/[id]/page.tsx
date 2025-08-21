@@ -21,6 +21,7 @@ import { fetchUserProfile } from "@/lib/store/userSlice";
 import { toast } from "sonner";
 import { store } from "@/lib/store/store";
 import { useState } from "react";
+import { Banner } from "@/interface/banner";
 
 // Request type for creating an order
 interface CreateOrderRequest {
@@ -80,7 +81,6 @@ export default function ProductDetailPage() {
     id,
   ]);
 
-  console.log("product", product);
   // Use the useFetchData hook to fetch similar products
   const { data: similarProductsData, isLoading: isLoadingSimilar } =
     useFetchData<Product[]>(
@@ -90,7 +90,14 @@ export default function ProductDetailPage() {
         enabled: !!id && !!product,
       }
     );
+    
+  // Fetch banner data for product detail page
+  const { data: bannersData = [] } = useFetchData<Banner[]>(
+    'banners/position/product_detail',
+    ['banners/position/product_detail']
+  );
 
+  console.log(bannersData)
   // Fetch comments for the product
   const {
     data: comments,
@@ -356,7 +363,7 @@ export default function ProductDetailPage() {
                 <div className="flex justify-between border-b pb-2 hover:bg-gray-100 px-2 rounded transition-colors">
                   <span className="text-gray-600">Platform:</span>
                   <span className="text-gray-900 font-medium">
-                    3dsMax 2015 + obj
+                    {product?.platform || "-"}
                   </span>
                 </div>
 
@@ -417,6 +424,26 @@ export default function ProductDetailPage() {
                 <Heart className="w-5 h-5" />
               </button>
             </div>
+            
+            {/* Ads Banner in Product Info */}
+            <div className="mt-6 border-2 border-red-500 rounded-lg overflow-hidden">
+              <div className="h-20 w-full bg-red-100 flex items-center justify-center">
+                {bannersData.length > 0 && bannersData[0]?.isActive ? (
+                  <div className="w-full h-full">
+                    <Image 
+                      src={bannersData[0].imageUrl} 
+                      alt={bannersData[0].title || 'Advertisement'} 
+                      width={0}
+                      height={0}
+                      sizes="100vw"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <span className="text-red-500 font-bold text-xl">ADS</span>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -433,6 +460,29 @@ export default function ProductDetailPage() {
             </div>
           </div>
         )}
+
+        {/* Banner Ads - Product Detail Position (Middle) */}
+        {/* {bannersData?.data?.filter((banner: any) => banner.position === 'product_detail' && banner.isActive).length > 0 && (
+          <div className="my-10">
+            <div className="w-full h-24 bg-gray-100 border rounded-lg flex items-center justify-center overflow-hidden">
+              {bannersData?.data
+                .filter((banner: any) => banner.position === 'product_detail' && banner.isActive)
+                .map((banner: any) => (
+                  <div key={banner._id} className="h-full w-full">
+                    <Image 
+                      src={banner.imageUrl} 
+                      alt={banner.title || 'Banner'} 
+                      width={0}
+                      height={0}
+                      sizes="100vw"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))
+              }
+            </div>
+          </div>
+        )} */}
 
         {/* Comments Section */}
         <div className="mt-10">
@@ -570,6 +620,7 @@ export default function ProductDetailPage() {
             <SimilarProductsSlider products={similarProducts} />
           </div>
         ) : null}
+      
       </div>
     </div>
   );

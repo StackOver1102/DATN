@@ -19,7 +19,9 @@ import { useState } from "react";
 import { Loading } from "./ui/loading";
 
 import { useAppSelector } from "@/lib/store/hooks";
-import { CircleDollarSign } from "lucide-react";
+import { CircleDollarSign, Bell } from "lucide-react";
+import { useFetchData } from "@/lib/hooks/useApi";
+import { Notification } from "@/lib/types";
 
 export default function Header() {
   const { data: session, status } = useSession();
@@ -33,6 +35,37 @@ export default function Header() {
     hasLoadedProfile,
     sessionLoaded,
   } = useAppSelector((state) => state.user);
+  
+  // Check if the user is authenticated
+  const isAuthenticated = status === "authenticated" && session?.user;
+
+  // Fetch notifications for authenticated users
+  const { data: notifications } = useFetchData<Notification[]>(
+    `notifications/byUser`,
+    ["notifications"],
+    {
+      enabled: !!isAuthenticated,
+      refetchInterval: 30000, // Refresh every 30 seconds
+    }
+  );
+
+  // Calculate notification counts by type
+  const getNotificationCount = (type: 'refund' | 'support' | 'order' | 'transaction') => {
+    if (!notifications) return 0;
+    return notifications.filter(notification => 
+      notification.originType === type && !notification.isWatching
+    ).length;
+  };
+
+  const refundNotificationCount = getNotificationCount('refund');
+  const supportNotificationCount = getNotificationCount('support');
+  const orderNotificationCount = getNotificationCount('order');
+  const transactionNotificationCount = getNotificationCount('transaction');
+  
+  // Total unread notifications
+  const totalUnreadCount = notifications
+    ? notifications.filter(notification => !notification.isWatching).length
+    : 0;
   // Handle sign out
   const handleSignOut = async () => {
     setIsLoggingOut(true);
@@ -67,9 +100,6 @@ export default function Header() {
       <Loading variant="spinner" size="sm" text="Signing out..." fullScreen />
     );
   }
-
-  // Check if the user is authenticated
-  const isAuthenticated = status === "authenticated" && session?.user;
 
   // Prevent flickering by showing consistent UI based on combined state
   const showUserData =
@@ -175,25 +205,32 @@ export default function Header() {
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Avatar className="h-8 w-8 cursor-pointer border-2 border-[#3A5B22]">
-                          <AvatarImage
-                            src={
-                              userProfile?.avatar || session.user.image || ""
-                            }
-                            alt={
-                              userProfile?.fullName ||
-                              session.user.name ||
-                              "User"
-                            }
-                          />
-                          <AvatarFallback className="bg-white text-[#3A5B22]">
-                            {getInitials(
-                              userProfile?.fullName || session.user.name
-                            )}
-                          </AvatarFallback>
-                        </Avatar>
+                        <div className="relative cursor-pointer">
+                          <Avatar className="h-8 w-8 border-2 border-[#3A5B22]">
+                            <AvatarImage
+                              src={
+                                userProfile?.avatar || session.user.image || ""
+                              }
+                              alt={
+                                userProfile?.fullName ||
+                                session.user.name ||
+                                "User"
+                              }
+                            />
+                            <AvatarFallback className="bg-white text-[#3A5B22]">
+                              {getInitials(
+                                userProfile?.fullName || session.user.name
+                              )}
+                            </AvatarFallback>
+                          </Avatar>
+                          {totalUnreadCount > 0 && (
+                            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                              {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
+                            </span>
+                          )}
+                        </div>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="end" className="w-56">
                         <DropdownMenuLabel>Account</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
@@ -201,15 +238,46 @@ export default function Header() {
                             href="/profile"
                             className="cursor-pointer w-full"
                           >
-                            Profile
+                            Personal Profile
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link
-                            href="/settings"
-                            className="cursor-pointer w-full"
+                            href="/profile?tab=purchases"
+                            className="cursor-pointer w-full flex items-center justify-between"
                           >
-                            Settings
+                            <span>Purchase History</span>
+                            {orderNotificationCount > 0 && (
+                              <span className="bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                                {orderNotificationCount}
+                              </span>
+                            )}
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link
+                            href="/profile?tab=refunds"
+                            className="cursor-pointer w-full flex items-center justify-between"
+                          >
+                            <span>Refund Requests</span>
+                            {refundNotificationCount > 0 && (
+                              <span className="bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                                {refundNotificationCount}
+                              </span>
+                            )}
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link
+                            href="/profile?tab=support"
+                            className="cursor-pointer w-full flex items-center justify-between"
+                          >
+                            <span>Support Tickets</span>
+                            {supportNotificationCount > 0 && (
+                              <span className="bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                                {supportNotificationCount}
+                              </span>
+                            )}
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
@@ -343,7 +411,7 @@ export default function Header() {
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <div className="flex items-center cursor-pointer hover:opacity-80 transition-opacity">
+                      <div className="relative flex items-center cursor-pointer hover:opacity-80 transition-opacity">
                         <Avatar className="h-10 w-10 border-2 border-yellow-400">
                           <AvatarImage
                             src={
@@ -361,6 +429,11 @@ export default function Header() {
                             )}
                           </AvatarFallback>
                         </Avatar>
+                        {totalUnreadCount > 0 && (
+                          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                            {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
+                          </span>
+                        )}
                       </div>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56">
@@ -374,11 +447,45 @@ export default function Header() {
                       <DropdownMenuItem asChild>
                         <Link
                           href="/profile?tab=purchases"
-                          className="cursor-pointer w-full"
+                          className="cursor-pointer w-full flex items-center justify-between"
                         >
-                          Purchase History
+                          <span>Purchase History</span>
+                          {orderNotificationCount > 0 && (
+                            <span className="bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                              {orderNotificationCount}
+                            </span>
+                          )}
                         </Link>
                       </DropdownMenuItem>
+
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href="/profile?tab=refunds"
+                          className="cursor-pointer w-full flex items-center justify-between"
+                        >
+                          <span>Refund Requests</span>
+                          {refundNotificationCount > 0 && (
+                            <span className="bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                              {refundNotificationCount}
+                            </span>
+                          )}
+                        </Link>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href="/profile?tab=support"
+                          className="cursor-pointer w-full flex items-center justify-between"
+                        >
+                          <span>Support Tickets</span>
+                          {supportNotificationCount > 0 && (
+                            <span className="bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                              {supportNotificationCount}
+                            </span>
+                          )}
+                        </Link>
+                      </DropdownMenuItem>
+
 
                       <DropdownMenuSeparator />
                       <DropdownMenuItem

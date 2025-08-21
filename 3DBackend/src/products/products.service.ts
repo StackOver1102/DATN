@@ -66,14 +66,11 @@ export class ProductsService {
 
     const updateStt = Number(stt) < 10 ? `0${stt}` : stt;
 
-    console.log("updateStt", updateStt)
     const folderInfo = await this.googleDriveService.getFolderInfo(
       folderId,
       `${updateStt}. ${name}`,
     );
 
-    console.log("name", name)
-    console.log("folderInfo", folderInfo)
     const productData = {
       ...createProductDto,
       stt: Number(stt),

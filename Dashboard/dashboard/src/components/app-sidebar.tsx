@@ -14,6 +14,8 @@ import {
   IconSettings,
   IconUsers,
   IconCoin,
+  IconPhoto,
+  IconMessageCircle,
 } from "@tabler/icons-react";
 import { useNotifications } from "@/lib/hooks/useNotifications";
 
@@ -37,6 +39,7 @@ const data = {
     avatar: "/avatars/admin.jpg",
   },
   navMain: [
+
     {
       title: "Dashboard",
       url: "/dashboard",
@@ -80,9 +83,19 @@ const data = {
       // notifications: 5,
     },
     {
+      title: "Banners",
+      url: "/dashboard/banner",
+      icon: IconPhoto,
+    },
+    {
       title: "Content",
       url: "/dashboard/master-data",
       icon: IconFileDescription,
+    },
+    {
+      title: "Comments",
+      url: "/dashboard/comment",
+      icon: IconMessageCircle,
     },
   ],
   navClouds: [
@@ -292,6 +305,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       notifications = counts.support || undefined;
     } else if (item.title === "Refunds") {
       notifications = counts.refund || undefined;
+    }
+    else if(item.title === "Comments"){
+      notifications = counts.comment || undefined;
     }
 
     return {

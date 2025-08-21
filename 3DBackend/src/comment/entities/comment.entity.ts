@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, HydratedDocument, Types } from 'mongoose';
 
-export type CommentDocument = Comment & Document;
+export type CommentDocument = Comment & HydratedDocument<Comment>;
 
 @Schema({ timestamps: true })
 export class Comment {
@@ -17,7 +17,7 @@ export class Comment {
   @Prop({ type: Number, min: 1, max: 5, required: true })
   rating: number;
 
-  @Prop({ default: true })
+  @Prop({ default: false })
   isApproved: boolean;
 }
 

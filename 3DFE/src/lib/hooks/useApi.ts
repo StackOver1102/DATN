@@ -96,6 +96,13 @@ export function useApi() {
     delete: async <T>(endpoint: string): Promise<ApiResponse<T>> => {
       return apiRequest<T>(endpoint, "DELETE", undefined, token);
     },
+
+    patch: async <T>(
+      endpoint: string,
+      data: RequestData
+    ): Promise<ApiResponse<T>> => {
+      return apiRequest<T>(endpoint, "PATCH", data, token);
+    },
   };
 }
 

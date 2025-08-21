@@ -21,7 +21,6 @@ export function NavMain({
     notifications?: number;
   }[];
 }) {
-  console.log(items[5]?.notifications && !items[5]?.notifications);
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">

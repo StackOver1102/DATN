@@ -68,4 +68,12 @@ export class CommentController {
   remove(@Param('id') id: string) {
     return this.commentService.remove(id);
   }
+
+  @Patch('approve/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Approve a comment' })
+  approveComment(@Param('id') id: string) {
+    return this.commentService.approveComment(id);
+  }
 }

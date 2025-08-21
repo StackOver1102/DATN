@@ -42,7 +42,6 @@ export class UploadService {
       this.configService.get<string>('R2_BUCKET') || 'my-bucket';
     this.publicUrl = this.configService.get<string>('R2_PUBLIC_URL') || '';
 
-    console.log('Public URL', this.publicUrl);
 
     // Create S3 client
     this.s3Client = new S3Client({
