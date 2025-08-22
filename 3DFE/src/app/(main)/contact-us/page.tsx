@@ -29,7 +29,7 @@ const ContactUsPage = () => {
     };
 
     fetchContent();
-  }, []);
+  }, [get]);
 
   return (
     <Container className="py-10">

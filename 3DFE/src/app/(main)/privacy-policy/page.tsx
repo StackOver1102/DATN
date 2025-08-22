@@ -29,7 +29,7 @@ const PrivacyPolicyPage = () => {
     };
 
     fetchContent();
-  }, []);
+  }, [get]);
 
   return (
     <Container className="py-10">

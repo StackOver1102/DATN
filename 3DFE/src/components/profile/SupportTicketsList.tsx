@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { LifeBuoy, Bell } from "lucide-react";
 import { Notification } from "@/lib/types";
-import { getMatchingNotification, getNotificationStatus } from "@/utils/notificationHelper";
+import {
+  getMatchingNotification,
+  getNotificationStatus,
+} from "@/utils/notificationHelper";
 import { Loading } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
 import Pagination from "@/components/Pagination";
@@ -38,9 +40,8 @@ export default function SupportTicketsList({
   notifications,
   onMarkAsRead,
   formatDate,
-  onCreateTicket
+  onCreateTicket,
 }: SupportTicketsListProps) {
-  
   if (isLoading) {
     return (
       <div className="flex justify-center py-10">
@@ -48,7 +49,7 @@ export default function SupportTicketsList({
       </div>
     );
   }
-  
+
   if (!tickets?.length) {
     return (
       <div className="text-center py-10">
@@ -61,31 +62,34 @@ export default function SupportTicketsList({
         <p className="text-gray-500 mt-2">
           You haven&apos;t created any support tickets yet.
         </p>
-        <Button
-          className="mt-4 text-yellow-400"
-          onClick={onCreateTicket}
-        >
+        <Button className="mt-4 text-yellow-400" onClick={onCreateTicket}>
           Create Support Ticket
         </Button>
       </div>
     );
   }
-  
+
   return (
     <>
       {tickets.map((ticket, index) => {
         // Check if this support ticket has a matching notification
-        const matchingNotification = getMatchingNotification(notifications, ticket._id, 'support');
-        const { hasNotification, isUnread } = getNotificationStatus(matchingNotification);
-        
+        const matchingNotification = getMatchingNotification(
+          notifications,
+          ticket._id,
+          "support"
+        );
+        const { hasNotification, isUnread } =
+          getNotificationStatus(matchingNotification);
+
         return (
           <div
             key={index}
             className={`bg-gray-50 rounded-lg p-4 flex items-center justify-between
               ${isUnread ? "border-l-4 border-yellow-400" : ""}
-              ${hasNotification 
-                ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md" 
-                : ""
+              ${
+                hasNotification
+                  ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md"
+                  : ""
               }`}
             onClick={() => {
               if (matchingNotification && isUnread) {
@@ -94,13 +98,25 @@ export default function SupportTicketsList({
             }}
           >
             <div className="flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-lg flex items-center justify-center relative
-                ${ticket.status === "open" ? "bg-blue-100" : 
-                  ticket.status === "in_progress" ? "bg-yellow-100" : "bg-green-100"}`}
+              <div
+                className={`w-12 h-12 rounded-lg flex items-center justify-center relative
+                ${
+                  ticket.status === "open"
+                    ? "bg-blue-100"
+                    : ticket.status === "in_progress"
+                    ? "bg-yellow-100"
+                    : "bg-green-100"
+                }`}
               >
-                <LifeBuoy className={`w-6 h-6 
-                  ${ticket.status === "open" ? "text-blue-600" : 
-                    ticket.status === "in_progress" ? "text-yellow-600" : "text-green-600"}`} 
+                <LifeBuoy
+                  className={`w-6 h-6 
+                  ${
+                    ticket.status === "open"
+                      ? "text-blue-600"
+                      : ticket.status === "in_progress"
+                      ? "text-yellow-600"
+                      : "text-green-600"
+                  }`}
                 />
                 {isUnread && (
                   <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -122,25 +138,26 @@ export default function SupportTicketsList({
                   #{ticket._id} • {formatDate(ticket.createdAt)}
                 </p>
                 <p className="text-sm text-gray-600 mt-1">
-                  {ticket.message.length > 80 
-                    ? ticket.message.substring(0, 80) + "..." 
+                  {ticket.message.length > 80
+                    ? ticket.message.substring(0, 80) + "..."
                     : ticket.message}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-medium 
-                      ${ticket.status === "open" 
-                        ? "text-blue-600 bg-blue-100" 
-                        : ticket.status === "in_progress" 
-                          ? "text-yellow-600 bg-yellow-100" 
+                      ${
+                        ticket.status === "open"
+                          ? "text-blue-600 bg-blue-100"
+                          : ticket.status === "in_progress"
+                          ? "text-yellow-600 bg-yellow-100"
                           : "text-green-600 bg-green-100"
                       }`}
                   >
-                    {ticket.status === "open" 
-                      ? "Open" 
-                      : ticket.status === "in_progress" 
-                        ? "In Progress" 
-                        : "Closed"}
+                    {ticket.status === "open"
+                      ? "Open"
+                      : ticket.status === "in_progress"
+                      ? "In Progress"
+                      : "Closed"}
                   </span>
                 </div>
               </div>

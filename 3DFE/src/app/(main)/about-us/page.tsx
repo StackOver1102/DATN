@@ -28,7 +28,7 @@ const AboutUsPage = () => {
     };
 
     fetchContent();
-  }, []);
+  }, [get]);
 
   return (
     <Container className="py-10">

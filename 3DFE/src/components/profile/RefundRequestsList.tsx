@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { RefreshCcw, Bell } from "lucide-react";
 import { Notification } from "@/lib/types";
-import { getMatchingNotification, getNotificationStatus } from "@/utils/notificationHelper";
+import {
+  getMatchingNotification,
+  getNotificationStatus,
+} from "@/utils/notificationHelper";
 import { Loading } from "@/components/ui/loading";
 import Pagination from "@/components/Pagination";
 
@@ -17,7 +19,7 @@ interface RefundRequest {
   order?: {
     productId: {
       name: string;
-    }
+    };
   };
 }
 
@@ -40,9 +42,8 @@ export default function RefundRequestsList({
   onPageChange,
   notifications,
   onMarkAsRead,
-  formatDate
+  formatDate,
 }: RefundRequestsListProps) {
-  
   if (isLoading) {
     return (
       <div className="flex justify-center py-10">
@@ -50,7 +51,7 @@ export default function RefundRequestsList({
       </div>
     );
   }
-  
+
   if (!refunds?.length) {
     return (
       <div className="text-center py-10">
@@ -66,22 +67,28 @@ export default function RefundRequestsList({
       </div>
     );
   }
-  
+
   return (
     <>
       {refunds.map((refund, index) => {
         // Check if this refund has a matching notification
-        const matchingNotification = getMatchingNotification(notifications, refund._id, 'refund');
-        const { hasNotification, isUnread } = getNotificationStatus(matchingNotification);
-        
+        const matchingNotification = getMatchingNotification(
+          notifications,
+          refund._id,
+          "refund"
+        );
+        const { hasNotification, isUnread } =
+          getNotificationStatus(matchingNotification);
+
         return (
           <div
             key={index}
             className={`bg-gray-50 rounded-lg p-4 flex items-center justify-between
               ${isUnread ? "border-l-4 border-yellow-400" : ""}
-              ${hasNotification 
-                ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md" 
-                : ""
+              ${
+                hasNotification
+                  ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md"
+                  : ""
               }`}
             onClick={() => {
               if (matchingNotification && isUnread) {
@@ -90,13 +97,25 @@ export default function RefundRequestsList({
             }}
           >
             <div className="flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-lg flex items-center justify-center relative
-                ${refund.status === "pending" ? "bg-yellow-100" : 
-                  refund.status === "approved" ? "bg-green-100" : "bg-red-100"}`}
+              <div
+                className={`w-12 h-12 rounded-lg flex items-center justify-center relative
+                ${
+                  refund.status === "pending"
+                    ? "bg-yellow-100"
+                    : refund.status === "approved"
+                    ? "bg-green-100"
+                    : "bg-red-100"
+                }`}
               >
-                <RefreshCcw className={`w-6 h-6 
-                  ${refund.status === "pending" ? "text-yellow-600" : 
-                    refund.status === "approved" ? "text-green-600" : "text-red-600"}`} 
+                <RefreshCcw
+                  className={`w-6 h-6 
+                  ${
+                    refund.status === "pending"
+                      ? "text-yellow-600"
+                      : refund.status === "approved"
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
                 />
                 {isUnread && (
                   <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -107,7 +126,8 @@ export default function RefundRequestsList({
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                  Refund Request {refund.order && `for ${refund.order.productId.name}`}
+                  Refund Request{" "}
+                  {refund.order && `for ${refund.order.productId.name}`}
                   {isUnread && (
                     <span className="ml-2 px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
                       New
@@ -118,25 +138,26 @@ export default function RefundRequestsList({
                   #{refund._id} • {formatDate(refund.createdAt)}
                 </p>
                 <p className="text-sm text-gray-600 mt-1">
-                  {refund.description.length > 80 
-                    ? refund.description.substring(0, 80) + "..." 
+                  {refund.description.length > 80
+                    ? refund.description.substring(0, 80) + "..."
                     : refund.description}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-medium 
-                      ${refund.status === "pending" 
-                        ? "text-yellow-600 bg-yellow-100" 
-                        : refund.status === "approved" 
-                          ? "text-green-600 bg-green-100" 
+                      ${
+                        refund.status === "pending"
+                          ? "text-yellow-600 bg-yellow-100"
+                          : refund.status === "approved"
+                          ? "text-green-600 bg-green-100"
                           : "text-red-600 bg-red-100"
                       }`}
                   >
-                    {refund.status === "pending" 
-                      ? "Pending" 
-                      : refund.status === "approved" 
-                        ? "Approved" 
-                        : "Rejected"}
+                    {refund.status === "pending"
+                      ? "Pending"
+                      : refund.status === "approved"
+                      ? "Approved"
+                      : "Rejected"}
                   </span>
                 </div>
               </div>

@@ -19,7 +19,7 @@ import { useState } from "react";
 import { Loading } from "./ui/loading";
 
 import { useAppSelector } from "@/lib/store/hooks";
-import { CircleDollarSign, Bell } from "lucide-react";
+import { CircleDollarSign } from "lucide-react";
 import { useFetchData } from "@/lib/hooks/useApi";
 import { Notification } from "@/lib/types";
 
@@ -35,7 +35,7 @@ export default function Header() {
     hasLoadedProfile,
     sessionLoaded,
   } = useAppSelector((state) => state.user);
-  
+
   // Check if the user is authenticated
   const isAuthenticated = status === "authenticated" && session?.user;
 
@@ -50,21 +50,24 @@ export default function Header() {
   );
 
   // Calculate notification counts by type
-  const getNotificationCount = (type: 'refund' | 'support' | 'order' | 'transaction') => {
+  const getNotificationCount = (
+    type: "refund" | "support" | "order" | "transaction"
+  ) => {
     if (!notifications) return 0;
-    return notifications.filter(notification => 
-      notification.originType === type && !notification.isWatching
+    return notifications.filter(
+      (notification) =>
+        notification.originType === type && !notification.isWatching
     ).length;
   };
 
-  const refundNotificationCount = getNotificationCount('refund');
-  const supportNotificationCount = getNotificationCount('support');
-  const orderNotificationCount = getNotificationCount('order');
-  const transactionNotificationCount = getNotificationCount('transaction');
-  
+  const refundNotificationCount = getNotificationCount("refund");
+  const supportNotificationCount = getNotificationCount("support");
+  const orderNotificationCount = getNotificationCount("order");
+  // const transactionNotificationCount = getNotificationCount("transaction");
+
   // Total unread notifications
   const totalUnreadCount = notifications
-    ? notifications.filter(notification => !notification.isWatching).length
+    ? notifications.filter((notification) => !notification.isWatching).length
     : 0;
   // Handle sign out
   const handleSignOut = async () => {
@@ -194,14 +197,12 @@ export default function Header() {
                 {showUserData ? (
                   <>
                     <div className="flex items-center bg-white text-[#3A5B22] px-2 py-0.5 rounded-full text-xs">
-                      <Link href="/deposit" className="flex items-center">  
+                      <Link href="/deposit" className="flex items-center">
                         <span className="font-medium">
                           {userProfile?.balance || session.user.balance || 0}
                         </span>
                         <CircleDollarSign className="w-3 h-3 text-yellow-500" />
                       </Link>
-
-
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -225,7 +226,7 @@ export default function Header() {
                           </Avatar>
                           {totalUnreadCount > 0 && (
                             <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                              {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
+                              {totalUnreadCount > 9 ? "9+" : totalUnreadCount}
                             </span>
                           )}
                         </div>
@@ -405,9 +406,7 @@ export default function Header() {
                         {userProfile?.balance || session.user.balance || 0}
                       </span>
                       <CircleDollarSign className="w-4 h-4 text-yellow-500 ml-1 mt-[1px]" />
-
                     </Link>
-
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -431,7 +430,7 @@ export default function Header() {
                         </Avatar>
                         {totalUnreadCount > 0 && (
                           <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
-                            {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
+                            {totalUnreadCount > 9 ? "9+" : totalUnreadCount}
                           </span>
                         )}
                       </div>
@@ -485,7 +484,6 @@ export default function Header() {
                           )}
                         </Link>
                       </DropdownMenuItem>
-
 
                       <DropdownMenuSeparator />
                       <DropdownMenuItem

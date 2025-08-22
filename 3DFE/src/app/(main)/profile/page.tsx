@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense, useRef } from "react";
+import { useState, useEffect, Suspense, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   User as UserIcon,
@@ -40,7 +40,13 @@ import { PaginatedResult } from "@/interface/pagination";
 import { Session } from "next-auth";
 import { getMatchingNotification } from "@/utils/notificationHelper";
 
-type TabType = "info" | "password" | "purchases" | "payments" | "refunds" | "support";
+type TabType =
+  | "info"
+  | "password"
+  | "purchases"
+  | "payments"
+  | "refunds"
+  | "support";
 
 interface UserInfo {
   fullName: string;
@@ -116,7 +122,9 @@ const userProfileSchema = z.object({
 const passwordSchema = z
   .object({
     oldPassword: z.string().min(6, "Password must have at least 6 characters"),
-    newPassword: z.string().min(6, "New password must have at least 6 characters"),
+    newPassword: z
+      .string()
+      .min(6, "New password must have at least 6 characters"),
     confirmPassword: z
       .string()
       .min(6, "Confirm password must have at least 6 characters"),
@@ -200,8 +208,8 @@ function ProfilePageContent({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Refund notification states
-  const [pendingRefunds, setPendingRefunds] = useState(0);
-  const [hasNewRefundUpdates, setHasNewRefundUpdates] = useState(false);
+  const [, setPendingRefunds] = useState(0);
+  const [, setHasNewRefundUpdates] = useState(false);
 
   // Pagination states
   const [purchasesPage, setPurchasesPage] = useState(1);
@@ -214,68 +222,69 @@ function ProfilePageContent({
     PaginatedResult<Purchase>
   >(
     `orders/my-orders?page=${purchasesPage}&limit=${itemsPerPage}`,
-    ["purchases", purchasesPage.toString()],
+    ["purchases", purchasesPage.toString()]
     // {
     //   enabled: activeTab === "purchases",
     // }
   );
 
-    const { data: paymentsData, isLoading: isLoadingPayments } = useFetchData<
+  const { data: paymentsData, isLoading: isLoadingPayments } = useFetchData<
     PaginatedResult<Payment>
   >(
     `transactions/my-transactions?page=${paymentsPage}&limit=${itemsPerPage}`,
-    ["transactions", paymentsPage.toString()],
+    ["transactions", paymentsPage.toString()]
     // {
     //   enabled: activeTab === "payments",
     // }
   );
-  
+
   // Fetch refund requests
-  const { data: refundsData, isLoading: isLoadingRefundRequests } = useFetchData<
-    PaginatedResult<RefundRequest>
-  >(
-    `refunds/my-refunds?page=${refundsPage}&limit=${itemsPerPage}`,
-    ["refunds", refundsPage.toString()],
-    {
-      enabled: activeTab === "refunds",
-    }
-  );
-  
+  const { data: refundsData, isLoading: isLoadingRefundRequests } =
+    useFetchData<PaginatedResult<RefundRequest>>(
+      `refunds/my-refunds?page=${refundsPage}&limit=${itemsPerPage}`,
+      ["refunds", refundsPage.toString()],
+      {
+        enabled: activeTab === "refunds",
+      }
+    );
+
   // Fetch support tickets
-  const { data: supportData, isLoading: isLoadingSupportTickets } = useFetchData<
-    PaginatedResult<SupportTicket>
-  >(
-    `support/my-tickets?page=${supportPage}&limit=${itemsPerPage}`,
-    ["support", supportPage.toString()],
-    {
-      enabled: activeTab === "support",
-    }
-  );
-  
+  const { data: supportData, isLoading: isLoadingSupportTickets } =
+    useFetchData<PaginatedResult<SupportTicket>>(
+      `support/my-tickets?page=${supportPage}&limit=${itemsPerPage}`,
+      ["support", supportPage.toString()],
+      {
+        enabled: activeTab === "support",
+      }
+    );
+
   // Fetch all notifications
-  const { data: notificationData, isLoading: isLoadingNotifications, refetch: refetchNotifications } = useFetchData<Notification[]>(
-    `notifications/byUser`,
-    ["notifications"],
-    {
-      refetchInterval: 30000, // Refresh every 30 seconds
-    }
-  );
-  
+  const {
+    data: notificationData,
+    isLoading: isLoadingNotifications,
+    refetch: refetchNotifications,
+  } = useFetchData<Notification[]>(`notifications/byUser`, ["notifications"], {
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
   // Extract data from paginated responses
   const purchases = purchasesData?.items || [];
   const purchasesTotalPages = purchasesData?.meta.totalPages || 1;
 
   const payments = paymentsData?.items || [];
   const paymentsTotalPages = paymentsData?.meta.totalPages || 1;
-  
+
   const refunds = refundsData?.items || [];
   const refundsTotalPages = refundsData?.meta.totalPages || 1;
-  
+
   const supportTickets = supportData?.items || [];
   const supportTotalPages = supportData?.meta.totalPages || 1;
-  
-  // Extract notifications
-  const notifications = notificationData || [];
+
+  // Extract and memoize notifications to prevent dependency changes on every render
+  const notifications = useMemo(
+    () => notificationData || [],
+    [notificationData]
+  );
 
   const { post, patch } = useApi();
 
@@ -305,13 +314,16 @@ function ProfilePageContent({
       formData.append("avatar", avatarFile);
 
       // Upload avatar
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/avatar`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${session.accessToken}`,
-        },
-        body: formData,
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/users/avatar`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.accessToken}`,
+          },
+          body: formData,
+        }
+      );
 
       const data = await response.json();
 
@@ -324,10 +336,12 @@ function ProfilePageContent({
 
         // Update Redux store
         if (profile) {
-          dispatch(setProfile({
-            ...profile,
-            avatar: data.data.avatar,
-          }));
+          dispatch(
+            setProfile({
+              ...profile,
+              avatar: data.data.avatar,
+            })
+          );
         }
 
         toast.success("Avatar updated successfully!");
@@ -430,16 +444,17 @@ function ProfilePageContent({
   }, [notifications]);
 
   // Calculate notification counts for each tab
-  const getTabNotificationCount = (type: 'refund' | 'support') => {
+  const getTabNotificationCount = (type: "refund" | "support") => {
     // console.log(notifications);
     if (!notifications || notifications.length === 0) return 0;
-    return notifications.filter(notification => 
-      notification.originType === type && !notification.isWatching
+    return notifications.filter(
+      (notification) =>
+        notification.originType === type && !notification.isWatching
     ).length;
   };
 
-  const refundNotificationCount = getTabNotificationCount('refund');
-  const supportNotificationCount = getTabNotificationCount('support');
+  const refundNotificationCount = getTabNotificationCount("refund");
+  const supportNotificationCount = getTabNotificationCount("support");
 
   const tabs = [
     {
@@ -447,42 +462,42 @@ function ProfilePageContent({
       label: "Personal Information",
       icon: UserIcon,
       notifications: 0,
-      hasUpdates: false
+      hasUpdates: false,
     },
     {
       id: "password" as TabType,
       label: "Change Password",
       icon: Lock,
       notifications: 0,
-      hasUpdates: false
+      hasUpdates: false,
     },
     {
       id: "purchases" as TabType,
       label: "Purchase History",
       icon: ShoppingBag,
       notifications: 0,
-      hasUpdates: false
+      hasUpdates: false,
     },
     {
       id: "payments" as TabType,
       label: "Payment History",
       icon: CreditCard,
       notifications: 0,
-      hasUpdates: false
+      hasUpdates: false,
     },
     {
       id: "refunds" as TabType,
       label: "Refund Requests",
       icon: RefreshCcw,
       notifications: refundNotificationCount,
-      hasUpdates: refundNotificationCount > 0
+      hasUpdates: refundNotificationCount > 0,
     },
     {
       id: "support" as TabType,
       label: "Support Tickets",
       icon: LifeBuoy,
       notifications: supportNotificationCount,
-      hasUpdates: supportNotificationCount > 0
+      hasUpdates: supportNotificationCount > 0,
     },
   ];
 
@@ -524,7 +539,8 @@ function ProfilePageContent({
       }
     } catch (error) {
       toast.error(
-        `An error occurred while updating information: ${error instanceof Error ? error.message : "Unknown error"
+        `An error occurred while updating information: ${
+          error instanceof Error ? error.message : "Unknown error"
         }`
       );
     }
@@ -571,9 +587,7 @@ function ProfilePageContent({
         toast.success(
           "Refund request submitted! We will process it within 24-48 hours."
         );
-      }
-      else {
-
+      } else {
         toast.error(response.message);
       }
     } catch (error) {
@@ -632,15 +646,18 @@ function ProfilePageContent({
   const formatNumber = (number: number) => {
     return number.toLocaleString("vi-VN");
   };
-  
+
   // Function to mark a notification as read
   const markNotificationAsRead = async (notificationId: string) => {
     try {
-      const response = await patch(`notifications/mark-as-watching/${notificationId}`, {});
+      const response = await patch(
+        `notifications/mark-as-watching/${notificationId}`,
+        {}
+      );
       if (response.success) {
         // Refresh notification data and transaction/purchase lists
         refetchNotifications();
-        
+
         // Show subtle toast notification
         toast.success("Notification marked as read");
       }
@@ -650,9 +667,14 @@ function ProfilePageContent({
     }
   };
 
-  if (isLoadingPurchases || isLoadingPayments || isLoadingStore || isLoadingNotifications ||
-      (activeTab === "refunds" && isLoadingRefundRequests) || 
-      (activeTab === "support" && isLoadingSupportTickets)) {
+  if (
+    isLoadingPurchases ||
+    isLoadingPayments ||
+    isLoadingStore ||
+    isLoadingNotifications ||
+    (activeTab === "refunds" && isLoadingRefundRequests) ||
+    (activeTab === "support" && isLoadingSupportTickets)
+  ) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Loading variant="spinner" size="lg" text="Loading information..." />
@@ -705,7 +727,9 @@ function ProfilePageContent({
                         <CircleDollarSign className="w-4 h-4 text-yellow-500 ml-1 mt-[1px]" />
                       </span>
                     </div>
-                    <div className="text-sm text-gray-600">Available Balance</div>
+                    <div className="text-sm text-gray-600">
+                      Available Balance
+                    </div>
                   </div>
                   <div className="bg-green-50 rounded-lg p-4">
                     <div className="text-2xl font-bold text-green-600">
@@ -734,17 +758,21 @@ function ProfilePageContent({
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
-                        ? "border-blue-500 text-blue-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                        } relative`}
+                      className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                        activeTab === tab.id
+                          ? "border-blue-500 text-blue-600"
+                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      } relative`}
                     >
                       <div className="relative">
                         <Icon className="w-5 h-5" />
                         {tab.notifications > 0 && (
                           <div className="absolute -top-2 -right-2 flex items-center justify-center">
                             <div className="relative">
-                              <Bell className="w-3 h-3 text-yellow-500" fill={tab.hasUpdates ? "#eab308" : "none"} />
+                              <Bell
+                                className="w-3 h-3 text-yellow-500"
+                                fill={tab.hasUpdates ? "#eab308" : "none"}
+                              />
                               <span className="absolute top-0 right-0 flex h-2 w-2">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
                                 {/* <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span> */}
@@ -801,10 +829,11 @@ function ProfilePageContent({
                       <input
                         {...registerProfile("fullName")}
                         disabled={!isEditing}
-                        className={`w-full px-4 py-3 border ${profileErrors.fullName
-                          ? "border-red-500"
-                          : "border-gray-300"
-                          } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500`}
+                        className={`w-full px-4 py-3 border ${
+                          profileErrors.fullName
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500`}
                       />
                       {profileErrors.fullName && (
                         <p className="mt-1 text-xs text-red-500">
@@ -820,10 +849,11 @@ function ProfilePageContent({
                       <input
                         {...registerProfile("email")}
                         disabled={!isEditing}
-                        className={`w-full px-4 py-3 border ${profileErrors.email
-                          ? "border-red-500"
-                          : "border-gray-300"
-                          } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500`}
+                        className={`w-full px-4 py-3 border ${
+                          profileErrors.email
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500`}
                       />
                       {profileErrors.email && (
                         <p className="mt-1 text-xs text-red-500">
@@ -839,10 +869,11 @@ function ProfilePageContent({
                       <input
                         {...registerProfile("phone")}
                         disabled={!isEditing}
-                        className={`w-full px-4 py-3 border ${profileErrors.phone
-                          ? "border-red-500"
-                          : "border-gray-300"
-                          } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500`}
+                        className={`w-full px-4 py-3 border ${
+                          profileErrors.phone
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500`}
                       />
                       {profileErrors.phone && (
                         <p className="mt-1 text-xs text-red-500">
@@ -859,10 +890,11 @@ function ProfilePageContent({
                         {...registerProfile("address")}
                         disabled={!isEditing}
                         rows={3}
-                        className={`w-full px-4 py-3 border ${profileErrors.address
-                          ? "border-red-500"
-                          : "border-gray-300"
-                          } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 resize-none`}
+                        className={`w-full px-4 py-3 border ${
+                          profileErrors.address
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 resize-none`}
                       />
                       {profileErrors.address && (
                         <p className="mt-1 text-xs text-red-500">
@@ -892,10 +924,11 @@ function ProfilePageContent({
                         <input
                           type={showOldPassword ? "text" : "password"}
                           {...registerPassword("oldPassword")}
-                          className={`w-full px-4 py-3 pr-12 border ${passwordErrors.oldPassword
-                            ? "border-red-500"
-                            : "border-gray-300"
-                            } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                          className={`w-full px-4 py-3 pr-12 border ${
+                            passwordErrors.oldPassword
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
                         />
                         <Button
                           type="button"
@@ -926,10 +959,11 @@ function ProfilePageContent({
                         <input
                           type={showNewPassword ? "text" : "password"}
                           {...registerPassword("newPassword")}
-                          className={`w-full px-4 py-3 pr-12 border ${passwordErrors.newPassword
-                            ? "border-red-500"
-                            : "border-gray-300"
-                            } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                          className={`w-full px-4 py-3 pr-12 border ${
+                            passwordErrors.newPassword
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
                         />
                         <Button
                           type="button"
@@ -960,10 +994,11 @@ function ProfilePageContent({
                         <input
                           type={showConfirmPassword ? "text" : "password"}
                           {...registerPassword("confirmPassword")}
-                          className={`w-full px-4 py-3 pr-12 border ${passwordErrors.confirmPassword
-                            ? "border-red-500"
-                            : "border-gray-300"
-                            } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                          className={`w-full px-4 py-3 pr-12 border ${
+                            passwordErrors.confirmPassword
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
                         />
                         <Button
                           type="button"
@@ -1012,16 +1047,18 @@ function ProfilePageContent({
                           <div
                             key={index}
                             className={`bg-gray-50 rounded-lg p-4 flex items-center justify-between
-                              ${purchase.notificationId && !purchase.isRead 
-                                ? "border-l-4 border-yellow-400" 
-                                : ""
+                              ${
+                                purchase.notificationId && !purchase.isRead
+                                  ? "border-l-4 border-yellow-400"
+                                  : ""
                               }
-                              ${purchase.notificationId 
-                                ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md" 
-                                : ""
+                              ${
+                                purchase.notificationId
+                                  ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md"
+                                  : ""
                               }`}
                             onClick={() => {
-                              if (purchase.notificationId ) {
+                              if (purchase.notificationId) {
                                 markNotificationAsRead(purchase.notificationId);
                               }
                             }}
@@ -1035,21 +1072,23 @@ function ProfilePageContent({
                                   height={60}
                                   className="rounded-lg object-cover"
                                 />
-                                {purchase.notificationId && !purchase.isRead && (
-                                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
-                                  </span>
-                                )}
+                                {purchase.notificationId &&
+                                  !purchase.isRead && (
+                                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                                      <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
+                                    </span>
+                                  )}
                               </div>
                               <div>
                                 <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                                   {purchase.productId.name}
-                                  {purchase.notificationId && !purchase.isRead && (
-                                    <span className="ml-2 px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
-                                      New
-                                    </span>
-                                  )}
+                                  {purchase.notificationId &&
+                                    !purchase.isRead && (
+                                      <span className="ml-2 px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                                        New
+                                      </span>
+                                    )}
                                 </h3>
                                 <p className="text-sm text-gray-600">
                                   #{purchase._id} •{" "}
@@ -1071,7 +1110,10 @@ function ProfilePageContent({
                             </div>
                             <div className="flex gap-2 items-center">
                               {purchase.notificationId && !purchase.isRead && (
-                                <Bell className="w-5 h-5 text-yellow-500 mr-2" fill="#eab308" />
+                                <Bell
+                                  className="w-5 h-5 text-yellow-500 mr-2"
+                                  fill="#eab308"
+                                />
                               )}
                               {purchase.status === "completed" && (
                                 <Button
@@ -1140,13 +1182,15 @@ function ProfilePageContent({
                           <div
                             key={index}
                             className={`bg-gray-50 rounded-lg p-4 flex items-center justify-between 
-                              ${payment.notificationId && !payment.isRead 
-                                ? "border-l-4 border-yellow-400" 
-                                : ""
+                              ${
+                                payment.notificationId && !payment.isRead
+                                  ? "border-l-4 border-yellow-400"
+                                  : ""
                               }
-                              ${payment.notificationId 
-                                ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md" 
-                                : ""
+                              ${
+                                payment.notificationId
+                                  ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md"
+                                  : ""
                               }`}
                             onClick={() => {
                               if (payment.notificationId && !payment.isRead) {
@@ -1156,10 +1200,11 @@ function ProfilePageContent({
                           >
                             <div className="flex items-center gap-4">
                               <div
-                                className={`w-12 h-12 ${payment.type === "payment"
-                                  ? "bg-red-100"
-                                  : "bg-green-100"
-                                  } rounded-lg flex items-center justify-center relative`}
+                                className={`w-12 h-12 ${
+                                  payment.type === "payment"
+                                    ? "bg-red-100"
+                                    : "bg-green-100"
+                                } rounded-lg flex items-center justify-center relative`}
                               >
                                 {payment.type === "payment" ? (
                                   <ShoppingBag className="w-6 h-6 text-red-600" />
@@ -1178,11 +1223,12 @@ function ProfilePageContent({
                                   {payment.type === "payment"
                                     ? "Order Payment"
                                     : payment.description}
-                                  {payment.notificationId && !payment.isRead && (
-                                    <span className="ml-2 px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
-                                      New
-                                    </span>
-                                  )}
+                                  {payment.notificationId &&
+                                    !payment.isRead && (
+                                      <span className="ml-2 px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                                        New
+                                      </span>
+                                    )}
                                 </h3>
                                 <p className="text-sm text-gray-600">
                                   #{payment.transactionCode} •{" "}
@@ -1225,7 +1271,10 @@ function ProfilePageContent({
                             </div>
                             {payment.notificationId && !payment.isRead && (
                               <div className="text-right">
-                                <Bell className="w-5 h-5 text-yellow-500" fill="#eab308" />
+                                <Bell
+                                  className="w-5 h-5 text-yellow-500"
+                                  fill="#eab308"
+                                />
                               </div>
                             )}
                           </div>
@@ -1270,7 +1319,7 @@ function ProfilePageContent({
                   </div>
                 </div>
               )}
-              
+
               {activeTab === "refunds" && (
                 <div className="space-y-6">
                   <h2 className="text-2xl font-bold text-gray-900">
@@ -1285,86 +1334,115 @@ function ProfilePageContent({
                     ) : refunds?.length ? (
                       <>
                         {refunds.map((refund, index) => {
-                          const matchingNotification = getMatchingNotification(notifications, refund._id, 'refund');
+                          const matchingNotification = getMatchingNotification(
+                            notifications,
+                            refund._id,
+                            "refund"
+                          );
                           const hasNotification = !!matchingNotification;
-                          const isUnread = matchingNotification && !matchingNotification.isWatching;
-                          
+                          const isUnread =
+                            matchingNotification &&
+                            !matchingNotification.isWatching;
+
                           return (
-                          <div
-                            key={index}
-                            className={`bg-gray-50 rounded-lg p-4 flex items-center justify-between
-                              ${isUnread 
-                                ? "border-l-4 border-yellow-400" 
-                                : ""
-                              }
-                              ${hasNotification 
-                                ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md" 
-                                : ""
+                            <div
+                              key={index}
+                              className={`bg-gray-50 rounded-lg p-4 flex items-center justify-between
+                              ${isUnread ? "border-l-4 border-yellow-400" : ""}
+                              ${
+                                hasNotification
+                                  ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md"
+                                  : ""
                               }`}
-                            onClick={() => {
-                              if (matchingNotification && !matchingNotification.isWatching) {
-                                markNotificationAsRead(matchingNotification._id);
-                              }
-                            }}
-                          >
-                            <div className="flex items-center gap-4">
-                              <div className={`w-12 h-12 rounded-lg flex items-center justify-center relative
-                                ${refund.status === "pending" ? "bg-yellow-100" : 
-                                  refund.status === "approved" ? "bg-green-100" : "bg-red-100"}`}
-                              >
-                                <RefreshCcw className={`w-6 h-6 
-                                  ${refund.status === "pending" ? "text-yellow-600" : 
-                                    refund.status === "approved" ? "text-green-600" : "text-red-600"}`} 
-                                />
-                                {isUnread && (
-                                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
-                                  </span>
-                                )}
-                              </div>
-                              <div>
-                                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                                  Refund Request {refund.order && `for ${refund.order.productId.name}`}
+                              onClick={() => {
+                                if (
+                                  matchingNotification &&
+                                  !matchingNotification.isWatching
+                                ) {
+                                  markNotificationAsRead(
+                                    matchingNotification._id
+                                  );
+                                }
+                              }}
+                            >
+                              <div className="flex items-center gap-4">
+                                <div
+                                  className={`w-12 h-12 rounded-lg flex items-center justify-center relative
+                                ${
+                                  refund.status === "pending"
+                                    ? "bg-yellow-100"
+                                    : refund.status === "approved"
+                                    ? "bg-green-100"
+                                    : "bg-red-100"
+                                }`}
+                                >
+                                  <RefreshCcw
+                                    className={`w-6 h-6 
+                                  ${
+                                    refund.status === "pending"
+                                      ? "text-yellow-600"
+                                      : refund.status === "approved"
+                                      ? "text-green-600"
+                                      : "text-red-600"
+                                  }`}
+                                  />
                                   {isUnread && (
-                                    <span className="ml-2 px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
-                                      New
+                                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                                      <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
                                     </span>
                                   )}
-                                </h3>
-                                <p className="text-sm text-gray-600">
-                                  #{refund._id} • {formatDate(refund.createdAt)}
-                                </p>
-                                <p className="text-sm text-gray-600 mt-1">
-                                  {refund.description.length > 80 
-                                    ? refund.description.substring(0, 80) + "..." 
-                                    : refund.description}
-                                </p>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <span
-                                    className={`px-2 py-1 rounded-full text-xs font-medium 
-                                      ${refund.status === "pending" 
-                                        ? "text-yellow-600 bg-yellow-100" 
-                                        : refund.status === "approved" 
-                                          ? "text-green-600 bg-green-100" 
+                                </div>
+                                <div>
+                                  <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                                    Refund Request{" "}
+                                    {refund.order &&
+                                      `for ${refund.order.productId.name}`}
+                                    {isUnread && (
+                                      <span className="ml-2 px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                                        New
+                                      </span>
+                                    )}
+                                  </h3>
+                                  <p className="text-sm text-gray-600">
+                                    #{refund._id} •{" "}
+                                    {formatDate(refund.createdAt)}
+                                  </p>
+                                  <p className="text-sm text-gray-600 mt-1">
+                                    {refund.description.length > 80
+                                      ? refund.description.substring(0, 80) +
+                                        "..."
+                                      : refund.description}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span
+                                      className={`px-2 py-1 rounded-full text-xs font-medium 
+                                      ${
+                                        refund.status === "pending"
+                                          ? "text-yellow-600 bg-yellow-100"
+                                          : refund.status === "approved"
+                                          ? "text-green-600 bg-green-100"
                                           : "text-red-600 bg-red-100"
                                       }`}
-                                  >
-                                    {refund.status === "pending" 
-                                      ? "Pending" 
-                                      : refund.status === "approved" 
-                                        ? "Approved" 
+                                    >
+                                      {refund.status === "pending"
+                                        ? "Pending"
+                                        : refund.status === "approved"
+                                        ? "Approved"
                                         : "Rejected"}
-                                  </span>
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
+                              {isUnread && (
+                                <div className="text-right">
+                                  <Bell
+                                    className="w-5 h-5 text-yellow-500"
+                                    fill="#eab308"
+                                  />
+                                </div>
+                              )}
                             </div>
-                            {isUnread && (
-                              <div className="text-right">
-                                <Bell className="w-5 h-5 text-yellow-500" fill="#eab308" />
-                              </div>
-                            )}
-                          </div>
                           );
                         })}
 
@@ -1393,7 +1471,7 @@ function ProfilePageContent({
                   </div>
                 </div>
               )}
-              
+
               {activeTab === "support" && (
                 <div className="space-y-6">
                   <div className="flex justify-between items-center">
@@ -1417,86 +1495,112 @@ function ProfilePageContent({
                     ) : supportTickets?.length ? (
                       <>
                         {supportTickets.map((ticket, index) => {
-                          const matchingNotification = getMatchingNotification(notifications, ticket._id, 'support');
+                          const matchingNotification = getMatchingNotification(
+                            notifications,
+                            ticket._id,
+                            "support"
+                          );
                           const hasNotification = !!matchingNotification;
-                          const isUnread = matchingNotification && !matchingNotification.isRead;
-                          
+                          const isUnread =
+                            matchingNotification &&
+                            !matchingNotification.isRead;
+
                           return (
-                          <div
-                            key={index}
-                            className={`bg-gray-50 rounded-lg p-4 flex items-center justify-between
-                              ${isUnread 
-                                ? "border-l-4 border-yellow-400" 
-                                : ""
-                              }
-                              ${hasNotification 
-                                ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md" 
-                                : ""
+                            <div
+                              key={index}
+                              className={`bg-gray-50 rounded-lg p-4 flex items-center justify-between
+                              ${isUnread ? "border-l-4 border-yellow-400" : ""}
+                              ${
+                                hasNotification
+                                  ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md"
+                                  : ""
                               }`}
-                            onClick={() => {
-                              if (matchingNotification && !matchingNotification.isRead) {
-                                markNotificationAsRead(matchingNotification._id);
-                              }
-                            }}
-                          >
-                            <div className="flex items-center gap-4">
-                              <div className={`w-12 h-12 rounded-lg flex items-center justify-center relative
-                                ${ticket.status === "open" ? "bg-blue-100" : 
-                                  ticket.status === "in_progress" ? "bg-yellow-100" : "bg-green-100"}`}
-                              >
-                                <LifeBuoy className={`w-6 h-6 
-                                  ${ticket.status === "open" ? "text-blue-600" : 
-                                    ticket.status === "in_progress" ? "text-yellow-600" : "text-green-600"}`} 
-                                />
-                                {isUnread && (
-                                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
-                                  </span>
-                                )}
-                              </div>
-                              <div>
-                                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                                  {ticket.subject}
+                              onClick={() => {
+                                if (
+                                  matchingNotification &&
+                                  !matchingNotification.isRead
+                                ) {
+                                  markNotificationAsRead(
+                                    matchingNotification._id
+                                  );
+                                }
+                              }}
+                            >
+                              <div className="flex items-center gap-4">
+                                <div
+                                  className={`w-12 h-12 rounded-lg flex items-center justify-center relative
+                                ${
+                                  ticket.status === "open"
+                                    ? "bg-blue-100"
+                                    : ticket.status === "in_progress"
+                                    ? "bg-yellow-100"
+                                    : "bg-green-100"
+                                }`}
+                                >
+                                  <LifeBuoy
+                                    className={`w-6 h-6 
+                                  ${
+                                    ticket.status === "open"
+                                      ? "text-blue-600"
+                                      : ticket.status === "in_progress"
+                                      ? "text-yellow-600"
+                                      : "text-green-600"
+                                  }`}
+                                  />
                                   {isUnread && (
-                                    <span className="ml-2 px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
-                                      New
+                                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                                      <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
                                     </span>
                                   )}
-                                </h3>
-                                <p className="text-sm text-gray-600">
-                                  #{ticket._id} • {formatDate(ticket.createdAt)}
-                                </p>
-                                <p className="text-sm text-gray-600 mt-1">
-                                  {ticket.message.length > 80 
-                                    ? ticket.message.substring(0, 80) + "..." 
-                                    : ticket.message}
-                                </p>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <span
-                                    className={`px-2 py-1 rounded-full text-xs font-medium 
-                                      ${ticket.status === "open" 
-                                        ? "text-blue-600 bg-blue-100" 
-                                        : ticket.status === "in_progress" 
-                                          ? "text-yellow-600 bg-yellow-100" 
+                                </div>
+                                <div>
+                                  <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                                    {ticket.subject}
+                                    {isUnread && (
+                                      <span className="ml-2 px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                                        New
+                                      </span>
+                                    )}
+                                  </h3>
+                                  <p className="text-sm text-gray-600">
+                                    #{ticket._id} •{" "}
+                                    {formatDate(ticket.createdAt)}
+                                  </p>
+                                  <p className="text-sm text-gray-600 mt-1">
+                                    {ticket.message.length > 80
+                                      ? ticket.message.substring(0, 80) + "..."
+                                      : ticket.message}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span
+                                      className={`px-2 py-1 rounded-full text-xs font-medium 
+                                      ${
+                                        ticket.status === "open"
+                                          ? "text-blue-600 bg-blue-100"
+                                          : ticket.status === "in_progress"
+                                          ? "text-yellow-600 bg-yellow-100"
                                           : "text-green-600 bg-green-100"
                                       }`}
-                                  >
-                                    {ticket.status === "open" 
-                                      ? "Open" 
-                                      : ticket.status === "in_progress" 
-                                        ? "In Progress" 
+                                    >
+                                      {ticket.status === "open"
+                                        ? "Open"
+                                        : ticket.status === "in_progress"
+                                        ? "In Progress"
                                         : "Closed"}
-                                  </span>
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
+                              {isUnread && (
+                                <div className="text-right">
+                                  <Bell
+                                    className="w-5 h-5 text-yellow-500"
+                                    fill="#eab308"
+                                  />
+                                </div>
+                              )}
                             </div>
-                            {isUnread && (
-                              <div className="text-right">
-                                <Bell className="w-5 h-5 text-yellow-500" fill="#eab308" />
-                              </div>
-                            )}
-                          </div>
                           );
                         })}
 

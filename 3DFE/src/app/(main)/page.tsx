@@ -36,7 +36,7 @@ async function getCategories() {
   return res.json();
 }
 
-export async function getBanners(): Promise<{ data: Banner[] }> {
+async function getBanners(): Promise<{ data: Banner[] }> {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL_SSR}/banners/position/home`,
     {
@@ -71,11 +71,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const itemsPerPage = 12;
 
   // Fetch data in parallel
-  const [paginatedProductsData, categoriesData, bannersData] = await Promise.all([
-    getProducts(currentPage, itemsPerPage),
-    getCategories(),
-    getBanners(),
-  ]);
+  const [paginatedProductsData, categoriesData, bannersData] =
+    await Promise.all([
+      getProducts(currentPage, itemsPerPage),
+      getCategories(),
+      getBanners(),
+    ]);
 
   // console.log(categoriesData);
   const paginatedProducts = paginatedProductsData?.data;
@@ -132,11 +133,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             {/* Banner Ads */}
             <div className="max-w-7xl mx-auto py-6">
               <div className="w-full h-20 bg-gray-200 border-2 border-solid border-gray-400 rounded-lg flex items-center justify-center overflow-hidden">
-                {bannersData.data.map((banner: any) => (
+                {bannersData.data.map((banner: Banner) => (
                   <div key={banner._id} className="h-full">
-                    <Image 
-                      src={banner.imageUrl} 
-                      alt={banner.title} 
+                    <Image
+                      src={banner.imageUrl}
+                      alt={banner.title}
                       width={0}
                       height={0}
                       sizes="100vw"
