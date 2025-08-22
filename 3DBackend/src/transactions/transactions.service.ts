@@ -551,6 +551,9 @@ export class TransactionsService {
         `${this.paypalClientId}:${this.paypalSecret}`,
       ).toString('base64');
 
+      console.log('paypalClientId', this.paypalClientId);
+      console.log('this.paypalSecret', this.paypalSecret);
+
       const response = await axios.post(
         `${this.paypalBaseUrl}/v1/oauth2/token`,
         'grant_type=client_credentials',
