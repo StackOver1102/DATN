@@ -7,6 +7,7 @@ import {
 } from './entities/notification.entity';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { NotificationType } from 'src/types/notification';
 
 @Injectable()
 export class NotificationsService {
@@ -35,19 +36,30 @@ export class NotificationsService {
   }
 
   async getUnreadCount() {
-    const supportNoti = await this.notificationModel.find({isRead: false, originType: 'support'})
+    const supportNoti = await this.notificationModel.find({
+      isRead: false,
+      originType: 'support',
+    });
     const supportCount = await this.notificationModel.countDocuments({
       isRead: false,
       originType: 'support',
     });
 
-    const refundNoti = await this.notificationModel.find({isRead: false, originType: 'refund'})
+    const refundNoti = await this.notificationModel.find({
+      isRead: false,
+      originType: 'refund',
+    });
     const refundCount = await this.notificationModel.countDocuments({
       isRead: false,
       originType: 'refund',
     });
 
-    const commentNoti = await this.notificationModel.find({isRead: false, originType: 'comment'})
+    // Comment notifications are no longer included in the total count
+    // but we still fetch them for backward compatibility
+    const commentNoti = await this.notificationModel.find({
+      isRead: false,
+      originType: 'comment',
+    });
     const commentCount = await this.notificationModel.countDocuments({
       isRead: false,
       originType: 'comment',
@@ -56,7 +68,7 @@ export class NotificationsService {
     return {
       support: supportCount,
       refund: refundCount,
-      total: supportCount + refundCount,
+      total: supportCount + refundCount, // Comment count excluded from total
       supportNoti,
       refundNoti,
       commentNoti,
@@ -82,7 +94,7 @@ export class NotificationsService {
 
   async markAsRead(id: string) {
     return this.notificationModel.findByIdAndUpdate(
-      {_id:id},
+      { _id: id },
       { isRead: true },
       {
         new: true,
@@ -90,14 +102,20 @@ export class NotificationsService {
     );
   }
 
-  async getNotificationsByUser(userId:string){
-    const notifications = await this.notificationModel.find({userId: new Types.ObjectId(userId), isWatching: false}).sort({createdAt: -1})
-    return notifications
+  async getNotificationsByUser(userId: string) {
+    const notifications = await this.notificationModel
+      .find({
+        userId: new Types.ObjectId(userId),
+        isWatching: false,
+        originType: { $ne: NotificationType.COMMENT }, // Exclude comment notifications
+      })
+      .sort({ createdAt: -1 });
+    return notifications;
   }
 
   async markAsWatching(id: string) {
     return this.notificationModel.findByIdAndUpdate(
-      {_id:id},
+      { _id: id },
       { isWatching: true },
       {
         new: true,

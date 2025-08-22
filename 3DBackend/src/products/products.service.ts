@@ -44,7 +44,7 @@ export class ProductsService {
     }
 
     // Handle single product
-    const { name, folderId, stt, images } = createProductDto;
+    const { name, folderId, stt, images, price } = createProductDto;
 
     if (!name) {
       throw new BadRequestException('Name is required');
@@ -71,10 +71,13 @@ export class ProductsService {
       `${updateStt}. ${name}`,
     );
 
+    const isPro = Number(price) > 0;
+
     const productData = {
       ...createProductDto,
       stt: Number(stt),
       images: (await imageUrl).url,
+      isPro: isPro,
       name: `${updateStt}. Model ${createProductDto.name} 3dsmax`,
       urlDownload: folderInfo?.rar?.id
         ? `https://drive.google.com/uc?id=${folderInfo.rar.id}`

@@ -11,7 +11,6 @@ import { NotificationsService } from './notifications.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
 import { ApiTags } from '@nestjs/swagger';
-import { Public } from 'src/auth/decorators/public.decorator';
 import { UserPayload } from 'src/auth/types';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 
@@ -30,7 +29,6 @@ export class NotificationsController {
     return this.notificationsService.findAll();
   }
 
-
   @Get('byUser')
   getNotificationsByUser(@CurrentUser() user: UserPayload) {
     return this.notificationsService.getNotificationsByUser(user.userId);
@@ -45,7 +43,6 @@ export class NotificationsController {
     return this.notificationsService.getUnread();
   }
 
-  
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.notificationsService.findOne(id);
@@ -68,7 +65,6 @@ export class NotificationsController {
   markAsRead(@Param('id') id: string) {
     return this.notificationsService.markAsRead(id);
   }
-
 
   @Patch('mark-as-watching/:id')
   markAsWatching(@Param('id') id: string) {

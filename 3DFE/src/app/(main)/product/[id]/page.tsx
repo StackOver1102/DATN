@@ -90,14 +90,14 @@ export default function ProductDetailPage() {
         enabled: !!id && !!product,
       }
     );
-    
+
   // Fetch banner data for product detail page
   const { data: bannersData = [] } = useFetchData<Banner[]>(
-    'banners/position/product_detail',
-    ['banners/position/product_detail']
+    "banners/position/product_detail",
+    ["banners/position/product_detail"]
   );
 
-  console.log(bannersData)
+  console.log(bannersData);
   // Fetch comments for the product
   const {
     data: comments,
@@ -424,15 +424,15 @@ export default function ProductDetailPage() {
                 <Heart className="w-5 h-5" />
               </button>
             </div>
-            
+
             {/* Ads Banner in Product Info */}
             <div className="mt-6 border-2 border-red-500 rounded-lg overflow-hidden">
-              <div className="h-20 w-full bg-red-100 flex items-center justify-center">
+              <div className="h-45 w-full bg-red-100 flex items-center justify-center">
                 {bannersData.length > 0 && bannersData[0]?.isActive ? (
                   <div className="w-full h-full">
-                    <Image 
-                      src={bannersData[0].imageUrl} 
-                      alt={bannersData[0].title || 'Advertisement'} 
+                    <Image
+                      src={bannersData[0].imageUrl}
+                      alt={bannersData[0].title || "Advertisement"}
                       width={0}
                       height={0}
                       sizes="100vw"
@@ -620,7 +620,6 @@ export default function ProductDetailPage() {
             <SimilarProductsSlider products={similarProducts} />
           </div>
         ) : null}
-      
       </div>
     </div>
   );

@@ -42,15 +42,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import {
-  Textarea
-} from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { User } from "../users/page";
@@ -58,13 +51,14 @@ import { formatNumber } from "@/lib/formatMoney";
 import Image from "next/image";
 import { toast } from "sonner";
 import { useNotifications } from "@/lib/hooks/useNotifications";
+import { CircleDollarSign } from "lucide-react";
 
 // Import RefundStatus enum from backend
 enum RefundStatus {
-  PENDING = 'pending',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-  COMPLETED = 'completed',
+  PENDING = "pending",
+  APPROVED = "approved",
+  REJECTED = "rejected",
+  COMPLETED = "completed",
 }
 
 interface Refund {
@@ -95,18 +89,20 @@ export default function RefundsPage() {
   const [activeTab, setActiveTab] = useState<string>("all");
   const [selectedRefund, setSelectedRefund] = useState<Refund | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [processingTab, setProcessingTab] = useState<"approve" | "reject">("approve");
+  const [processingTab, setProcessingTab] = useState<"approve" | "reject">(
+    "approve"
+  );
   const [adminNotes, setAdminNotes] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const {refundNoti, handleMarkAsRead} = useNotifications();
+  const { refundNoti, handleMarkAsRead } = useNotifications();
   const { data, isLoading, error, refetch } = useApiQuery<{
     data: Refund[];
   }>(
     ["refunds", activeTab],
     activeTab === "all" ? "/refunds" : `/refunds?status=${activeTab}`
   );
-  
+
   // Mutation for updating refund status
   const { mutate: updateRefundStatus, isPending: isUpdating } = useApiMutation<
     { data: Refund },
@@ -118,8 +114,10 @@ export default function RefundsPage() {
   const refunds =
     data?.data?.map((refund) => {
       // Check if this refund request has an unread notification
-      const isUnread = refundNoti?.some(noti => noti.originalId === refund._id && !noti.isRead);
-      
+      const isUnread = refundNoti?.some(
+        (noti) => noti.originalId === refund._id && !noti.isRead
+      );
+
       return {
         ...refund,
         id: refund._id,
@@ -196,8 +194,9 @@ export default function RefundsPage() {
       cell: ({ row }) => {
         const amount = row.getValue("amount") as number;
         return (
-          <div className="font-medium text-green-600">
-            {formatNumber(amount)} coin
+          <div className="font-mono font-semibold flex items-center gap-1">
+            {formatNumber(amount)}
+            <CircleDollarSign className="w-5 h-5 text-yellow-500" />
           </div>
         );
       },
@@ -216,7 +215,7 @@ export default function RefundsPage() {
       ),
       cell: ({ row }) => {
         const status = row.getValue("status") as RefundStatus;
-        
+
         switch (status) {
           case RefundStatus.PENDING:
             return (
@@ -226,7 +225,10 @@ export default function RefundsPage() {
             );
           case RefundStatus.APPROVED:
             return (
-              <Badge variant="default" className="bg-blue-500 flex items-center gap-1">
+              <Badge
+                variant="default"
+                className="bg-blue-500 flex items-center gap-1"
+              >
                 <IconCheck className="h-3 w-3" /> Đã duyệt
               </Badge>
             );
@@ -291,7 +293,9 @@ export default function RefundsPage() {
                 onClick={() => {
                   // Mark as read if unread
                   if (refund.isUnread) {
-                    const notification = refundNoti?.find(noti => noti.originalId === refund._id && !noti.isRead);
+                    const notification = refundNoti?.find(
+                      (noti) => noti.originalId === refund._id && !noti.isRead
+                    );
                     if (notification) {
                       handleMarkAsRead(notification._id);
                     }
@@ -315,7 +319,10 @@ export default function RefundsPage() {
                     onClick={() => {
                       // Mark as read if unread
                       if (refund.isUnread) {
-                        const notification = refundNoti?.find(noti => noti.originalId === refund._id && !noti.isRead);
+                        const notification = refundNoti?.find(
+                          (noti) =>
+                            noti.originalId === refund._id && !noti.isRead
+                        );
                         if (notification) {
                           handleMarkAsRead(notification._id);
                         }
@@ -420,7 +427,9 @@ export default function RefundsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Thông tin cơ bản</CardTitle>
+                    <CardTitle className="text-base">
+                      Thông tin cơ bản
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
@@ -430,25 +439,37 @@ export default function RefundsPage() {
                         switch (status) {
                           case RefundStatus.PENDING:
                             return (
-                              <Badge variant="outline" className="flex items-center gap-1 w-fit">
+                              <Badge
+                                variant="outline"
+                                className="flex items-center gap-1 w-fit"
+                              >
                                 <IconClock className="h-3 w-3" /> Chờ xử lý
                               </Badge>
                             );
                           case RefundStatus.APPROVED:
                             return (
-                              <Badge variant="default" className="bg-blue-500 flex items-center gap-1 w-fit">
+                              <Badge
+                                variant="default"
+                                className="bg-blue-500 flex items-center gap-1 w-fit"
+                              >
                                 <IconCheck className="h-3 w-3" /> Đã duyệt
                               </Badge>
                             );
                           case RefundStatus.COMPLETED:
                             return (
-                              <Badge variant="success" className="flex items-center gap-1 w-fit">
+                              <Badge
+                                variant="success"
+                                className="flex items-center gap-1 w-fit"
+                              >
                                 <IconCoin className="h-3 w-3" /> Đã hoàn tiền
                               </Badge>
                             );
                           case RefundStatus.REJECTED:
                             return (
-                              <Badge variant="destructive" className="flex items-center gap-1 w-fit">
+                              <Badge
+                                variant="destructive"
+                                className="flex items-center gap-1 w-fit"
+                              >
                                 <IconX className="h-3 w-3" /> Từ chối
                               </Badge>
                             );
@@ -459,7 +480,9 @@ export default function RefundsPage() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Mã yêu cầu</p>
-                      <p className="font-mono text-xs break-all">{selectedRefund._id}</p>
+                      <p className="font-mono text-xs break-all">
+                        {selectedRefund._id}
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Số tiền hoàn trả</p>
@@ -486,7 +509,9 @@ export default function RefundsPage() {
 
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Thông tin người dùng</CardTitle>
+                    <CardTitle className="text-base">
+                      Thông tin người dùng
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
@@ -495,16 +520,21 @@ export default function RefundsPage() {
                         href={`/dashboard/users/${selectedRefund.userId._id}`}
                         className="text-blue-600 hover:underline font-medium"
                       >
-                        {selectedRefund.userId.fullName || selectedRefund.userId.email}
+                        {selectedRefund.userId.fullName ||
+                          selectedRefund.userId.email}
                       </Link>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Email</p>
-                      <p className="font-medium">{selectedRefund.userId.email}</p>
+                      <p className="font-medium">
+                        {selectedRefund.userId.email}
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">ID khách hàng</p>
-                      <p className="font-mono text-xs break-all">{selectedRefund.userId._id}</p>
+                      <p className="font-mono text-xs break-all">
+                        {selectedRefund.userId._id}
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Đơn hàng</p>
@@ -512,7 +542,8 @@ export default function RefundsPage() {
                         href={`/dashboard/orders/${selectedRefund.orderId._id}/view`}
                         className="text-blue-600 hover:underline font-medium"
                       >
-                        {selectedRefund.orderId.productId?.name || selectedRefund.orderId._id}
+                        {selectedRefund.orderId.productId?.name ||
+                          selectedRefund.orderId._id}
                       </Link>
                     </div>
                   </CardContent>
@@ -525,7 +556,9 @@ export default function RefundsPage() {
                   <CardTitle className="text-base">Mô tả yêu cầu</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="whitespace-pre-line">{selectedRefund.description}</p>
+                  <p className="whitespace-pre-line">
+                    {selectedRefund.description}
+                  </p>
                 </CardContent>
               </Card>
 
@@ -533,10 +566,14 @@ export default function RefundsPage() {
               {selectedRefund.adminNotes && (
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Ghi chú của Admin</CardTitle>
+                    <CardTitle className="text-base">
+                      Ghi chú của Admin
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="whitespace-pre-line">{selectedRefund.adminNotes}</p>
+                    <p className="whitespace-pre-line">
+                      {selectedRefund.adminNotes}
+                    </p>
                   </CardContent>
                 </Card>
               )}
@@ -545,12 +582,17 @@ export default function RefundsPage() {
               {selectedRefund.images && selectedRefund.images.length > 0 && (
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Hình ảnh đính kèm</CardTitle>
+                    <CardTitle className="text-base">
+                      Hình ảnh đính kèm
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {selectedRefund.images.map((image, index) => (
-                        <div key={index} className="relative h-48 border rounded-md overflow-hidden">
+                        <div
+                          key={index}
+                          className="relative h-48 border rounded-md overflow-hidden"
+                        >
                           <Image
                             src={image}
                             alt={`Hình ảnh ${index + 1}`}
@@ -576,14 +618,21 @@ export default function RefundsPage() {
 
           {selectedRefund && selectedRefund.status === RefundStatus.PENDING ? (
             <div className="mt-6">
-              <Tabs value={processingTab} onValueChange={(v) => setProcessingTab(v as "approve" | "reject")}>
+              <Tabs
+                value={processingTab}
+                onValueChange={(v) =>
+                  setProcessingTab(v as "approve" | "reject")
+                }
+              >
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="approve">Chấp nhận</TabsTrigger>
                   <TabsTrigger value="reject">Từ chối</TabsTrigger>
                 </TabsList>
                 <TabsContent value="approve" className="mt-4 space-y-4">
                   <div>
-                    <h4 className="text-sm font-medium mb-2">Ghi chú (không bắt buộc)</h4>
+                    <h4 className="text-sm font-medium mb-2">
+                      Ghi chú (không bắt buộc)
+                    </h4>
                     <Textarea
                       placeholder="Nhập ghi chú cho việc chấp nhận yêu cầu hoàn tiền..."
                       value={adminNotes}
@@ -592,20 +641,25 @@ export default function RefundsPage() {
                     />
                   </div>
                   <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setIsDetailModalOpen(false)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsDetailModalOpen(false)}
+                    >
                       Hủy
                     </Button>
-                    <Button 
+                    <Button
                       onClick={() => {
                         setIsProcessing(true);
                         updateRefundStatus(
-                          { 
+                          {
                             status: RefundStatus.APPROVED,
-                            adminNotes: adminNotes.trim() || undefined
+                            adminNotes: adminNotes.trim() || undefined,
                           },
                           {
                             onSuccess: () => {
-                              toast.success("Yêu cầu hoàn tiền đã được chấp nhận");
+                              toast.success(
+                                "Yêu cầu hoàn tiền đã được chấp nhận"
+                              );
                               setIsDetailModalOpen(false);
                               setAdminNotes("");
                               refetch();
@@ -616,14 +670,14 @@ export default function RefundsPage() {
                             },
                             onSettled: () => {
                               setIsProcessing(false);
-                            }
+                            },
                           }
                         );
                       }}
                       disabled={isProcessing || isUpdating}
                       className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
                     >
-                      {(isProcessing || isUpdating) ? (
+                      {isProcessing || isUpdating ? (
                         <>
                           <Loading size="sm" variant="spinner" />
                           Đang xử lý...
@@ -639,7 +693,9 @@ export default function RefundsPage() {
                 </TabsContent>
                 <TabsContent value="reject" className="mt-4 space-y-4">
                   <div>
-                    <h4 className="text-sm font-medium mb-2">Lý do từ chối <span className="text-red-500">*</span></h4>
+                    <h4 className="text-sm font-medium mb-2">
+                      Lý do từ chối <span className="text-red-500">*</span>
+                    </h4>
                     <Textarea
                       placeholder="Nhập lý do từ chối yêu cầu hoàn tiền..."
                       value={adminNotes}
@@ -649,22 +705,25 @@ export default function RefundsPage() {
                     />
                   </div>
                   <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setIsDetailModalOpen(false)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsDetailModalOpen(false)}
+                    >
                       Hủy
                     </Button>
-                    <Button 
+                    <Button
                       variant="destructive"
                       onClick={() => {
                         if (!adminNotes.trim()) {
                           toast.error("Vui lòng nhập lý do từ chối");
                           return;
                         }
-                        
+
                         setIsProcessing(true);
                         updateRefundStatus(
-                          { 
+                          {
                             status: RefundStatus.REJECTED,
-                            adminNotes: adminNotes
+                            adminNotes: adminNotes,
                           },
                           {
                             onSuccess: () => {
@@ -679,14 +738,14 @@ export default function RefundsPage() {
                             },
                             onSettled: () => {
                               setIsProcessing(false);
-                            }
+                            },
                           }
                         );
                       }}
                       disabled={isProcessing || isUpdating}
                       className="flex items-center gap-2"
                     >
-                      {(isProcessing || isUpdating) ? (
+                      {isProcessing || isUpdating ? (
                         <>
                           <Loading size="sm" variant="spinner" />
                           Đang xử lý...
@@ -704,7 +763,10 @@ export default function RefundsPage() {
             </div>
           ) : (
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDetailModalOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsDetailModalOpen(false)}
+              >
                 Đóng
               </Button>
             </DialogFooter>

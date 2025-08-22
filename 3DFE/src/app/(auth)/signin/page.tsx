@@ -138,7 +138,7 @@ function SignInForm() {
                 </label>
                 <Link
                   href="/forgot-password"
-                  className="text-xs text-yellow-400 hover:underline"
+                  className="text-xs text-black hover:underline hover:text-blue-600"
                 >
                   forgot password
                 </Link>
@@ -205,7 +205,7 @@ function SignInForm() {
               Don&apos;t have an account?{" "}
               <Link
                 href="/signup"
-                className="font-medium text-yellow-400 hover:underline"
+                className="font-medium text-black hover:underline hover:text-blue-600"
               >
                 Sign Up
               </Link>

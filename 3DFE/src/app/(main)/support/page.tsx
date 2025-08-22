@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Send, Upload, X } from "lucide-react";
-import Image from "next/image";
+import Link from "next/link";
 import { supportApi } from "@/lib/api";
 import { toast } from "sonner";
 
@@ -69,10 +69,14 @@ export default function SupportPage() {
           message: "",
         });
         setUploadedFiles([]);
-        
-        toast.success("Thank you for your message! We will contact you as soon as possible.");
+
+        toast.success(
+          "Thank you for your message! We will contact you as soon as possible."
+        );
       } else {
-        toast.error(`Error: ${response.message || "Failed to submit support request"}`);
+        toast.error(
+          `Error: ${response.message || "Failed to submit support request"}`
+        );
       }
     } catch (error) {
       console.error("Support submission error:", error);
@@ -83,230 +87,192 @@ export default function SupportPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white relative overflow-hidden">
-      {/* Background Image */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1920&h=1080&fit=crop&crop=center"
-          alt="3D Interior Design"
-          fill
-          className="object-cover opacity-60"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/30" />
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 container mx-auto px-4 py-16 lg:py-24">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Left Side - Form */}
-          <div className="max-w-md mx-auto lg:mx-0">
-            <h1 className="text-3xl lg:text-4xl font-bold mb-3 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-              You Need Support?
-            </h1>
-            <p className="text-gray-300 mb-8 text-lg">
+    <div className="flex min-h-screen">
+      {/* Centered Form */}
+      <div className="w-full flex items-center justify-center px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-md space-y-8 py-12 px-6 sm:px-8 bg-white rounded-lg shadow-md">
+          <div className="text-center">
+            <h1 className="text-3xl font-medium mb-2">You Need Support?</h1>
+            <p className="text-base text-gray-700">
               Leave your information below. We will contact you as soon as
               possible.
             </p>
+          </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Name Field */}
-              <div>
+          <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+            {/* Name Field */}
+            <div className="space-y-2">
+              <label htmlFor="name" className="block text-sm font-medium">
+                Name
+              </label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                placeholder="Enter your name"
+                value={formData.name}
+                onChange={handleInputChange}
+                required
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-[#3A5B22] focus:border-[#3A5B22] focus:z-10 sm:text-sm"
+              />
+            </div>
+
+            {/* Phone Field */}
+            <div className="space-y-2">
+              <label htmlFor="phone" className="block text-sm font-medium">
+                Phone
+              </label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                placeholder="Enter your phone number"
+                value={formData.phone}
+                onChange={handleInputChange}
+                required
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-[#3A5B22] focus:border-[#3A5B22] focus:z-10 sm:text-sm"
+              />
+            </div>
+
+            {/* Email Field */}
+            <div className="space-y-2">
+              <label htmlFor="email" className="block text-sm font-medium">
+                Email address
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="Enter your email"
+                value={formData.email}
+                onChange={handleInputChange}
+                required
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-[#3A5B22] focus:border-[#3A5B22] focus:z-10 sm:text-sm"
+              />
+            </div>
+
+            {/* Message Field */}
+            <div className="space-y-2">
+              <label htmlFor="message" className="block text-sm font-medium">
+                Message
+              </label>
+              <textarea
+                id="message"
+                name="message"
+                placeholder="Enter your message"
+                value={formData.message}
+                onChange={handleInputChange}
+                rows={5}
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-[#3A5B22] focus:border-[#3A5B22] focus:z-10 sm:text-sm resize-none"
+              />
+            </div>
+
+            {/* File Upload Field */}
+            <div className="space-y-2">
+              <label
+                htmlFor="file-upload"
+                className="block text-sm font-medium"
+              >
+                Attachments
+              </label>
+              <div className="relative">
                 <input
-                  type="text"
-                  name="name"
-                  placeholder="Name *"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-3 bg-transparent border border-gray-600 rounded-lg focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 text-white placeholder-gray-400 transition-colors"
+                  type="file"
+                  id="file-upload"
+                  multiple
+                  accept="image/*,.pdf"
+                  onChange={handleFileUpload}
+                  className="hidden"
                 />
+                <label
+                  htmlFor="file-upload"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-within:border-[#3A5B22] text-gray-700 cursor-pointer transition-colors flex items-center gap-3 hover:border-gray-400"
+                >
+                  <Upload className="w-5 h-5 text-gray-500" />
+                  <span className="text-gray-500 text-sm">
+                    Upload images or PDF (Max 5 files, 10MB each)
+                  </span>
+                </label>
               </div>
 
-              {/* Phone Field */}
-              <div>
-                <input
-                  type="tel"
-                  name="phone"
-                  placeholder="Phone *"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-3 bg-transparent border border-gray-600 rounded-lg focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 text-white placeholder-gray-400 transition-colors"
-                />
-              </div>
-
-              {/* Email Field */}
-              <div>
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Email *"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-3 bg-transparent border border-gray-600 rounded-lg focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 text-white placeholder-gray-400 transition-colors"
-                />
-              </div>
-
-              {/* Message Field */}
-              <div>
-                <textarea
-                  name="message"
-                  placeholder="Message"
-                  value={formData.message}
-                  onChange={handleInputChange}
-                  rows={5}
-                  className="w-full px-4 py-3 bg-transparent border border-gray-600 rounded-lg focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 text-white placeholder-gray-400 resize-none transition-colors"
-                />
-              </div>
-
-              {/* File Upload Field */}
-              <div>
-                <div className="relative">
-                  <input
-                    type="file"
-                    id="file-upload"
-                    multiple
-                    accept="image/*,.pdf"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                  <label
-                    htmlFor="file-upload"
-                    className="w-full px-4 py-3 bg-transparent border border-gray-600 rounded-lg focus-within:border-cyan-400 text-white cursor-pointer transition-colors flex items-center gap-3 hover:border-gray-500"
-                  >
-                    <Upload className="w-5 h-5 text-gray-400" />
-                    <span className="text-gray-400">
-                      Upload images or PDF (Max 5 files, 10MB each)
-                    </span>
-                  </label>
-                </div>
-
-                {/* Uploaded Files Preview */}
-                {uploadedFiles.length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    {uploadedFiles.map((file, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between bg-gray-800/50 rounded-lg px-3 py-2 border border-gray-700"
-                      >
-                        <div className="flex items-center gap-2">
-                          {file.type.startsWith("image/") ? (
-                            <div className="w-8 h-8 bg-cyan-500/20 rounded flex items-center justify-center">
-                              <span className="text-cyan-400 text-xs">IMG</span>
-                            </div>
-                          ) : (
-                            <div className="w-8 h-8 bg-red-500/20 rounded flex items-center justify-center">
-                              <span className="text-red-400 text-xs">PDF</span>
-                            </div>
-                          )}
-                          <span className="text-white text-sm truncate max-w-[200px]">
-                            {file.name}
-                          </span>
-                          <span className="text-gray-400 text-xs">
-                            ({(file.size / 1024 / 1024).toFixed(1)}MB)
-                          </span>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeFile(index)}
-                          className="text-gray-400 hover:text-red-400 p-1 h-auto"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
+              {/* Uploaded Files Preview */}
+              {uploadedFiles.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {uploadedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between bg-gray-100 rounded-lg px-3 py-2 border border-gray-200"
+                    >
+                      <div className="flex items-center gap-2">
+                        {file.type.startsWith("image/") ? (
+                          <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                            <span className="text-blue-600 text-xs">IMG</span>
+                          </div>
+                        ) : (
+                          <div className="w-8 h-8 bg-red-100 rounded flex items-center justify-center">
+                            <span className="text-red-600 text-xs">PDF</span>
+                          </div>
+                        )}
+                        <span className="text-gray-700 text-sm truncate max-w-[200px]">
+                          {file.name}
+                        </span>
+                        <span className="text-gray-500 text-xs">
+                          ({(file.size / 1024 / 1024).toFixed(1)}MB)
+                        </span>
                       </div>
-                    ))}
-                  </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFile(index)}
+                        className="text-gray-500 hover:text-red-600 p-1 h-auto"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full py-2 px-4 border border-transparent text-sm font-bold rounded-lg text-yellow-400 bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3A5B22] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <div className="flex items-center justify-center gap-2">
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin w-4 h-4 border-2 border-yellow-400 border-t-transparent rounded-full" />
+                    <span>Sending...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    <span>Submit</span>
+                  </>
                 )}
               </div>
+            </Button>
+          </form>
 
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold text-lg rounded-lg transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+          {/* Back to Home Link */}
+          <div className="flex items-center justify-center mt-6">
+            <Link
+              href="/"
+              className="flex items-center justify-center px-6 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3A5B22]"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 mr-2"
+                viewBox="0 0 20 20"
+                fill="currentColor"
               >
-                <div className="flex items-center justify-center gap-2">
-                  {isSubmitting ? (
-                    <>
-                      <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
-                      SENDING...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-5 h-5" />
-                      SEND
-                    </>
-                  )}
-                </div>
-              </Button>
-            </form>
-          </div>
-
-          {/* Right Side - 3D Model Showcase */}
-          <div className="hidden lg:block">
-            <div className="relative">
-              {/* Main Featured Image */}
-              <div className="relative overflow-hidden rounded-2xl shadow-2xl">
-                <Image
-                  src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600&h=400&fit=crop&crop=center"
-                  alt="Modern Bedroom 3D Model"
-                  width={800}
-                  height={400}
-                  className="object-cover"
-                />
-              </div>
-
-              {/* Floating Cards */}
-              <div className="absolute -top-6 -left-6 bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
-                <div className="text-cyan-400 font-semibold text-sm">
-                  Premium Models
-                </div>
-                <div className="text-white text-xs">High Quality 3D Assets</div>
-              </div>
-
-              <div className="absolute -bottom-6 -right-6 bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
-                <div className="text-blue-400 font-semibold text-sm">
-                  Support 24/7
-                </div>
-                <div className="text-white text-xs">Always Here to Help</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Section */}
-        <div className="mt-16 lg:mt-24 text-center">
-          <div className="max-w-2xl mx-auto">
-            <h2 className="text-2xl lg:text-3xl font-bold mb-4 text-white">
-              Welcome to the official website channel 3D Blue Model Pro
-            </h2>
-            <p className="text-gray-300 text-lg">
-              Every day we publish new and attractive 3D models.
-            </p>
-          </div>
-
-          {/* Quick Links */}
-          <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
-            <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-              <h3 className="text-cyan-400 font-semibold mb-2">Categories</h3>
-              <p className="text-gray-300 text-sm">13+ Model Categories</p>
-            </div>
-            <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-              <h3 className="text-cyan-400 font-semibold mb-2">Quality</h3>
-              <p className="text-gray-300 text-sm">Premium 3D Assets</p>
-            </div>
-            <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-              <h3 className="text-cyan-400 font-semibold mb-2">Formats</h3>
-              <p className="text-gray-300 text-sm">Multiple File Types</p>
-            </div>
-            <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-              <h3 className="text-cyan-400 font-semibold mb-2">Support</h3>
-              <p className="text-gray-300 text-sm">24/7 Customer Care</p>
-            </div>
+                <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+              </svg>
+              Back to Home
+            </Link>
           </div>
         </div>
       </div>

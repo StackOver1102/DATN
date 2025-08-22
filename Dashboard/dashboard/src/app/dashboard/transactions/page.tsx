@@ -54,6 +54,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { CircleDollarSign } from "lucide-react";
 
 interface Transaction {
   _id: string;
@@ -246,12 +247,13 @@ export default function TransactionsPage() {
 
         return (
           <div
-            className={`font-medium ${
+            className={`font-mono font-semibold flex items-center gap-1 ${
               isPositive ? "text-green-600" : "text-red-600"
             }`}
           >
             {isPositive ? "+" : "-"}
-            {formatNumber(displayAmount)} coin
+            {formatNumber(displayAmount)}
+            <CircleDollarSign className="w-5 h-5 text-yellow-500" />
           </div>
         );
       },

@@ -16,6 +16,9 @@ import {
   IconTrash,
   IconUser,
   IconFileSpreadsheet,
+  IconArrowDown,
+  IconArrowUp,
+  IconSelector,
 } from "@tabler/icons-react";
 import * as XLSX from "xlsx";
 import {
@@ -176,29 +179,99 @@ export default function UsersPage() {
     },
     {
       accessorKey: "_id",
-      header: "ID",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="flex items-center"
+          >
+            ID
+            {column.getIsSorted() === "desc" ? (
+              <IconArrowDown className="ml-2 h-4 w-4" />
+            ) : column.getIsSorted() === "asc" ? (
+              <IconArrowUp className="ml-2 h-4 w-4" />
+            ) : (
+              <IconSelector className="ml-2 h-4 w-4" />
+            )}
+          </Button>
+        );
+      },
       cell: ({ row }) => (
         <div className="font-mono text-xs">{row.getValue("_id")}</div>
       ),
     },
     {
       accessorKey: "fullName",
-      header: "Họ và tên",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="flex items-center"
+          >
+            Họ và tên
+            {column.getIsSorted() === "desc" ? (
+              <IconArrowDown className="ml-2 h-4 w-4" />
+            ) : column.getIsSorted() === "asc" ? (
+              <IconArrowUp className="ml-2 h-4 w-4" />
+            ) : (
+              <IconSelector className="ml-2 h-4 w-4" />
+            )}
+          </Button>
+        );
+      },
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <IconUser className="h-4 w-4 text-muted-foreground" />
           <span className="font-medium">{row.getValue("fullName")}</span>
         </div>
       ),
+      sortingFn: "text",
     },
     {
       accessorKey: "email",
-      header: "Email",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="flex items-center"
+          >
+            Email
+            {column.getIsSorted() === "desc" ? (
+              <IconArrowDown className="ml-2 h-4 w-4" />
+            ) : column.getIsSorted() === "asc" ? (
+              <IconArrowUp className="ml-2 h-4 w-4" />
+            ) : (
+              <IconSelector className="ml-2 h-4 w-4" />
+            )}
+          </Button>
+        );
+      },
       cell: ({ row }) => <div>{row.getValue("email")}</div>,
+      sortingFn: "text",
     },
     {
       accessorKey: "role",
-      header: "Vai trò",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="flex items-center"
+          >
+            Vai trò
+            {column.getIsSorted() === "desc" ? (
+              <IconArrowDown className="ml-2 h-4 w-4" />
+            ) : column.getIsSorted() === "asc" ? (
+              <IconArrowUp className="ml-2 h-4 w-4" />
+            ) : (
+              <IconSelector className="ml-2 h-4 w-4" />
+            )}
+          </Button>
+        );
+      },
       cell: ({ row }) => {
         const role = row.getValue("role") as string;
         return (
@@ -211,10 +284,28 @@ export default function UsersPage() {
         );
       },
       filterFn: booleanFilterFn,
+      sortingFn: "text",
     },
     {
       accessorKey: "balance",
-      header: "Số dư",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="flex items-center"
+          >
+            Số dư
+            {column.getIsSorted() === "desc" ? (
+              <IconArrowDown className="ml-2 h-4 w-4" />
+            ) : column.getIsSorted() === "asc" ? (
+              <IconArrowUp className="ml-2 h-4 w-4" />
+            ) : (
+              <IconSelector className="ml-2 h-4 w-4" />
+            )}
+          </Button>
+        );
+      },
       cell: ({ row }) => {
         const balance = parseFloat(row.getValue("balance"));
         return (
@@ -224,22 +315,59 @@ export default function UsersPage() {
           </div>
         );
       },
+      sortingFn: "basic",
     },
     {
       accessorKey: "totalSpent",
-      header: "Số tiền đã tiêu",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="flex items-center"
+          >
+            Số tiền đã tiêu
+            {column.getIsSorted() === "desc" ? (
+              <IconArrowDown className="ml-2 h-4 w-4" />
+            ) : column.getIsSorted() === "asc" ? (
+              <IconArrowUp className="ml-2 h-4 w-4" />
+            ) : (
+              <IconSelector className="ml-2 h-4 w-4" />
+            )}
+          </Button>
+        );
+      },
       cell: ({ row }) => {
         const totalSpent = parseFloat(row.getValue("totalSpent"));
         return (
-          <div className="font-mono">
-            {totalSpent.toLocaleString("vi-VN")} coin
+          <div className="font-mono flex items-center gap-1">
+            {totalSpent.toLocaleString("vi-VN")}
+            <CircleDollarSign className="w-5 h-5 text-yellow-500" />
           </div>
         );
       },
+      sortingFn: "basic",
     },
     {
       accessorKey: "isDeleted",
-      header: "Trạng thái",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="flex items-center"
+          >
+            Trạng thái
+            {column.getIsSorted() === "desc" ? (
+              <IconArrowDown className="ml-2 h-4 w-4" />
+            ) : column.getIsSorted() === "asc" ? (
+              <IconArrowUp className="ml-2 h-4 w-4" />
+            ) : (
+              <IconSelector className="ml-2 h-4 w-4" />
+            )}
+          </Button>
+        );
+      },
       cell: ({ row }) => {
         const status = row.getValue("isDeleted") as boolean;
         return (
@@ -252,10 +380,28 @@ export default function UsersPage() {
         );
       },
       filterFn: booleanFilterFn,
+      sortingFn: "basic",
     },
     {
       accessorKey: "createdAt",
-      header: "Ngày tạo",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="flex items-center"
+          >
+            Ngày tạo
+            {column.getIsSorted() === "desc" ? (
+              <IconArrowDown className="ml-2 h-4 w-4" />
+            ) : column.getIsSorted() === "asc" ? (
+              <IconArrowUp className="ml-2 h-4 w-4" />
+            ) : (
+              <IconSelector className="ml-2 h-4 w-4" />
+            )}
+          </Button>
+        );
+      },
       cell: ({ row }) => {
         const date = new Date(row.getValue("createdAt"));
         return (
@@ -264,6 +410,7 @@ export default function UsersPage() {
           </div>
         );
       },
+      sortingFn: "datetime",
     },
     {
       id: "actions",

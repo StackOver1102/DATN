@@ -38,6 +38,7 @@ import { PageLoading, Loading } from "@/components/ui/loading";
 import { User } from "../users/page";
 import Link from "next/link";
 import { Product } from "@/interface/product";
+import { CircleDollarSign } from "lucide-react";
 
 interface Order {
   _id: string;
@@ -147,7 +148,10 @@ function OrdersPageContent() {
         const userName = userId.fullName || userId.email;
         return (
           <div className="flex items-center gap-2">
-            <Link href={`/dashboard/users/${userId._id}`} className="hover:underline text-blue-500">
+            <Link
+              href={`/dashboard/users/${userId._id}`}
+              className="hover:underline text-blue-500"
+            >
               <span className="font-medium">{userName}</span>
             </Link>
           </div>
@@ -162,7 +166,10 @@ function OrdersPageContent() {
         const productName = productId.name;
         return (
           <div className="flex items-center gap-2">
-            <Link href={`/dashboard/products/${productId._id}`} className="hover:underline text-blue-500">
+            <Link
+              href={`/dashboard/products/${productId._id}`}
+              className="hover:underline text-blue-500"
+            >
               <span className="font-medium">{productName}</span>
             </Link>
           </div>
@@ -175,8 +182,9 @@ function OrdersPageContent() {
       cell: ({ row }) => {
         const amount = parseFloat(row.getValue("totalAmount"));
         return (
-          <div className="font-mono font-semibold">
-            {amount.toLocaleString("vi-VN")} coin
+          <div className="font-mono font-semibold flex items-center gap-1">
+            {amount.toLocaleString("vi-VN")}
+            <CircleDollarSign className="w-5 h-5 text-yellow-500" />
           </div>
         );
       },

@@ -9,7 +9,6 @@ export type NotificationDocument = HydratedDocument<Notification>;
   timestamps: true,
 })
 export class Notification {
- 
   @Prop({ required: true })
   message: string;
 

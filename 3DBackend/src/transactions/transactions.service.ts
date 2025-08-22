@@ -444,7 +444,6 @@ export class TransactionsService {
     payload: Record<string, any>,
     headers: Record<string, string>,
   ): Promise<Record<string, any>> {
-
     // 1. Xác thực webhook từ PayPal (kiểm tra chữ ký)
     try {
       const isValid = await this.verifyPayPalWebhook(payload, headers);
@@ -552,6 +551,7 @@ export class TransactionsService {
       ).toString('base64');
 
       console.log('paypalClientId', this.paypalClientId);
+
       console.log('this.paypalSecret', this.paypalSecret);
 
       const response = await axios.post(
