@@ -288,7 +288,7 @@ function ProfilePageContent({
     [notificationData]
   );
 
-  const { post, patch } = useApi();
+  const {  patch } = useApi();
 
   // Function to handle avatar file selection
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
