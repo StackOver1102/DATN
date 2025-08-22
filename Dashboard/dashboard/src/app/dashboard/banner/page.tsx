@@ -74,10 +74,10 @@ export default function BannerPage() {
   >("banners", `/banners/${bannerToDelete?._id}`, "delete");
 
   // Toggle status mutation
-  const { mutate: toggleStatus, isPending: isToggling } = useApiMutation<
-    Banner,
-    {}
-  >("banners", "", "patch");
+  // const { mutate: toggleStatus, isPending: isToggling } = useApiMutation<
+  //   { success: boolean; message: string },
+  //   { id: string }
+  // >("banners", `/banners/${bannerToDelete?._id}/toggle-status`, "patch");
 
   // Handle delete confirmation
   const handleDeleteClick = (banner: Banner) => {
@@ -114,21 +114,28 @@ export default function BannerPage() {
   // Handle toggle status
   const handleToggleStatus = async (banner: Banner) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/banners/${banner._id}/toggle-status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
+      const response = await fetch(
+        `${
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"
+        }/banners/${banner._id}/toggle-status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
       if (response.ok) {
         bannerToasts.statusToggled();
         refetch();
       } else {
-        throw new Error('Failed to toggle status');
+        throw new Error("Failed to toggle status");
       }
     } catch (error) {
-      bannerToasts.error(error instanceof Error ? error.message : 'Unknown error');
+      bannerToasts.error(
+        error instanceof Error ? error.message : "Unknown error"
+      );
     }
   };
 
@@ -199,7 +206,10 @@ export default function BannerPage() {
       cell: ({ row }) => {
         const description = row.getValue("description") as string;
         return (
-          <div className="max-w-[200px] truncate text-muted-foreground" title={description}>
+          <div
+            className="max-w-[200px] truncate text-muted-foreground"
+            title={description}
+          >
             {description || "—"}
           </div>
         );
@@ -211,7 +221,7 @@ export default function BannerPage() {
       cell: ({ row }) => {
         const position = row.getValue("position") as string;
         return (
-          <Badge variant={getPositionVariant(position) as any}>
+          <Badge variant={getPositionVariant(position)}>
             {getPositionLabel(position)}
           </Badge>
         );
@@ -235,9 +245,7 @@ export default function BannerPage() {
       cell: ({ row }) => {
         const date = new Date(row.getValue("createdAt"));
         return (
-          <div className="text-sm">
-            {date.toLocaleDateString("vi-VN")}
-          </div>
+          <div className="text-sm">{date.toLocaleDateString("vi-VN")}</div>
         );
       },
     },
@@ -266,7 +274,7 @@ export default function BannerPage() {
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => handleToggleStatus(banner)}
-                disabled={isToggling}
+                // disabled={isToggling}
               >
                 {banner.isActive ? (
                   <EyeOff className="mr-2 h-4 w-4" />
@@ -366,8 +374,8 @@ export default function BannerPage() {
           <DialogHeader>
             <DialogTitle>Xác nhận xóa banner</DialogTitle>
             <DialogDescription>
-              Bạn có chắc chắn muốn xóa banner "{bannerToDelete?.title}"? 
-              Hành động này không thể hoàn tác.
+              Bạn có chắc chắn muốn xóa banner &quot;{bannerToDelete?.title}
+              &quot;? Hành động này không thể hoàn tác.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

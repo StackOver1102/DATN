@@ -14,7 +14,6 @@ import {
   IconEye,
   IconTrash,
   IconCheck,
-  IconX,
   IconBell,
 } from "@tabler/icons-react";
 import {
@@ -37,7 +36,6 @@ import { showSuccessToast, showErrorToast } from "@/lib/toast";
 import { format } from "date-fns";
 import { ApiResponse } from "@/interface/pagination";
 import { useNotifications } from "@/lib/hooks/useNotifications";
-
 
 interface Comment {
   _id: string;
@@ -66,28 +64,28 @@ export default function CommentsPage() {
   const [selectedComment, setSelectedComment] = useState<Comment | null>(null);
 
   // Fetch comments with populated user and product data
-  const { data, isLoading, error, refetch } = useApiQuery<ApiResponse<Comment[]>>(
-    "comments",
-    "/comments",
-    {
-      refetchOnMount: true,
-      staleTime: 0, // Consider data always stale
-    }
-  );
+  const { data, isLoading, error, refetch } = useApiQuery<
+    ApiResponse<Comment[]>
+  >("comments", "/comments", {
+    refetchOnMount: true,
+    staleTime: 0, // Consider data always stale
+  });
 
-  const {commentNoti, handleMarkAsRead} = useNotifications();
+  const { commentNoti, handleMarkAsRead } = useNotifications();
 
   // Helper function to check if comment has notification
   const hasNotification = (commentId: string) => {
-    return commentNoti.some(notification => 
-      notification.originalId === commentId && !notification.isRead
+    return commentNoti.some(
+      (notification) =>
+        notification.originalId === commentId && !notification.isRead
     );
   };
 
   // Helper function to get notification for comment
   const getNotificationForComment = (commentId: string) => {
-    return commentNoti.find(notification => 
-      notification.originalId === commentId && !notification.isRead
+    return commentNoti.find(
+      (notification) =>
+        notification.originalId === commentId && !notification.isRead
     );
   };
 
@@ -100,7 +98,7 @@ export default function CommentsPage() {
   // Approve comment mutation
   const { mutate: approveComment, isPending: isApproving } = useApiMutation<
     Comment,
-    {}
+    { id: string }
   >("comments", `/comments/approve/${selectedComment?._id}`, "patch");
 
   // Handle delete confirmation
@@ -113,7 +111,7 @@ export default function CommentsPage() {
   const handleViewClick = async (comment: Comment) => {
     setSelectedComment(comment);
     setViewModalOpen(true);
-    
+
     // Mark notification as read if it exists
     const notification = getNotificationForComment(comment._id);
     if (notification) {
@@ -146,7 +144,7 @@ export default function CommentsPage() {
     if (!selectedComment) return;
 
     approveComment(
-      {},
+      { id: selectedComment._id },
       {
         onSuccess: () => {
           showSuccessToast("Bình luận đã được phê duyệt thành công");
@@ -163,7 +161,7 @@ export default function CommentsPage() {
   // Format date
   const formatDate = (dateString: string) => {
     try {
-      return format(new Date(dateString), 'dd/MM/yyyy HH:mm');
+      return format(new Date(dateString), "dd/MM/yyyy HH:mm");
     } catch (e) {
       return dateString;
     }
@@ -196,16 +194,24 @@ export default function CommentsPage() {
         const user = row.original.userId;
         const comment = row.original;
         const hasNewNotification = hasNotification(comment._id);
-        
+
         return (
-          <div className={`relative ${hasNewNotification ? 'bg-yellow-50 p-2 rounded border-l-4 border-yellow-400' : ''}`}>
+          <div
+            className={`relative ${
+              hasNewNotification
+                ? "bg-yellow-50 p-2 rounded border-l-4 border-yellow-400"
+                : ""
+            }`}
+          >
             <div className="flex items-center gap-2">
               <div className="flex-1">
                 <div className="font-medium">{user?.fullName || "N/A"}</div>
-                <div className="text-xs text-gray-500">{user?.email || "N/A"}</div>
+                <div className="text-xs text-gray-500">
+                  {user?.email || "N/A"}
+                </div>
               </div>
               {hasNewNotification && (
-                <div 
+                <div
                   className="flex items-center cursor-pointer hover:bg-yellow-200 p-1 rounded transition-colors"
                   onClick={async (e) => {
                     e.stopPropagation();
@@ -233,9 +239,7 @@ export default function CommentsPage() {
       cell: ({ row }) => {
         const product = row.original.productId;
         return (
-          <div className="max-w-[200px] truncate">
-            {product?.name || "N/A"}
-          </div>
+          <div className="max-w-[200px] truncate">{product?.name || "N/A"}</div>
         );
       },
     },
@@ -473,10 +477,7 @@ export default function CommentsPage() {
             </div>
           )}
           <DialogFooter className="flex sm:justify-between">
-            <Button
-              variant="outline"
-              onClick={() => setViewModalOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setViewModalOpen(false)}>
               Đóng
             </Button>
             {selectedComment && !selectedComment.isApproved && (

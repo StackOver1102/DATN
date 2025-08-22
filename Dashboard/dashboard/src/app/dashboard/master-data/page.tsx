@@ -11,7 +11,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MoreHorizontal, Edit, Trash2, Eye } from "lucide-react";
@@ -75,7 +81,7 @@ export default function ContentManagementPage() {
     window.location.href = `/dashboard/master-data/edit?tab=${type}&id=${id}`;
   };
 
-  const handleView = (id: string, content: string) => {
+  const handleView = () => {
     // Open a modal or navigate to view the content
     toast.info("View functionality will be implemented soon");
   };
@@ -84,7 +90,9 @@ export default function ContentManagementPage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Content Management</h1>
-        <Button onClick={() => window.location.href = "/dashboard/master-data/edit"}>
+        <Button
+          onClick={() => (window.location.href = "/dashboard/master-data/edit")}
+        >
           Add New Content
         </Button>
       </div>
@@ -92,9 +100,7 @@ export default function ContentManagementPage() {
       <Card>
         <CardHeader>
           <CardTitle>Website Content</CardTitle>
-          <CardDescription>
-            View and manage all website content
-          </CardDescription>
+          <CardDescription>View and manage all website content</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -118,11 +124,14 @@ export default function ContentManagementPage() {
                     <TableRow key={item._id}>
                       <TableCell className="font-medium">{item.name}</TableCell>
                       <TableCell>
-                        {contentTypes.find(t => t.value === item.type)?.label || item.type}
+                        {contentTypes.find((t) => t.value === item.type)
+                          ?.label || item.type}
                       </TableCell>
                       <TableCell>
                         {item.isActive ? (
-                          <Badge variant="success" className="bg-green-500">Active</Badge>
+                          <Badge variant="success" className="bg-green-500">
+                            Active
+                          </Badge>
                         ) : (
                           <Badge variant="destructive">Inactive</Badge>
                         )}
@@ -141,7 +150,7 @@ export default function ContentManagementPage() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuItem
-                              onClick={() => handleView(item._id, item.content || "")}
+                              onClick={() => handleView()}
                               className="cursor-pointer"
                             >
                               <Eye className="mr-2 h-4 w-4" />
@@ -162,7 +171,8 @@ export default function ContentManagementPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8">
-                      No content found. Click the "Add New Content" button to create content.
+                      No content found. Click the &quot;Add New Content&quot;
+                      button to create content.
                     </TableCell>
                   </TableRow>
                 )}
