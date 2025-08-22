@@ -125,7 +125,7 @@ export class AuthService {
 
   async loginByVQR(loginDto: LoginDto) {
     const { email, password } = loginDto;
-
+ 
     const user = await this.usersService.findByEmail(email);
 
     if (!user) {
@@ -140,6 +140,7 @@ export class AuthService {
     const payload: { username: string } = {
       username: email,
     };
+
 
     return {
       access_token: this.jwtService.sign(payload),

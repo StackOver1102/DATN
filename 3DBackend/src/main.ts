@@ -39,19 +39,8 @@ async function bootstrap() {
   // Apply transform interceptor globally
   app.useGlobalInterceptors(new TransformInterceptor());
 
-  // Apply exception filter globally (except for VQR module)
-  const httpExceptionFilter = new HttpExceptionFilter();
-  app.useGlobalFilters({
-    catch(exception: any, host: any) {
-      const ctx = host.switchToHttp();
-      const req = ctx.getRequest();
-      // Skip VQR module
-      if (req.url.startsWith('/api/v1/vqr')) {
-        return;
-      }
-      return httpExceptionFilter.catch(exception, host);
-    }
-  });
+  // Apply exception filter globally
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   // Tạo thư mục uploads nếu chưa tồn tại
   const uploadsDir = join(process.cwd(), 'uploads');

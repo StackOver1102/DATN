@@ -23,9 +23,15 @@ export class TransformInterceptor<T>
   intercept(
     context: ExecutionContext,
     next: CallHandler,
-  ): Observable<ApiResponse<T>> {
+  ): Observable<ApiResponse<T> | any> {
     const ctx = context.switchToHttp();
     const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest();
+    
+    // Skip transformation for VQR module
+    if (request.url.startsWith('/api/v1/vqr')) {
+      return next.handle();
+    }
 
     const statusCode = response.statusCode || HttpStatus.OK;
 
