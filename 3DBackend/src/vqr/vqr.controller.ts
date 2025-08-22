@@ -1,11 +1,9 @@
-import { Controller, Post, Headers, UnauthorizedException, UseFilters } from '@nestjs/common';
-import { HttpExceptionFilter } from '../common/filters/http-exception.filter';
+import { Controller, Post, Headers, UnauthorizedException } from '@nestjs/common';
 import { VqrService } from './vqr.service';
 // import { CreateVqrDto } from './dto/create-vqr.dto';
 // import { UpdateVqrDto } from './dto/update-vqr.dto';
 
 @Controller('vqr')
-@UseFilters(new HttpExceptionFilter())
 export class VqrController {
   constructor(private readonly vqrService: VqrService) { }
 
