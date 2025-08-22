@@ -5,7 +5,7 @@ import { Container } from '@/components/ui/container';
 async function getTermsContent() {
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333'}/master-data/type/terms-of-use`, {
-      cache: 'no-store' // Don't cache this request
+      next: { revalidate: 3600 } // Revalidate every hour
     });
     
     if (!response.ok) {

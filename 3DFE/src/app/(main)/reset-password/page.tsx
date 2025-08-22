@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -235,6 +235,12 @@ function ResetPasswordForm() {
 
 export default function ResetPassword() {
   return (
-    <ResetPasswordForm />
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <Loading variant="spinner" size="lg" text="Đang tải..." />
+      </div>
+    }>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

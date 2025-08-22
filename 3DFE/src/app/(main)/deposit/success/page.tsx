@@ -14,10 +14,26 @@ import { useUserProfile } from "@/lib/hooks/useAuth";
 function DepositSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: session, update: updateSession } = useSession();
+  const session = useSession();
   const [isProcessing, setIsProcessing] = useState(true);
   const [isSuccess, setIsSuccess] = useState(false);
   const [newBalance, setNewBalance] = useState<number | null>(null);
+  
+  // Safely destructure session data and update function
+  const sessionData = session?.data;
+  const updateSession = session?.update;
+  
+  // Access token from session data
+  // Using a more specific type for the session user
+  interface SessionUser {
+    id?: string;
+    email?: string | null;
+    name?: string | null;
+    image?: string | null;
+    token?: string;
+  }
+  
+  const accessToken = (sessionData?.user as SessionUser)?.token;
 
   // Get the PayPal order ID from the URL query parameters
   const paypalOrderId = searchParams.get("token");
@@ -35,15 +51,17 @@ function DepositSuccessContent() {
         setIsProcessing(true);
 
         // Check if we have a session and token
-        if (!session || !session.accessToken) {
+        if (!sessionData || !accessToken) {
           console.error("No session or access token available");
 
           // Wait a moment and try to get the session again (in case it's still loading)
           setTimeout(async () => {
-            await updateSession();
+            if (updateSession) {
+              await updateSession();
+            }
 
             // If we still don't have a session after update, redirect to login
-            if (!session || !session.accessToken) {
+            if (!sessionData || !accessToken) {
               toast.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại");
               router.push(
                 "/signin?callbackUrl=" +
@@ -53,7 +71,7 @@ function DepositSuccessContent() {
             } else {
               // If we now have a session, proceed with payment processing
               processPaymentWithToken(
-                session.accessToken,
+                accessToken,
                 paypalOrderId as string
               );
             }
@@ -62,7 +80,7 @@ function DepositSuccessContent() {
         }
 
         // Process payment with the token
-        processPaymentWithToken(session.accessToken, paypalOrderId as string);
+        processPaymentWithToken(accessToken, paypalOrderId as string);
       } catch (error: unknown) {
         console.error("Error processing payment:", error);
         toast.error(
@@ -123,7 +141,7 @@ function DepositSuccessContent() {
     }
 
     processPayment();
-  }, [paypalOrderId, session, router, updateSession, refetchProfile]);
+  }, [paypalOrderId, sessionData, accessToken, router, updateSession, refetchProfile]);
 
   return (
     <div className="container mx-auto py-12 max-w-3xl">

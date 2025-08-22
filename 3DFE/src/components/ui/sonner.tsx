@@ -4,7 +4,9 @@ import { useTheme } from "next-themes"
 import { Toaster as Sonner, ToasterProps } from "sonner"
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
+  // Safely access theme with fallback
+  const themeResult = useTheme()
+  const theme = themeResult?.theme || "system"
 
   return (
     <Sonner
