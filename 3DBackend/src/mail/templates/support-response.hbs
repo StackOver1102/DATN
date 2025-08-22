@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Phản hồi yêu cầu hỗ trợ</title>
+  <title>Support Request Response</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -62,36 +62,36 @@
 <body>
   <div class="container">
     <div class="header">
-      <h1>Phản hồi cho yêu cầu hỗ trợ của bạn</h1>
+      <h1>Response to Your Support Request</h1>
     </div>
     <div class="content">
-      <p>Xin chào {{name}},</p>
-      <p>Chúng tôi đã xem xét và có phản hồi cho yêu cầu hỗ trợ của bạn.</p>
+      <p>Hello {{name}},</p>
+      <p>We have reviewed and have a response to your support request.</p>
       
       <div class="info">
-        <p><strong>Mã yêu cầu:</strong> {{requestId}}</p>
+        <p><strong>Request ID:</strong> {{requestId}}</p>
       </div>
 
-      <h3>Yêu cầu của bạn:</h3>
+      <h3>Your Request:</h3>
       <div class="message-box">
         <p>{{message}}</p>
       </div>
 
-      <h3>Phản hồi của chúng tôi:</h3>
+      <h3>Our Response:</h3>
       <div class="response-box">
         <p>{{response}}</p>
       </div>
 
-      <p>Nếu bạn có thêm câu hỏi hoặc cần hỗ trợ thêm, vui lòng không ngần ngại liên hệ lại với chúng tôi bằng cách trả lời email này hoặc tạo yêu cầu hỗ trợ mới.</p>
+      <p>If you have additional questions or need further assistance, please don't hesitate to contact us by replying to this email or creating a new support request.</p>
       
-      <a href="{{frontendUrl}}/support" class="button">Tạo yêu cầu hỗ trợ mới</a>
+      <a href="{{frontendUrl}}/support" class="button">Create New Support Request</a>
       
-      <p>Trân trọng,<br>Đội ngũ hỗ trợ 3DVN</p>
+      <p>Best regards,<br>The 3DVN Support Team</p>
     </div>
     <div class="footer">
-      <p>© {{year}} 3DVN. Tất cả các quyền được bảo lưu.</p>
-      <p>Email này được gửi tới {{email}}</p>
+      <p>© {{year}} 3DVN. All rights reserved.</p>
+      <p>This email was sent to {{email}}</p>
     </div>
   </div>
 </body>
-</html> 
+</html>

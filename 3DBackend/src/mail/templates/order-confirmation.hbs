@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Xác nhận đơn hàng</title>
+  <title>Order Confirmation</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -73,34 +73,34 @@
 <body>
   <div class="container">
     <div class="header">
-      <h1>Xác nhận đơn hàng</h1>
+      <h1>Order Confirmation</h1>
     </div>
     <div class="content">
-      <p>Xin chào {{name}},</p>
-      <p>Cảm ơn bạn đã đặt hàng tại 3DVN. Đơn hàng của bạn đã được xác nhận và đang được xử lý.</p>
+      <p>Hello {{name}},</p>
+      <p>Thank you for your order at 3DVN. Your order has been confirmed and is being processed.</p>
       
       <div class="order-details">
-        <h3>Chi tiết đơn hàng</h3>
-        <p><strong>Mã đơn hàng:</strong> {{orderId}}</p>
-        <p><strong>Ngày đặt hàng:</strong> {{date}}</p>
+        <h3>Order Details</h3>
+        <p><strong>Order ID:</strong> {{orderId}}</p>
+        <p><strong>Order Date:</strong> {{date}}</p>
         
         <div class="order-summary">
-          <p class="total">Tổng thanh toán: {{amount}} VNĐ</p>
+          <p class="total">Total Payment: {{amount}} VND</p>
         </div>
       </div>
 
-      <p>Bạn có thể theo dõi trạng thái đơn hàng của mình bằng cách nhấp vào nút bên dưới.</p>
+      <p>You can track your order status by clicking the button below.</p>
       
-      <a href="{{frontendUrl}}/orders/{{orderId}}" class="button">Xem đơn hàng</a>
+      <a href="{{frontendUrl}}/orders/{{orderId}}" class="button">View Order</a>
       
-      <p>Nếu bạn có bất kỳ câu hỏi nào về đơn hàng của mình, vui lòng liên hệ với chúng tôi.</p>
+      <p>If you have any questions about your order, please contact us.</p>
       
-      <p>Trân trọng,<br>Đội ngũ 3DVN</p>
+      <p>Best regards,<br>The 3DVN Team</p>
     </div>
     <div class="footer">
-      <p>© {{year}} 3DVN. Tất cả các quyền được bảo lưu.</p>
-      <p>Email này được gửi tới {{email}}</p>
+      <p>© {{year}} 3DVN. All rights reserved.</p>
+      <p>This email was sent to {{email}}</p>
     </div>
   </div>
 </body>
-</html> 
+</html>
