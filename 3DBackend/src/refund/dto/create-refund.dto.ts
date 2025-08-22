@@ -12,5 +12,6 @@ export class CreateRefundDto {
 
   @IsOptional()
   @IsString({ each: true })
-  images?: string[];
+  attachments?: string[];
+  
 }

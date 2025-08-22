@@ -189,17 +189,6 @@ const data = {
     },
   ],
   navSecondary: [
-    {
-      title: "Settings",
-      url: "/dashboard/settings",
-      icon: IconSettings,
-    },
-    // Removed Support from here as it's now in the main nav
-    {
-      title: "Search",
-      url: "/dashboard/search",
-      icon: IconSearch,
-    },
   ],
   documents: [
     {
@@ -283,14 +272,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     });
 
     // Check secondary navigation
-    data.navSecondary.forEach((item, index) => {
-      if (isPathActive(item.url, pathname)) {
-        const specificity = item.url.length;
-        if (specificity > bestMatch.specificity) {
-          bestMatch = { type: "secondary", index, url: item.url, specificity };
-        }
-      }
-    });
+    // data?.navSecondary?.forEach((item, index) => {
+    //   if (isPathActive(item.url, pathname)) {
+    //     const specificity = item.url.length;
+    //     if (specificity > bestMatch.specificity) {
+    //       bestMatch = { type: "secondary", index, url: item.url, specificity };
+    //     }
+    //   }
+    // });
 
     return bestMatch;
   };
@@ -321,10 +310,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // For now, we're using the flat navigation structure
 
   // Update secondary nav items with isActive property
-  const secondaryWithActive = data.navSecondary.map((item, index) => ({
-    ...item,
-    isActive: bestMatch.type === "secondary" && bestMatch.index === index,
-  }));
+  // const secondaryWithActive = data.navSecondary.map((item, index) => ({
+  //   ...item,
+  //   isActive: bestMatch.type === "secondary" && bestMatch.index === index,
+  // }));
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -337,7 +326,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             >
               <Link href="/dashboard">
                 <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">3D Models Admin</span>
+                <span className="text-base font-semibold">3DVN Models Admin</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -345,7 +334,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navMainWithActive} />
-        <NavSecondary items={secondaryWithActive} className="mt-auto" />
+        {/* <NavSecondary items={secondaryWithActive} className="mt-auto" /> */}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />

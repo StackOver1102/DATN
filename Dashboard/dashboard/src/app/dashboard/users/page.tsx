@@ -311,7 +311,7 @@ export default function UsersPage() {
         return (
           <div className="font-mono flex items-center gap-1">
             {balance.toLocaleString("vi-VN")}
-            <CircleDollarSign className="w-5 h-5 text-yellow-500" />
+            <CircleDollarSign className="w-3 h-3 text-yellow-500" />
           </div>
         );
       },
@@ -342,7 +342,7 @@ export default function UsersPage() {
         return (
           <div className="font-mono flex items-center gap-1">
             {totalSpent.toLocaleString("vi-VN")}
-            <CircleDollarSign className="w-5 h-5 text-yellow-500" />
+            <CircleDollarSign className="w-3 h-3 text-yellow-500" />
           </div>
         );
       },

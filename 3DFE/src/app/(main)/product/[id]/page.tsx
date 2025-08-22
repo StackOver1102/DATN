@@ -426,8 +426,8 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Ads Banner in Product Info */}
-            <div className="mt-6 border-2 border-red-500 rounded-lg overflow-hidden">
-              <div className="h-45 w-full bg-red-100 flex items-center justify-center">
+            <div className="mt-6 border-2 border-gray-300 rounded-lg overflow-hidden">
+              <div className="h-45 w-full bg-gray-50 flex items-center justify-center">
                 {bannersData.length > 0 && bannersData[0]?.isActive ? (
                   <div className="w-full h-full">
                     <Image
@@ -440,7 +440,7 @@ export default function ProductDetailPage() {
                     />
                   </div>
                 ) : (
-                  <span className="text-red-500 font-bold text-xl">ADS</span>
+                  <span className="text-gray-500 font-bold text-xl">ADS</span>
                 )}
               </div>
             </div>

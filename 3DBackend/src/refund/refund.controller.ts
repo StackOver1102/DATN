@@ -8,6 +8,8 @@ import {
   Delete,
   UseGuards,
   Query,
+  UseInterceptors,
+  UploadedFiles,
 } from '@nestjs/common';
 import { RefundService } from './refund.service';
 import { CreateRefundDto } from './dto/create-refund.dto';
@@ -19,17 +21,35 @@ import { UserRole } from 'src/enum/user.enum';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { UserPayload } from 'src/auth/types';
 import { FilterDto } from 'src/common/dto/filter.dto';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { UploadService } from 'src/upload/upload.service';
 
+interface FileWithBuffer extends Express.Multer.File {
+  buffer: Buffer;
+  key: string;
+}
 @Controller('refunds')
 export class RefundController {
-  constructor(private readonly refundService: RefundService) {}
+  constructor(private readonly refundService: RefundService, private readonly uploadService: UploadService) {}
 
   @Post()
+  @UseInterceptors(FilesInterceptor('attachments', 5))    
   create(
     @Body() createRefundDto: CreateRefundDto,
     @CurrentUser() user: UserPayload,
+    @UploadedFiles() files?: FileWithBuffer[],
   ) {
-    return this.refundService.create(createRefundDto, user.userId);
+    let attachments: string[] = [];
+    if (files && files.length > 0) {
+      attachments = files.map((file: FileWithBuffer) => {
+        const url = this.uploadService.getFileUrl(file.key);
+        return url;
+      });
+    }
+    return this.refundService.create({
+      ...createRefundDto,
+      attachments,
+    }, user.userId);
   }
 
   @Get()

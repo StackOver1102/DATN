@@ -400,7 +400,7 @@ export default function Header() {
             <div className="hidden lg:flex items-center space-x-4">
               {showUserData ? (
                 <>
-                  <div className="flex items-center bg-white text-yellow-400 px-3 py-1 rounded-full">
+                  <div className="flex items-center bg-white text-blue-600 px-3 py-1 rounded-full">
                     <Link href="/deposit" className="flex items-center">
                       <span className="font-medium">
                         {userProfile?.balance || session.user.balance || 0}

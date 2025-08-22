@@ -149,12 +149,12 @@ export default async function ModelsPage({ searchParams }: ModelsPageProps) {
   const totalPages = productsData?.data?.meta?.totalPages ?? 0;
 
   // Log for debugging
-  console.log("Server-side products data:", {
-    items: products.length,
-    totalItems,
-    totalPages,
-    hasData: products.length > 0,
-  });
+  // console.log("Server-side products data:", {
+  //   items: products.length,
+  //   totalItems,
+  //   totalPages,
+  //   hasData: products.length > 0,
+  // });
 
   // Map the products to ensure they have the required 'name' property
   const mappedProducts = products.map((product: Product) => ({

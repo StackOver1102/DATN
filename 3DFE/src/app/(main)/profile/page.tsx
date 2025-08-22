@@ -202,6 +202,8 @@ function ProfilePageContent({
     null
   );
   const [refundReason, setRefundReason] = useState("");
+  const [refundImage, setRefundImage] = useState<File | null>(null);
+  const [refundImagePreview, setRefundImagePreview] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
@@ -575,20 +577,33 @@ function ProfilePageContent({
     }
 
     try {
+      // Create form data for the request
+      const formData = new FormData();
+      formData.append('description', refundReason);
+      formData.append('orderId', selectedPurchase?._id || '');
+      
+      // Add image if available
+      if (refundImage) {
+        formData.append('attachments', refundImage);
+      }
+
       // Handle refund request submission
-      const response = await post(`refunds`, {
-        description: refundReason,
-        orderId: selectedPurchase?._id,
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/refunds`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session?.accessToken}`,
+        },
+        body: formData,
       });
 
-      if (response.success) {
-        // Close modal and reset
+      const data = await response.json();
 
+      if (data.success) {
         toast.success(
           "Refund request submitted! We will process it within 24-48 hours."
         );
       } else {
-        toast.error(response.message);
+        toast.error(data.message);
       }
     } catch (error) {
       console.error("Error submitting refund request:", error);
@@ -597,6 +612,8 @@ function ProfilePageContent({
       setShowRefundModal(false);
       setSelectedPurchase(null);
       setRefundReason("");
+      setRefundImage(null);
+      setRefundImagePreview(null);
     }
   };
 
@@ -690,13 +707,15 @@ function ProfilePageContent({
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
             <div className="flex flex-col md:flex-row items-center gap-6">
               <div className="relative">
-                <Image
-                  src={userData.avatar}
-                  alt="Avatar"
-                  width={120}
-                  height={120}
-                  className="rounded-full object-cover border-4 border-blue-100"
-                />
+                <div className="w-[120px] h-[120px] relative">
+                  <Image
+                    src={userData.avatar}
+                    alt="Avatar"
+                    fill
+                    sizes="120px"
+                    className="rounded-full object-cover border-4 border-blue-100"
+                  />
+                </div>
                 <Button
                   size="sm"
                   className="absolute bottom-0 right-0 rounded-full w-8 h-8 p-0"
@@ -1714,6 +1733,62 @@ function ProfilePageContent({
               </p>
             </div>
 
+
+   {/* Image Evidence Upload */}
+   <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Upload Evidence (optional)
+              </label>
+              <div className="space-y-3">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setRefundImage(file);
+                      // Create preview
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setRefundImagePreview(reader.result as string);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  className="block w-full text-sm text-gray-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-full file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-blue-50 file:text-blue-700
+                    hover:file:bg-blue-100"
+                />
+                
+                {refundImagePreview && (
+                  <div className="relative w-full h-40 bg-gray-100 rounded-lg overflow-hidden">
+                    <Image 
+                      src={refundImagePreview}
+                      alt="Evidence preview"
+                      fill
+                      sizes="100%"
+                      className="object-contain"
+                    />
+                    <button
+                      onClick={() => {
+                        setRefundImage(null);
+                        setRefundImagePreview(null);
+                      }}
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Upload screenshots or images to support your refund request
+              </p>
+            </div>
+
             {/* Modal Actions */}
             <div className="flex gap-3">
               <Button
@@ -1778,6 +1853,7 @@ function ProfilePageContent({
                   src={avatarPreview}
                   alt="Avatar Preview"
                   fill
+                  sizes="160px"
                   className="rounded-full object-cover border-4 border-blue-100"
                 />
               </div>

@@ -53,6 +53,9 @@ export class Refund {
 
   @Prop({ default: false })
   isWatchingByUser: boolean;
+
+  @Prop([{ type: String }])
+  attachments?: string[];
 }
 
 export const RefundSchema = SchemaFactory.createForClass(Refund);
