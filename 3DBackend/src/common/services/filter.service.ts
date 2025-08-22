@@ -34,7 +34,6 @@ export class FilterService {
       q,
       subSearch,
       categoryName,
-      categoryPath,
       sortBy,
       sortDirection = 'desc',
       // Extract additional filter fields
@@ -68,20 +67,23 @@ export class FilterService {
     }
 
     // Thêm điều kiện tìm kiếm theo danh mục vào mảng OR
-    if (subSearch) {
-      const subSearchRegex = new RegExp(subSearch, 'i');
-      orConditions.push({ categoryPath: subSearchRegex });
-    }
+    // if (subSearch) {
+    //   const subSearchRegex = new RegExp(subSearch, 'i');
+    //   orConditions.push({ categoryPath: subSearchRegex });
+    // }
 
     // Thêm điều kiện tìm kiếm theo categoryName và categoryPath vào mảng AND
     if (categoryName) {
       const categoryNameRegex = new RegExp(categoryName, 'i');
-      andConditions.push({ categoryName: categoryNameRegex });
+      andConditions.push({ categoryPath: categoryNameRegex });
     }
 
-    if (categoryPath) {
-      const categoryPathRegex = new RegExp(categoryPath, 'i');
-      andConditions.push({ categoryPath: categoryPathRegex });
+    if (subSearch) {
+      // Replace hyphens with spaces and make search case-insensitive
+      const subSearchRegex = subSearch.replace(/-/g, ' ');
+      // Using 'i' flag for case-insensitive search
+      const categoryNameRegex = new RegExp(subSearchRegex, 'i');
+      andConditions.push({ categoryName: categoryNameRegex });
     }
 
     // Process additional filter fields
@@ -152,6 +154,8 @@ export class FilterService {
     if (populateOptions) {
       findQuery = findQuery.populate(populateOptions);
     }
+
+    console.log("query", query);
 
     const [items, totalItems] = await Promise.all([
       findQuery.exec(),
