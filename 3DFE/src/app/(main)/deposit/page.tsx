@@ -17,7 +17,7 @@ export default function DepositPage() {
   const { data: session, update: updateSession } = useSession();
   const router = useRouter();
 
-  const [coinAmount, setCoinAmount] = useState<number>(0);
+  const [coinAmount, setCoinAmount] = useState<number>(50);
   const [isLoading, setIsLoading] = useState(false);
   const [returnUrl, setReturnUrl] = useState<string>("");
   const [cancelUrl, setCancelUrl] = useState<string>("");
@@ -90,7 +90,7 @@ export default function DepositPage() {
       await fetchProfile();
 
       toast.success(
-        "Payment successful! coin have been added to your account."
+        "Payment successful! Coins have been added to your account."
       );
 
       // Reset form
@@ -278,7 +278,7 @@ export default function DepositPage() {
               {/* Custom Amount */}
               <div className="mt-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <h4 className="text-sm font-medium text-gray-700 mb-2">
-                  Enter coin amount:
+                  Enter coins amount:
                 </h4>
                 <div className="flex flex-col md:flex-row items-center gap-3">
                   <div className="relative flex-1 w-full">
@@ -329,7 +329,7 @@ export default function DepositPage() {
                 </div>
                 <div className="flex justify-between mt-3">
                   <p className="text-xs text-gray-500">
-                    Minimum amount: {getMinimumAmount()} coin
+                    Minimum amount: {getMinimumAmount()} coins
                   </p>
                   <p className={`text-xs font-medium ${paymentRegion === "international" ? "text-blue-600" : "text-green-600"}`}>
                     = {getPaymentAmount().toLocaleString()} {getPaymentCurrency()}
@@ -498,20 +498,20 @@ export default function DepositPage() {
                   2. Exchange rate:
                 </p>
                 <div className="ml-4 text-xs">
-                  <p className="text-blue-600">• International: 50 coin = $5 USD</p>
-                  <p className="text-green-600">• Vietnam: 50 coin = 50,000 VND</p>
+                  <p className="text-blue-600">• International: 50 coins = $5 USD</p>
+                  <p className="text-green-600">• Vietnam: 50 coins = 50,000 VND</p>
                 </div>
               </div>
 
               <div>
                 <p className="text-gray-700 mb-1">
-                  3. coin are one-time purchases with unlimited download time.
+                  3. Coins are one-time purchases with unlimited download time.
                 </p>
               </div>
 
               <div>
                 <p className="text-gray-700 mb-1">
-                  4. After payment confirmation, coin will be immediately added to
+                  4. After payment confirmation, coins will be immediately added to
                   your account.
                 </p>
               </div>

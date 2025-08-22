@@ -62,7 +62,7 @@ function DepositSuccessContent() {
 
             // If we still don't have a session after update, redirect to login
             if (!sessionData || !accessToken) {
-              toast.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại");
+              toast.error("Your session has expired. Please log in again");
               router.push(
                 "/signin?callbackUrl=" +
                   encodeURIComponent(window.location.href)
@@ -86,7 +86,7 @@ function DepositSuccessContent() {
         toast.error(
           error instanceof Error
             ? error.message
-            : "Có lỗi xảy ra khi xử lý thanh toán"
+            : "An error occurred while processing your payment"
         );
 
         // Redirect to deposit page after a delay
@@ -106,7 +106,7 @@ function DepositSuccessContent() {
         );
 
         if (!response.success) {
-          throw new Error(response.message || "Xử lý thanh toán thất bại");
+          throw new Error(response.message || "Payment processing failed");
         }
 
         // Update session to get the new balance
@@ -135,7 +135,7 @@ function DepositSuccessContent() {
     };
 
     if (!paypalOrderId) {
-      toast.error("Không tìm thấy thông tin thanh toán");
+      toast.error("Payment information not found");
       router.push("/deposit");
       return;
     }
@@ -150,10 +150,10 @@ function DepositSuccessContent() {
           <div className="flex flex-col items-center justify-center py-12">
             <LoadingSpinner size="lg" />
             <h2 className="text-2xl font-semibold mt-6 text-gray-800">
-              Đang xử lý thanh toán...
+              Processing payment...
             </h2>
             <p className="text-gray-600 mt-2">
-              Vui lòng đợi trong khi chúng tôi xác nhận giao dịch của bạn
+              Please wait while we confirm your transaction
             </p>
           </div>
         ) : isSuccess ? (
@@ -175,17 +175,16 @@ function DepositSuccessContent() {
               </svg>
             </div>
             <h1 className="text-3xl font-bold text-gray-800 mb-4">
-              Thanh toán thành công!
+              Payment Successful!
             </h1>
             <p className="text-gray-600 text-center mb-6">
-              Cảm ơn bạn đã nạp tiền. Kim cương đã được thêm vào tài khoản của
-              bạn.
+              Thank you for your deposit. Coins have been added to your account.
             </p>
 
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 flex items-center justify-center w-full mb-8">
               <div className="flex items-center">
                 <span className="text-2xl font-bold text-gray-800 mr-2">
-                  Số dư hiện tại:
+                  Current Balance:
                 </span>
                 {isLoadingProfile ? (
                   <span className="inline-block w-24 h-8 bg-gray-200 animate-pulse rounded"></span>
@@ -209,11 +208,11 @@ function DepositSuccessContent() {
             <div className="flex space-x-4">
               <Link href="/models">
                 <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-                  Khám phá mô hình
+                  Explore Models
                 </Button>
               </Link>
               <Link href="/profile">
-                <Button variant="outline">Xem hồ sơ</Button>
+                <Button variant="outline">View Profile</Button>
               </Link>
             </div>
           </div>
@@ -236,15 +235,15 @@ function DepositSuccessContent() {
               </svg>
             </div>
             <h1 className="text-3xl font-bold text-gray-800 mb-4">
-              Xử lý thanh toán thất bại
+              Payment Processing Failed
             </h1>
             <p className="text-gray-600 text-center mb-6">
-              Đã xảy ra lỗi khi xử lý thanh toán của bạn. Vui lòng thử lại hoặc
-              liên hệ với bộ phận hỗ trợ.
+              An error occurred while processing your payment. Please try again or
+              contact our support team.
             </p>
             <Link href="/deposit">
               <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-                Thử lại
+                Try Again
               </Button>
             </Link>
           </div>

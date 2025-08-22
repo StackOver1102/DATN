@@ -19,7 +19,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private mailService: MailService,
-  ) {}
+  ) { }
 
   async login(loginDto: LoginDto): Promise<JwtToken> {
     const { email, password } = loginDto;
@@ -94,24 +94,24 @@ export class AuthService {
     try {
       // Verify and decode the token
       const decoded = this.jwtService.verify(resetPasswordDto.token);
-      
+
       // Check if token was issued for password reset
       if (decoded.purpose !== 'password_reset') {
         throw new UnauthorizedException('Invalid token purpose');
       }
-      
+
       // Find the user by email from token
       const user = await this.usersService.findByEmail(decoded.email);
       if (!user) {
         throw new NotFoundException('User not found');
       }
-      
+
       // Hash the new password
       const hashedPassword = await this.hashPassword(resetPasswordDto.password);
-      
+
       // Update user's password
       await this.usersService.updatePassword(user._id.toString(), hashedPassword);
-      
+
       return { message: 'Password has been reset successfully' };
     } catch (error) {
       if (error.name === 'TokenExpiredError') {
@@ -121,5 +121,30 @@ export class AuthService {
       }
       throw error;
     }
+  }
+
+  async loginByVQR(loginDto: LoginDto) {
+    const { email, password } = loginDto;
+
+    const user = await this.usersService.findByEmail(email);
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const payload: { username: string } = {
+      username: email,
+    };
+
+    return {
+      access_token: this.jwtService.sign(payload),
+      token_type: 'Bearer',
+      expires_in: 86400
+    };
   }
 }

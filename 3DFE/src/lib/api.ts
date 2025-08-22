@@ -174,6 +174,10 @@ export const transactionApi = {
   // Get transaction by code
   getTransactionByCode: (token: string, code: string) => 
     apiRequest(`transactions/code/${code}`, 'GET', undefined, token),
+
+  // Cancel PayPal order
+  cancelPayPalOrder: (token: string, orderId: string) => 
+    apiRequest(`transactions/${orderId}/cancel-order`, 'PATCH', undefined, token),
 };
 
 /**

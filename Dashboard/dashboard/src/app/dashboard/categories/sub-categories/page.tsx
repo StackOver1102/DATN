@@ -30,19 +30,26 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   IconDotsVertical,
   IconEdit,
   IconEye,
   IconPlus,
   IconTrash,
+  IconArrowLeft,
 } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
-import Link from "next/link";
 import { ApiResponse } from "@/interface/pagination";
 
 interface Category {
   _id: string;
-  id?: string; // Keep for backward compatibility
+  id?: string;
   name: string;
   description?: string;
   productCount?: number;
@@ -50,50 +57,57 @@ interface Category {
   createdAt?: string;
   updatedAt?: string;
   parentId?: string | null;
-  childCount?: number; // Số lượng danh mục con
   image?: string;
   icon?: string;
 }
 
-export default function CategoriesPage() {
+interface NewSubCategory {
+  name: string;
+  description: string;
+  parentId: string;
+}
+
+export default function SubCategoriesPage() {
   const router = useRouter();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newCategory, setNewCategory] = useState({ name: "", description: "" });
-  const [categoriesWithChildCount, setCategoriesWithChildCount] = useState<Category[]>([]);
+  const [newSubCategory, setNewSubCategory] = useState<NewSubCategory>({
+    name: "",
+    description: "",
+    parentId: "",
+  });
 
-  // Query for fetching categories
-  const { data, isLoading, error, refetch } = useApiQuery<ApiResponse<Category[]>>(
-    "categories",
+  // Query for fetching parent categories for dropdown
+  const { data: parentCategories, isLoading: isLoadingParentCategories } = useApiQuery<ApiResponse<Category[]>>(
+    "parent-categories",
     "/categories/parent/get-all",
     {
       refetchOnMount: true,
-      staleTime: 0, // Consider data always stale
     }
   );
-  
-  // Query for fetching all categories to calculate child counts
-  const { data: allCategoriesData } = useApiQuery<ApiResponse<Category[]>>(
-    "all-categories",
-    "/categories",
+
+  // Query for fetching sub-categories
+  const { data, isLoading, error, refetch } = useApiQuery<ApiResponse<Category[]>>(
+    "sub-categories",
+    "/categories/sub/get-all",
     {
       refetchOnMount: true,
       staleTime: 0,
     }
   );
-  
+
   // Create mutation
-  const { mutate: createCategory, isPending: isCreating } = useApiMutation<
-    Category, 
-    typeof newCategory
-  >("categories", "/categories", "post");
-  
+  const { mutate: createSubCategory, isPending: isCreating } = useApiMutation<
+    Category,
+    typeof newSubCategory
+  >("sub-categories", "/categories", "post");
+
   // Delete mutation
-  const { mutate: deleteCategory, isPending: isDeleting } = useApiMutation<
+  const { mutate: deleteSubCategory, isPending: isDeleting } = useApiMutation<
     { success: boolean; message: string },
     { id: string }
-  >("categories", `/categories/${categoryToDelete?._id}`, "delete");
+  >("sub-categories", `/categories/${categoryToDelete?._id}`, "delete");
 
   // Handle delete click
   const handleDeleteClick = (category: Category) => {
@@ -101,16 +115,21 @@ export default function CategoriesPage() {
     setDeleteModalOpen(true);
   };
 
-  // Handle create category
+  // Handle create sub-category
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    createCategory(
-      newCategory,
+
+    if (!newSubCategory.parentId) {
+      toast.error("Vui lòng chọn danh mục cha");
+      return;
+    }
+
+    createSubCategory(
+      newSubCategory,
       {
         onSuccess: () => {
-          toast.success("Danh mục đã được tạo thành công");
-          setNewCategory({ name: "", description: "" });
+          toast.success("Danh mục con đã được tạo thành công");
+          setNewSubCategory({ name: "", description: "", parentId: "" });
           setIsDialogOpen(false);
           refetch();
         },
@@ -120,16 +139,16 @@ export default function CategoriesPage() {
       }
     );
   };
-  
+
   // Handle delete confirmation
   const handleDeleteConfirm = () => {
     if (!categoryToDelete) return;
 
-    deleteCategory(
+    deleteSubCategory(
       { id: categoryToDelete._id },
       {
         onSuccess: () => {
-          toast.success("Danh mục đã được xóa thành công");
+          toast.success("Danh mục con đã được xóa thành công");
           setDeleteModalOpen(false);
           setCategoryToDelete(null);
           refetch();
@@ -140,34 +159,19 @@ export default function CategoriesPage() {
       }
     );
   };
-  
+
   // Handle delete cancel
   const handleDeleteCancel = () => {
     setDeleteModalOpen(false);
     setCategoryToDelete(null);
   };
-  
-  // Calculate child counts for each parent category
-  useEffect(() => {
-    if (data?.data && allCategoriesData?.data) {
-      const parentCategories = data.data;
-      const allCategories = allCategoriesData.data;
-      
-      const categoriesWithCount = parentCategories.map(category => {
-        // Count children for this category
-        const childCount = allCategories.filter(
-          cat => cat.parentId === category._id
-        ).length;
-        
-        return {
-          ...category,
-          childCount
-        };
-      });
-      
-      setCategoriesWithChildCount(categoriesWithCount);
-    }
-  }, [data, allCategoriesData]);
+
+  // Get parent category name by ID
+  const getParentCategoryName = (parentId: string | null | undefined): string => {
+    if (!parentId || !parentCategories?.data) return "Không có";
+    const parent = parentCategories.data.find(cat => cat._id === parentId);
+    return parent ? parent.name : "Không tìm thấy";
+  };
 
   // Define columns for DataTable
   const columns: ColumnDef<Category>[] = [
@@ -202,7 +206,7 @@ export default function CategoriesPage() {
     },
     {
       accessorKey: "name",
-      header: "Tên danh mục",
+      header: "Tên danh mục con",
       cell: ({ row }) => <div>{row.getValue("name")}</div>,
     },
     {
@@ -211,20 +215,15 @@ export default function CategoriesPage() {
       cell: ({ row }) => <div>{row.getValue("description") || "-"}</div>,
     },
     {
-      id: "childCount",
-      header: "Danh mục con",
+      id: "parentCategory",
+      header: "Danh mục cha",
       cell: ({ row }) => {
         const category = row.original;
-        const childCount = category.childCount || 0;
         return (
-          <div className="font-medium">
-            {childCount > 0 ? (
-              <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-200">
-                {childCount}
-              </Badge>
-            ) : (
-              "0"
-            )}
+          <div>
+            <Badge variant="outline" className="bg-blue-100 text-blue-800">
+              {getParentCategoryName(category.parentId)}
+            </Badge>
           </div>
         );
       },
@@ -285,8 +284,8 @@ export default function CategoriesPage() {
     },
   ];
 
-  if (isLoading) {
-    return <PageLoading text="Đang tải danh sách danh mục..." />;
+  if (isLoading || isLoadingParentCategories) {
+    return <PageLoading text="Đang tải danh sách danh mục con..." />;
   }
 
   if (error) {
@@ -305,74 +304,99 @@ export default function CategoriesPage() {
   return (
     <>
       <div className="flex items-center justify-between px-4 lg:px-6">
-        <h1 className="text-2xl font-bold">Danh mục</h1>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            onClick={() => router.push("/dashboard/categories/sub-categories")}
+            size="icon"
+            onClick={() => router.push("/dashboard/categories")}
           >
-            Quản lý danh mục con
+            <IconArrowLeft className="h-4 w-4" />
           </Button>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <IconPlus className="h-4 w-4 mr-1" />
-                Thêm danh mục
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Thêm danh mục mới</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit}>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="name">Tên danh mục</Label>
-                    <Input
-                      id="name"
-                      value={newCategory.name}
-                      onChange={(e) =>
-                        setNewCategory({ ...newCategory, name: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="description">Mô tả</Label>
-                    <Input
-                      id="description"
-                      value={newCategory.description}
-                      onChange={(e) =>
-                        setNewCategory({
-                          ...newCategory,
-                          description: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button type="submit" disabled={isCreating}>
-                    {isCreating ? "Đang tạo..." : "Tạo danh mục"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <h1 className="text-2xl font-bold">Danh mục con</h1>
         </div>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <IconPlus className="h-4 w-4 mr-1" />
+              Thêm danh mục con
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Thêm danh mục con mới</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit}>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="name">Tên danh mục con</Label>
+                  <Input
+                    id="name"
+                    value={newSubCategory.name}
+                    onChange={(e) =>
+                      setNewSubCategory({ ...newSubCategory, name: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="description">Mô tả</Label>
+                  <Input
+                    id="description"
+                    value={newSubCategory.description}
+                    onChange={(e) =>
+                      setNewSubCategory({
+                        ...newSubCategory,
+                        description: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="parentId">Danh mục cha</Label>
+                  <Select
+                    value={newSubCategory.parentId}
+                    onValueChange={(value) =>
+                      setNewSubCategory({
+                        ...newSubCategory,
+                        parentId: value,
+                      })
+                    }
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn danh mục cha" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {parentCategories?.data?.map((category) => (
+                        <SelectItem key={category._id} value={category._id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="submit" disabled={isCreating}>
+                  {isCreating ? "Đang tạo..." : "Tạo danh mục con"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="px-4 lg:px-6">
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>Tất cả danh mục</CardTitle>
+            <CardTitle>Tất cả danh mục con</CardTitle>
           </CardHeader>
           <CardContent>
             <DataTable
               columns={columns}
-              data={categoriesWithChildCount.length > 0 ? categoriesWithChildCount : (data?.data || [])}
+              data={data?.data || []}
               searchKey="name"
-              searchPlaceholder="Tìm kiếm danh mục..."
+              searchPlaceholder="Tìm kiếm danh mục con..."
               filters={[
                 {
                   columnId: "isActive",
@@ -392,9 +416,9 @@ export default function CategoriesPage() {
       <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Xác nhận xóa danh mục</DialogTitle>
+            <DialogTitle>Xác nhận xóa danh mục con</DialogTitle>
             <DialogDescription>
-              Bạn có chắc chắn muốn xóa danh mục{" "}
+              Bạn có chắc chắn muốn xóa danh mục con{" "}
               <span className="font-semibold text-red-600">
                 &ldquo;{categoryToDelete?.name}&rdquo;
               </span>
@@ -416,7 +440,7 @@ export default function CategoriesPage() {
               className="inline-flex items-center justify-center gap-2"
             >
               {isDeleting && <Loading size="sm" variant="spinner" />}
-              {isDeleting ? "Đang xóa..." : "Xóa danh mục"}
+              {isDeleting ? "Đang xóa..." : "Xóa danh mục con"}
             </Button>
           </DialogFooter>
         </DialogContent>

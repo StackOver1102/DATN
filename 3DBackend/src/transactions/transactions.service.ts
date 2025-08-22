@@ -257,7 +257,7 @@ export class TransactionsService {
 
       // Tạo giao dịch trong hệ thống với trạng thái PENDING
       const transactionDto: CreateTransactionDto = {
-        amount: createPayPalOrderDto.amount,
+        amount: createPayPalOrderDto.amount * 10,
         type: TransactionType.DEPOSIT,
         method: TransactionMethod.PAYPAL,
         description: createPayPalOrderDto.description || 'Deposit via PayPal',
@@ -983,5 +983,18 @@ export class TransactionsService {
     }, 0);
 
     return totalSpent;
+  }
+
+  async cancelPayPalOrder(orderId: string): Promise<Transaction> {
+    const transaction = await this.transactionModel.findOne({
+      orderId: orderId,
+    });
+    if (!transaction) {
+      throw new NotFoundException('Giao dịch không tồn tại');
+    }
+    transaction.status = TransactionStatus.CANCELLED;
+    await transaction.save();
+
+    return transaction;
   }
 }

@@ -6,8 +6,9 @@ import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { Suspense } from "react";
 
-export default function DepositCancelPage() {
+function CancelContent() {
   const router = useRouter();
   // const searchParams = useSearchParams();
   const { data: session, update: updateSession } = useSession();
@@ -26,7 +27,7 @@ export default function DepositCancelPage() {
 
         // If we still don't have a session after update, redirect to login
         if (!session) {
-          toast.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại");
+          toast.error("Your session has expired. Please log in again");
           router.push("/signin?callbackUrl=" + encodeURIComponent("/deposit"));
         }
       }, 1500);
@@ -35,7 +36,7 @@ export default function DepositCancelPage() {
     }
 
     // Show a toast notification about the cancelled payment
-    toast.info("Thanh toán đã bị hủy");
+    toast.info("Payment has been canceled");
   }, [session, router, updateSession]);
 
   return (
@@ -59,21 +60,19 @@ export default function DepositCancelPage() {
             </svg>
           </div>
           <h1 className="text-3xl font-bold text-gray-800 mb-4">
-            Thanh toán đã bị hủy
+            Payment Canceled
           </h1>
           <p className="text-gray-600 text-center mb-6">
-            Bạn đã hủy giao dịch thanh toán. Không có khoản phí nào được tính
-            cho bạn.
+            You have canceled the payment transaction. No fees have been charged.
           </p>
 
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 w-full mb-8">
-            <h3 className="font-medium text-gray-800 mb-2">Lưu ý:</h3>
+            <h3 className="font-medium text-gray-800 mb-2">Note:</h3>
             <ul className="list-disc pl-5 space-y-2 text-gray-600">
-              <li>Không có khoản phí nào được tính cho giao dịch bị hủy</li>
-              <li>Bạn có thể thử lại việc nạp tiền bất kỳ lúc nào</li>
+              <li>No fees are charged for canceled transactions</li>
+              <li>You can try depositing again at any time</li>
               <li>
-                Nếu bạn gặp vấn đề với việc thanh toán, vui lòng liên hệ với bộ
-                phận hỗ trợ
+                If you encounter payment issues, please contact our support team
               </li>
             </ul>
           </div>
@@ -81,15 +80,30 @@ export default function DepositCancelPage() {
           <div className="flex space-x-4">
             <Link href="/deposit">
               <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-                Thử lại
+                Try Again
               </Button>
             </Link>
             <Link href="/">
-              <Button variant="outline">Về trang chủ</Button>
+              <Button variant="outline">Back to Home</Button>
             </Link>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function DepositCancelPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+          <div>Loading...</div>
+        </div>
+      </div>
+    }>
+      <CancelContent />
+    </Suspense>
   );
 }

@@ -191,4 +191,15 @@ export class TransactionsController {
   approve(@Param('id') id: string) {
     return this.transactionsService.handleApprove(id);
   }
+
+  // @UseGuards(RolesGuard)
+  // @Roles(UserRole.ADMIN)
+  // @ApiBearerAuth()
+  @Patch(':id/cancel')
+  @ApiOperation({ summary: 'Cancel transaction' })
+  @ApiParam({ name: 'id', description: 'Transaction MongoDB ObjectId' })
+  @ApiResponse({ status: 200, description: 'Transaction cancelled successfully' })
+  cancel(@Param('id') id: string) {
+    return this.transactionsService.cancelPayPalOrder(id);
+  }
 }

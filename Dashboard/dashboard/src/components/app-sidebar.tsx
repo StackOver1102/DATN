@@ -97,6 +97,21 @@ const data = {
       url: "/dashboard/comment",
       icon: IconMessageCircle,
     },
+    {
+        title: "Category",
+        url: "/dashboard/categories",
+        icon: IconSettings,
+        items: [
+          {
+            title: "Categories",
+            url: "/dashboard/categories",
+          },
+          {
+            title: "Sub Categories",
+            url: "/dashboard/categories/sub-categories",
+          }
+        ],
+    }
   ],
   navClouds: [
     {
@@ -299,9 +314,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       notifications = counts.comment || undefined;
     }
 
+    // Check if current path matches this item or any of its subitems
+    let isActive = bestMatch.type === "main" && bestMatch.index === index;
+    
+    // Also check subitems if they exist
+    if (!isActive && item.items && item.items.length > 0) {
+      isActive = item.items.some(subItem => isPathActive(subItem.url, pathname));
+    }
+
     return {
       ...item,
-      isActive: bestMatch.type === "main" && bestMatch.index === index,
+      isActive,
       notifications,
     };
   });

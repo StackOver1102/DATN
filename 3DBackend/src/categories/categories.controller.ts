@@ -173,4 +173,12 @@ export class CategoriesController extends BaseController {
     const categories = await this.categoriesService.getCategoryParent();
     return this.success(categories, 'Lấy danh sách danh mục cha thành công');
   }
+
+  @Public()
+  @Get('sub/get-all')
+  @ApiOperation({ summary: 'Lấy danh sách danh mục con' })
+  async getCategorySub(): Promise<ApiResponse<Category[]>> {
+    const categories = await this.categoriesService.getCategorySub();
+    return this.success(categories, 'Lấy danh sách danh mục con thành công');
+  }
 }

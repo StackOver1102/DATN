@@ -140,4 +140,9 @@ export class CategoriesService {
     const category = await this.categoryModel.find({ parentId: null }).exec();
     return category;
   }
+
+  async getCategorySub(): Promise<Category[]> {
+    const category = await this.categoryModel.find({ parentId: { $ne: null } }).exec();
+    return category;
+  }
 }

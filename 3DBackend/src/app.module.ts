@@ -18,6 +18,7 @@ import { CommonModule } from './common/common.module';
 import { MasterDataModule } from './master-data/master-data.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { BannerModule } from './banner/banner.module';
+import { VqrModule } from './vqr/vqr.module';
 import * as Joi from 'joi';
 
 // Định nghĩa schema xác thực cho biến môi trường
@@ -59,6 +60,7 @@ const validationSchema = Joi.object({
     MasterDataModule,
     NotificationsModule,
     BannerModule,
+    VqrModule,
   ],
   controllers: [],
   providers: [],

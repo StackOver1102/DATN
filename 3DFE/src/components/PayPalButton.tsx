@@ -49,7 +49,7 @@ export default function PayPalButton({
   if (amount <= 0) {
     return (
       <div className="w-full py-4 px-6 bg-gray-100 border border-gray-300 rounded-lg text-center text-gray-500">
-        Vui lòng chọn gói hoặc nhập số tiền để thanh toán
+        Please select a package or enter an amount to pay
       </div>
     );
   }
@@ -65,7 +65,7 @@ export default function PayPalButton({
   // Create PayPal order through our backend
   const createPayPalOrder = async () => {
     if (!session?.accessToken) {
-      toast.error("Vui lòng đăng nhập để tiếp tục");
+      toast.error("Please log in to continue");
 
       // Try to refresh the session
       try {
@@ -120,7 +120,7 @@ export default function PayPalButton({
       return response.data.paypalOrderId;
     } catch (error) {
       console.error("Error creating PayPal order:", error);
-      toast.error("Không thể tạo đơn hàng PayPal. Vui lòng thử lại sau.");
+      toast.error("Cannot create PayPal order. Please try again later.");
       onError(error);
       setIsPending(false);
       return null;
@@ -130,7 +130,7 @@ export default function PayPalButton({
   // Process the approved PayPal order through our backend
   const processApprovedOrder = async (orderId: string) => {
     if (!session?.accessToken) {
-      toast.error("Vui lòng đăng nhập để tiếp tục");
+      toast.error("Please log in to continue");
 
       // Try to refresh the session
       try {
@@ -177,10 +177,30 @@ export default function PayPalButton({
     } catch (error) {
       console.error("Error processing PayPal order:", error);
       toast.error(
-        "Có lỗi xảy ra khi xử lý thanh toán. Vui lòng liên hệ hỗ trợ."
+        "An error occurred while processing your payment. Please contact support."
       );
       return false;
     }
+  };
+
+  const cancelPayPalOrder = async (orderId: string) => {
+    if (!session?.accessToken) {
+      toast.error("Please log in to continue");
+      return;
+    }
+    if (!orderId) {
+      toast.error("An error occurred");
+      return;
+    }
+    const response = await transactionApi.cancelPayPalOrder(
+      session.accessToken,
+      orderId,
+    );
+    if (!response.success) {
+      toast.error(response.message || "An error occurred while canceling the payment.");
+      return;
+    }
+    toast.success("Payment has been canceled.");
   };
 
   return (
@@ -189,7 +209,7 @@ export default function PayPalButton({
         {isPending && (
           <div className="flex justify-center items-center py-4">
             <LoadingSpinner size="md" />
-            <span className="ml-2">Đang xử lý...</span>
+            <span className="ml-2">Processing...</span>
           </div>
         )}
 
@@ -246,16 +266,15 @@ export default function PayPalButton({
           onError={(err) => {
             setIsPending(false);
             onError(err);
-            toast.error("Có lỗi xảy ra trong quá trình thanh toán.");
+            toast.error("An error occurred during the payment process.");
           }}
-          onCancel={() => {
-            setIsPending(false);
-            toast.info("Thanh toán đã bị hủy.");
+          onCancel={(data) => {
+            cancelPayPalOrder(data?.orderID as string);
 
             // If we have cancelUrl, redirect to it
-            if (cancelUrl && typeof window !== "undefined") {
-              window.location.href = cancelUrl;
-            }
+            // if (cancelUrl && typeof window !== "undefined") {
+            //   window.location.href = cancelUrl;
+            // }
           }}
         />
       </div>
