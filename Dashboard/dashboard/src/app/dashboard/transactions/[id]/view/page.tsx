@@ -291,10 +291,10 @@ export default function TransactionViewPage() {
                   <div className="flex items-center gap-2">
                     <IconUser className="h-4 w-4 text-muted-foreground" />
                     <Link
-                      href={`/dashboard/users/${transaction.userId._id}/view`}
+                      href={`/dashboard/users/${transaction?.userId?._id}/view`}
                       className="font-medium text-blue-500 hover:underline"
                     >
-                      {transaction.userId.fullName || transaction.userId.email}
+                      {transaction?.userId?.fullName || transaction?.userId?.email}
                     </Link>
                   </div>
                 </div>

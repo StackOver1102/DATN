@@ -208,6 +208,73 @@ export class GoogleDriveService {
       return false;
     }
   }
+  
+  /**
+   * Tự động hủy quyền truy cập của một email cụ thể cho tất cả các file trong một thư mục
+   * @param folderId ID của thư mục cần xóa quyền
+   * @param email Email cần hủy quyền truy cập
+   * @param recursive Có xóa quyền trong các thư mục con không
+   * @returns Danh sách kết quả xóa quyền
+   */
+  async autoRevokePermission(folderId: string, email: string, recursive: boolean = false): Promise<{
+    success: boolean;
+    totalFiles: number;
+    revokedCount: number;
+    failedFiles: { id: string; name: string }[];
+  }> {
+    try {
+      // Lấy danh sách tất cả các file trong thư mục
+      const allFiles: DriveFile[] = await this.listFiles(folderId);
+      
+      // Kết quả xóa quyền
+      const result = {
+        success: true,
+        totalFiles: allFiles.length,
+        revokedCount: 0,
+        failedFiles: [] as { id: string; name: string }[],
+      };
+      
+      // Xóa quyền cho từng file
+      for (const file of allFiles) {
+        try {
+          const removed = await this.removeDrivePermission(file.id, email);
+          if (removed) {
+            result.revokedCount++;
+          }
+        } catch (error) {
+          console.error(`Lỗi khi xóa quyền cho file ${file.name} (${file.id}):`, error);
+          result.failedFiles.push({ id: file.id, name: file.name });
+        }
+      }
+      
+      // Nếu recursive = true, xử lý các thư mục con
+      if (recursive) {
+        const subFolders = await this.listFolders(folderId);
+        
+        for (const folder of subFolders) {
+          try {
+            const subResult = await this.autoRevokePermission(folder.id, email, true);
+            
+            // Cập nhật kết quả tổng
+            result.totalFiles += subResult.totalFiles;
+            result.revokedCount += subResult.revokedCount;
+            result.failedFiles = [...result.failedFiles, ...subResult.failedFiles];
+          } catch (error) {
+            console.error(`Lỗi khi xử lý thư mục con ${folder.name} (${folder.id}):`, error);
+          }
+        }
+      }
+      
+      result.success = result.failedFiles.length === 0;
+      return result;
+    } catch (error) {
+      console.error('Lỗi khi tự động hủy quyền truy cập:', error);
+      throw new HttpException(
+        `Không thể hủy quyền truy cập: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        HttpStatus.BAD_REQUEST
+      );
+    }
+  }
 
   getIdByUrl(url: string): string {
     // Extract ID from URL like https://drive.google.com/uc?id=1RaRoIhSHk4JJgZ2m_rAx8QesKTPSZkEx

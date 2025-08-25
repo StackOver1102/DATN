@@ -150,10 +150,10 @@ export default function RefundsPage() {
         const user = row.original.userId;
         return (
           <Link
-            href={`/dashboard/users/${user._id}`}
+            href={`/dashboard/users/${user?._id}`}
             className="text-blue-500 hover:underline"
           >
-            {user.fullName || user.email}
+            {user?.fullName || user?.email}
           </Link>
         );
       },
@@ -170,7 +170,7 @@ export default function RefundsPage() {
               <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
             )}
             <Link
-              href={`/dashboard/orders/${order._id}/view`}
+              href={`/dashboard/orders/${order?._id}/view`}
               className="text-blue-500 hover:underline"
             >
               {order.productId?.name || order._id}

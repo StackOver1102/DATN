@@ -175,17 +175,17 @@ export default function OrderEditPage() {
                 <div className="mb-4">
                   <Label className="text-sm text-gray-500">Khách hàng</Label>
                   <Link 
-                    href={`/dashboard/users/${order.userId._id}`} 
+                    href={`/dashboard/users/${order?.userId?._id}`} 
                     className="block font-semibold text-blue-600 hover:underline"
                   >
-                    {order.userId.fullName || order.userId.email}
+                    {order.userId?.fullName || order.userId?.email}
                   </Link>
                 </div>
 
                 <div className="mb-4">
                   <Label className="text-sm text-gray-500">Sản phẩm</Label>
                   <Link 
-                    href={`/dashboard/products/${order.productId._id}`} 
+                    href={`/dashboard/products/${order?.productId?._id}`} 
                     className="block font-semibold text-blue-600 hover:underline"
                   >
                     {order.productId.name}
@@ -194,7 +194,7 @@ export default function OrderEditPage() {
 
                 <div className="mb-4">
                   <Label className="text-sm text-gray-500">Giá trị đơn hàng</Label>
-                  <p className="font-semibold">{order.totalAmount} coin</p>
+                  <p className="font-semibold">{order?.totalAmount} coin</p>
                 </div>
               </div>
 

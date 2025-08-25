@@ -145,11 +145,11 @@ function OrdersPageContent() {
       header: "Khách hàng",
       cell: ({ row }) => {
         const userId = row.getValue("userId") as User;
-        const userName = userId.fullName || userId.email;
+        const userName = userId?.fullName || userId?.email;
         return (
           <div className="flex items-center gap-2">
             <Link
-              href={`/dashboard/users/${userId._id}`}
+              href={`/dashboard/users/${userId?._id}`}
               className="hover:underline text-blue-500"
             >
               <span className="font-medium">{userName}</span>

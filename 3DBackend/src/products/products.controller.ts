@@ -163,6 +163,7 @@ export class ProductsController {
       );
       return result;
     } catch (error: unknown) {
+      console.log('error', error);
       const msg = error instanceof Error ? error.message : 'Unknown error';
       // Sử dụng HttpException để ném lỗi với status code và message
       throw new HttpException(

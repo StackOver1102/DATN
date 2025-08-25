@@ -44,6 +44,9 @@ export class Order {
 
   @Prop({ type: String })
   fileId: string;
+
+  @Prop({ default: false })
+  isRemoveGoogleDrive: boolean;
 }
 
 export type OrderDocument = HydratedDocument<Order>;

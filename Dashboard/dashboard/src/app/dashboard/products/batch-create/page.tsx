@@ -170,6 +170,8 @@ export default function BatchCreateProductPage() {
   const [previewImages, setPreviewImages] = useState<{ [key: string]: string }>(
     {}
   );
+  // State để theo dõi các sản phẩm mới thêm vào để không bị ghi đè STT
+  const [newProductIndexes, setNewProductIndexes] = useState<Set<number>>(new Set());
   const urlBE = process.env.NEXT_PUBLIC_IMAGE;
 
   // State để theo dõi sản phẩm nào đang tải ảnh
@@ -290,17 +292,18 @@ export default function BatchCreateProductPage() {
   // Hàm tải ảnh preview dựa trên tên và STT của sản phẩm
   const loadPreviewImage = useCallback(
     (index: number) => {
+debugger
       const product = products[index];
-
+      console.log("product", product)
       // Kiểm tra xem có đủ thông tin để tìm ảnh không
       if (!sharedFolderId || !product?.stt || !product?.categoryName) {
         return;
       }
 
       // Kiểm tra xem ảnh đã đang được tải hay chưa
-      if (loadingImages[index]) {
-        return;
-      }
+      // if (loadingImages[index]) {
+      //   return;
+      // }
 
       // Kiểm tra xem ảnh đã từng gặp lỗi khi tải chưa
       if (failedImages[index]) {
@@ -355,6 +358,14 @@ export default function BatchCreateProductPage() {
   useEffect(() => {
     if (lastSttData?.data && activeTab) {
       const index = parseInt(activeTab);
+      console.log("index", index);
+      
+      // Skip STT update for newly added products
+      if (newProductIndexes.has(index)) {
+        console.log("Skipping STT update for newly added product at index", index);
+        return;
+      }
+      
       const lastStt = lastSttData.data;
       const nextStt = lastStt + 1;
 
@@ -389,6 +400,7 @@ export default function BatchCreateProductPage() {
     loadPreviewImage,
     products,
     failedImages,
+    newProductIndexes, // Add newProductIndexes to dependencies
   ]);
 
   // Effect để tải ảnh preview khi sharedFolderId thay đổi
@@ -450,11 +462,37 @@ export default function BatchCreateProductPage() {
 
     console.log("newProduct", newProduct);
     const newProducts = [...products, newProduct];
+    
+    // Get the index of the new product
+    const newIndex = newProducts.length - 1;
+    
+    // Mark this product as newly added to prevent STT overriding
+    setNewProductIndexes(prev => {
+      const updated = new Set(prev);
+      updated.add(newIndex);
+      return updated;
+    });
+    
+    // Update products state and switch to the new tab
     setProducts(newProducts);
-
-    // Switch to the new tab - use flushSync to ensure DOM updates are synchronized
-    const newTabIndex = (newProducts.length - 1).toString();
-    setActiveTab(newTabIndex);
+    setActiveTab(newIndex.toString());
+    
+    // Sau khi thêm sản phẩm mới, chờ state được cập nhật rồi tải ảnh preview chỉ cho tab mới
+    if (sharedFolderId && newProduct.categoryName) {
+      // Sử dụng thời gian chờ dài hơn để đảm bảo state đã được cập nhật
+      setTimeout(() => {
+        // Chỉ tải ảnh cho tab mới
+        loadPreviewImage(newIndex);
+      }, 800);
+      
+      // Thêm một lần tải ảnh nữa sau thời gian dài hơn để đảm bảo ảnh được tải
+      setTimeout(() => {
+        if (!previewImages[newIndex] && !loadingImages[newIndex]) {
+          console.log("Tải lại ảnh cho tab mới sau khi thêm");
+          loadPreviewImage(newIndex);
+        }
+      }, 2000);
+    }
   };
 
   // Handle removing a product form
@@ -466,6 +504,26 @@ export default function BatchCreateProductPage() {
 
     const newProducts = [...products];
     newProducts.splice(index, 1);
+    
+    // Update the newProductIndexes set to reflect the removed product
+    setNewProductIndexes(prev => {
+      const updated = new Set<number>();
+      
+      // Rebuild the set with adjusted indexes
+      prev.forEach(prevIndex => {
+        if (prevIndex < index) {
+          // Indexes before the removed one stay the same
+          updated.add(prevIndex);
+        } else if (prevIndex > index) {
+          // Indexes after the removed one need to be decremented
+          updated.add(prevIndex - 1);
+        }
+        // The index that was removed is not added to the new set
+      });
+      
+      return updated;
+    });
+    
     setProducts(newProducts);
 
     // If we removed the active tab, switch to the previous tab
@@ -501,6 +559,15 @@ export default function BatchCreateProductPage() {
         setSelectedRootCategoryId(value);
         setSelectedCategoryId(selectedCategory.rootId);
       }
+    }
+    
+    // If STT is manually changed, mark this product to prevent auto-update
+    if (field === "stt") {
+      setNewProductIndexes(prev => {
+        const updated = new Set(prev);
+        updated.add(index);
+        return updated;
+      });
     }
 
     setProducts(newProducts);
@@ -677,6 +744,7 @@ export default function BatchCreateProductPage() {
     return <PageLoading text={text} />;
   }
 
+  console.log("products", products)
   return (
     <>
       <div className="px-4 lg:px-6">
@@ -721,16 +789,55 @@ export default function BatchCreateProductPage() {
             </span>
             sản phẩm đang được tạo
           </div>
-          <Button
-            onClick={handleAddProduct}
-            variant="outline"
-            size="sm"
-            type="button"
-            className="bg-green-50 text-green-600 border-green-200 hover:bg-green-100 hover:text-green-700 hover:border-green-300"
-          >
-            <IconPlus className="h-4 w-4 mr-1.5" />
-            Thêm sản phẩm
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => {
+                // Tải lại ảnh cho tab hiện tại
+                if (sharedFolderId) {
+                  const currentIndex = parseInt(activeTab);
+                  const currentProduct = products[currentIndex];
+                  
+                  if (currentProduct && currentProduct.categoryName && currentProduct.stt) {
+                    // Reset trạng thái lỗi
+                    setFailedImages((prev) => ({
+                      ...prev,
+                      [currentIndex]: false
+                    }));
+                    
+                    // Tải lại ảnh
+                    loadPreviewImage(currentIndex);
+                    toast.info("Đang tải lại ảnh cho tab hiện tại");
+                  } else {
+                    toast.error("Không đủ thông tin để tải ảnh");
+                  }
+                } else {
+                  toast.error("Vui lòng nhập ID Folder Google Drive trước");
+                }
+              }}
+              variant="outline"
+              size="sm"
+              type="button"
+              className="bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 hover:text-blue-700 hover:border-blue-300"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 mr-1.5">
+                <path d="M3 2v6h6"></path>
+                <path d="M21 12A9 9 0 0 0 6 5.3L3 8"></path>
+                <path d="M21 22v-6h-6"></path>
+                <path d="M3 12a9 9 0 0 0 15 6.7l3-2.7"></path>
+              </svg>
+              Tải lại ảnh
+            </Button>
+            <Button
+              onClick={handleAddProduct}
+              variant="outline"
+              size="sm"
+              type="button"
+              className="bg-green-50 text-green-600 border-green-200 hover:bg-green-100 hover:text-green-700 hover:border-green-300"
+            >
+              <IconPlus className="h-4 w-4 mr-1.5" />
+              Thêm sản phẩm
+            </Button>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -760,7 +867,31 @@ export default function BatchCreateProductPage() {
                     <Input
                       id="shared-folder-id"
                       value={sharedFolderId}
-                      onChange={(e) => setSharedFolderId(e.target.value)}
+                      onChange={(e) => {
+                        const newValue = e.target.value;
+                        setSharedFolderId(newValue);
+                        
+                        // Nếu người dùng đã nhập ID folder và đã chọn danh mục
+                        if (newValue && selectedRootCategoryId) {
+                          // Đợi một chút để state được cập nhật
+                          setTimeout(() => {
+                            // Chỉ tải ảnh cho tab hiện tại
+                            const currentIndex = parseInt(activeTab);
+                            const currentProduct = products[currentIndex];
+                            
+                            if (currentProduct && currentProduct.categoryName) {
+                              // Reset trạng thái lỗi để có thể tải lại ảnh
+                              setFailedImages((prev) => ({
+                                ...prev,
+                                [currentIndex]: false
+                              }));
+                              
+                              // Tải ảnh cho tab hiện tại
+                              loadPreviewImage(currentIndex);
+                            }
+                          }, 500);
+                        }
+                      }}
                       placeholder="Nhập ID folder Google Drive (sẽ áp dụng cho tất cả sản phẩm)"
                       className="pl-9 border-gray-300 focus:border-orange-500 focus:ring focus:ring-orange-200 focus:ring-opacity-50"
                     />
@@ -795,11 +926,15 @@ export default function BatchCreateProductPage() {
                       >;
                       if (apiData?.data) {
                         let found = false;
+                        let updatedCategoryName = "";
+                        let updatedRootCategoryId = "";
 
                         // Kiểm tra xem đây là danh mục cha
                         for (const group of apiData.data) {
                           if (group._id === value) {
                             setSelectedCategoryId(group._id);
+                            updatedCategoryName = group.title;
+                            updatedRootCategoryId = group._id;
 
                             // Cập nhật tất cả sản phẩm với danh mục cha
                             setProducts((prevProducts) => {
@@ -820,6 +955,8 @@ export default function BatchCreateProductPage() {
                             for (const category of group.items) {
                               if (category._id === value) {
                                 setSelectedCategoryId(group._id);
+                                updatedCategoryName = category.name;
+                                updatedRootCategoryId = group._id;
 
                                 // Cập nhật tất cả sản phẩm với danh mục con
                                 setProducts((prevProducts) => {
@@ -838,6 +975,24 @@ export default function BatchCreateProductPage() {
                           }
 
                           if (found) break;
+                        }
+
+                        // Sau khi cập nhật danh mục, chỉ tải ảnh preview cho tab hiện tại
+                        if (found && sharedFolderId) {
+                          // Đợi một chút để state được cập nhật
+                          setTimeout(() => {
+                            // Chỉ tải ảnh cho tab hiện tại
+                            const currentIndex = parseInt(activeTab);
+                            
+                            // Reset trạng thái lỗi để có thể tải lại ảnh
+                            setFailedImages((prev) => ({
+                              ...prev,
+                              [currentIndex]: false,
+                            }));
+                            
+                            // Tải ảnh cho tab hiện tại
+                            loadPreviewImage(currentIndex);
+                          }, 500);
                         }
                       }
                     }}
@@ -893,7 +1048,44 @@ export default function BatchCreateProductPage() {
             </CardContent>
           </Card>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs 
+            value={activeTab} 
+            onValueChange={(newTabValue) => {
+              setActiveTab(newTabValue);
+              
+              // Khi chuyển tab, kiểm tra xem tab đó đã có ảnh chưa
+              const tabIndex = parseInt(newTabValue);
+              const product = products[tabIndex];
+              
+              // Nếu đủ điều kiện và chưa có ảnh, tải ảnh cho tab đó
+              if (
+                sharedFolderId && 
+                product && 
+                product.stt && 
+                product.categoryName && 
+                !previewImages[tabIndex] && 
+                !loadingImages[tabIndex]
+              ) {
+                // Reset trạng thái lỗi khi chuyển tab để có thể tải lại ảnh
+                setFailedImages((prev) => ({
+                  ...prev,
+                  [tabIndex]: false
+                }));
+                
+                // Đợi một chút để state được cập nhật
+                setTimeout(() => {
+                  loadPreviewImage(tabIndex);
+                }, 500);
+                
+                // Thêm một lần tải ảnh nữa sau thời gian dài hơn để đảm bảo ảnh được tải
+                setTimeout(() => {
+                  if (!previewImages[tabIndex] && !loadingImages[tabIndex]) {
+                    console.log("Tải lại ảnh cho tab sau khi chuyển tab");
+                    loadPreviewImage(tabIndex);
+                  }
+                }, 1500);
+              }
+            }}>
             <TabsList className="mb-4 flex-wrap bg-gray-100 p-1 rounded-lg">
               {products.map((_, index) => (
                 <TabsTrigger

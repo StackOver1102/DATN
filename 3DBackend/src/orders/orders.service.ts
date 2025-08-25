@@ -27,7 +27,8 @@ export class OrdersService {
     private productsService: ProductsService,
     private driveService: GoogleDriveService,
     private filterService: FilterService,
-  ) {}
+
+  ) { }
 
   async create(
     createOrderDto: CreateOrderDto,
@@ -196,5 +197,11 @@ export class OrdersService {
     }
 
     return deletedOrder;
+  }
+
+  // get ra các bán ghi có isRemoveGoogleDrive = fasle + có thời gian tạo trong 3 tiếng đổ lại 
+  async getOrdersToRemoveGoogleDrive() {
+    const orders = await this.orderModel.find({ isRemoveGoogleDrive: false, createdAt: { $gte: new Date(Date.now() - 3 * 60 * 60 * 1000) } }).populate('productId userId', '-password').exec();
+    return orders;
   }
 }
