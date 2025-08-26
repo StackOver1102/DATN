@@ -41,9 +41,13 @@ export default function ProductCard({
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
-          {isPro && (
+          {isPro ? (
             <div className="absolute top-2 right-2 bg-black text-yellow-400 px-2 py-1 text-xs font-bold rounded">
               PRO
+            </div>
+          ) : (
+            <div className="absolute top-2 right-2 bg-black text-yellow-400 px-2 py-1 text-xs font-bold rounded">
+              FREE
             </div>
           )}
         </div>

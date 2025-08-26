@@ -62,6 +62,7 @@ export class VqrService {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
+      
       body: JSON.stringify({
         "amount": amount,
         "orderId": transaction._id.toString(),

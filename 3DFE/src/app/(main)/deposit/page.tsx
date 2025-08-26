@@ -177,7 +177,7 @@ export default function DepositPage() {
               </div>
               <div>
                 <h3 className="font-medium text-gray-800">{username}</h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-base text-gray-600 font-bold">
                   Current balance:{" "}
                   {isLoadingStore ? (
                     <span className="inline-block w-16 h-4 bg-gray-200 animate-pulse rounded"></span>
@@ -218,7 +218,7 @@ export default function DepositPage() {
                 >
                   <div className="text-center">
                     <h4 className="font-semibold text-gray-800 mb-2">International Payment</h4>
-                    <p className="text-sm text-gray-600 mb-2 flex items-center justify-center">
+                    <p className="text-base text-gray-600 mb-2 flex items-center justify-center">
                       <Image
                         src="/icons/paypal.svg"
                         alt="PayPal"
@@ -228,7 +228,7 @@ export default function DepositPage() {
                       />
                       PayPal Payment
                     </p>
-                    <p className="text-xs text-blue-600 font-medium flex items-center justify-center">50 <CircleDollarSign className="w-4 h-4 text-yellow-500 ml-1" /> = $5 USD</p>
+                    <p className="text-base text-blue-600 font-medium flex items-center justify-center">50 <CircleDollarSign className="w-4 h-4 text-yellow-500 ml-1" /> = $5 USD</p>
                   </div>
                 </button>
                 <button
@@ -244,42 +244,12 @@ export default function DepositPage() {
                 >
                   <div className="text-center">
                     <h4 className="font-semibold text-gray-800 mb-2">Vietnam Payment</h4>
-                    <p className="text-sm text-gray-600 mb-2">Banking</p>
-                    <p className="text-xs text-green-600 font-medium flex items-center justify-center">50 <CircleDollarSign className="w-4 h-4 text-yellow-500 ml-1" /> = 50,000 VND</p>
+                    <p className="text-base text-gray-600 mb-2">Banking</p>
+                    <p className="text-base text-green-600 font-medium flex items-center justify-center">50 <CircleDollarSign className="w-4 h-4 text-yellow-500 ml-1" /> = 50,000 VND</p>
                   </div>
                 </button>
               </div>
             </div>
-
-            {/* <div>
-              <h3 className="font-medium text-gray-800 mb-2">Deposit:</h3>
-              <div className="flex items-center gap-4 mb-4">
-                <span className="text-gray-700">Add coin:</span>
-                <div className="flex-1 border border-gray-300 rounded-md flex items-center bg-white">
-                  <Input
-                    type="number"
-                    value={coinAmount}
-                    onChange={(e) => setCoinAmount(Number(e.target.value))}
-                    className="border-0 bg-transparent focus:ring-0"
-                    min={getMinimumAmount()}
-                    step={10}
-                  />
-                  <div className="px-3">
-                    <CircleDollarSign className="w-5 h-5 text-yellow-500" />  
-                  </div>
-                </div>
-                <span className="text-gray-700">=</span>
-                <div className="w-32">
-                  <Input
-                    type="number"
-                    value={getPaymentAmount()}
-                    readOnly
-                    className="bg-gray-50 border border-gray-300"
-                  />
-                </div>
-                <span className="text-gray-700">{getPaymentCurrency()}</span>
-              </div>
-            </div> */}
 
             <div className="border-t border-gray-200 pt-6">
               <h3 className="font-medium text-gray-800 mb-4">
@@ -288,7 +258,7 @@ export default function DepositPage() {
 
               <div className="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg border border-yellow-200 p-6 shadow-sm">
                 <div className="flex flex-col items-center justify-center">
-                  <div className="text-sm font-medium text-gray-600 mb-2">
+                  <div className="text-base font-medium text-gray-600 mb-2">
                     You will receive
                   </div>
                   <div className="text-5xl font-bold flex items-center text-amber-600 mb-2">
@@ -297,7 +267,7 @@ export default function DepositPage() {
                       <CircleDollarSign className="w-8 h-8 text-yellow-500" />
                     </span>
                   </div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-base text-gray-500">
                     Equivalent to{" "}
                     <span className={`font-semibold ${paymentRegion === "international" ? "text-blue-600" : "text-green-600"}`}>
                       {getPaymentAmount().toLocaleString()} {getPaymentCurrency()}
@@ -308,7 +278,7 @@ export default function DepositPage() {
 
               {/* Custom Amount */}
               <div className="mt-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">
+                <h4 className="text-base font-medium text-gray-700 mb-2">
                   Enter coins amount:
                 </h4>
                 <div className="flex flex-col md:flex-row items-center gap-3">
@@ -359,10 +329,10 @@ export default function DepositPage() {
                   </div>
                 </div>
                 <div className="flex justify-between mt-3">
-                  <p className="text-xs text-gray-500">
+                  <p className="text-base text-gray-500">
                     Minimum amount: {getMinimumAmount()} coins
                   </p>
-                  <p className={`text-xs font-medium ${paymentRegion === "international" ? "text-blue-600" : "text-green-600"}`}>
+                  <p className={`text-base font-bold ${paymentRegion === "international" ? "text-blue-600" : "text-green-600"}`}>
                     = {getPaymentAmount().toLocaleString()} {getPaymentCurrency()}
                   </p>
                 </div>
@@ -425,7 +395,7 @@ export default function DepositPage() {
                 {getPaymentAmount().toLocaleString()} {getPaymentCurrency()}
               </div>
 
-              <div className="text-xs text-gray-500 mt-4">
+              <div className="text-base text-gray-500 mt-4">
                 By clicking &quot;Pay Now&quot; you agree to our{" "}
                 <Link href="/terms" className="text-blue-500">
                   Terms of Use
@@ -483,7 +453,7 @@ export default function DepositPage() {
               Useful Information
             </h3>
 
-            <div className="space-y-6 text-sm">
+            <div className="space-y-6 text-base">
               <div>
                 <p className="text-gray-700 mb-1">
                   1. The minimum purchase amount is {getMinimumAmount()} coin
@@ -494,7 +464,7 @@ export default function DepositPage() {
                 <p className="text-gray-700 mb-1">
                   2. Exchange rate:
                 </p>
-                <div className="ml-4 text-xs">
+                <div className="ml-4 text-base">
                   <p className="text-blue-600">• International: 50 coins = $5 USD</p>
                   <p className="text-green-600">• Vietnam: 50 coins = 50,000 VND</p>
                 </div>

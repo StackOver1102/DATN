@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense, useRef, useMemo } from "react";
+import { differenceInDays } from "date-fns";
 import { Button } from "@/components/ui/button";
 import {
   User as UserIcon,
@@ -97,17 +98,29 @@ interface RefundRequest {
   order?: Purchase;
   notificationId?: string;
   isRead?: boolean;
+  amount?: number;
+  adminNotes?: string;
+  processedAt?: string;
+  processedBy?: string;
+  attachments?: string[];
+  images?: string[];
 }
 
 interface SupportTicket {
   _id: string;
   subject: string;
   message: string;
-  status: "open" | "in_progress" | "closed";
+  status: "open" | "in_progress" | "closed" | "resolved";
   createdAt: string;
   updatedAt: string;
   notificationId?: string;
   isRead?: boolean;
+  name?: string;
+  email?: string;
+  phone?: string;
+  response?: string;
+  respondedBy?: string;
+  attachments?: string[];
 }
 
 // Schema validation for user profile form
@@ -150,6 +163,14 @@ function ProfileContentInner() {
     <ProfilePageContent session={session} tabParam={tabParam} router={router} />
   );
 }
+
+// Helper function to check if a date is within the last 3 days
+const isWithinLastThreeDays = (dateString: string) => {
+  const purchaseDate = new Date(dateString);
+  const today = new Date();
+  const daysDifference = differenceInDays(today, purchaseDate);
+  return daysDifference <= 3;
+};
 
 export default function ProfileContent() {
   return (
@@ -198,9 +219,13 @@ function ProfilePageContent({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [showRefundDetailsModal, setShowRefundDetailsModal] = useState(false);
+  const [showTicketDetailsModal, setShowTicketDetailsModal] = useState(false);
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(
     null
   );
+  const [selectedRefund, setSelectedRefund] = useState<RefundRequest | null>(null);
+  const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [refundReason, setRefundReason] = useState("");
   const [refundImage, setRefundImage] = useState<File | null>(null);
   const [refundImagePreview, setRefundImagePreview] = useState<string | null>(null);
@@ -249,6 +274,58 @@ function ProfilePageContent({
         enabled: activeTab === "refunds",
       }
     );
+    
+  // Function to fetch refund details
+  const fetchRefundDetails = async (refundId: string) => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/refunds/${refundId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${session?.accessToken}`,
+          },
+        }
+      );
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setSelectedRefund(data.data);
+        setShowRefundDetailsModal(true);
+      } else {
+        toast.error(data.message || "Failed to fetch refund details");
+      }
+    } catch (error) {
+      console.error("Error fetching refund details:", error);
+      toast.error("An error occurred while fetching refund details");
+    }
+  };
+  
+  // Function to fetch ticket details
+  const fetchTicketDetails = async (ticketId: string) => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/support/${ticketId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${session?.accessToken}`,
+          },
+        }
+      );
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setSelectedTicket(data.data);
+        setShowTicketDetailsModal(true);
+      } else {
+        toast.error(data.message || "Failed to fetch ticket details");
+      }
+    } catch (error) {
+      console.error("Error fetching ticket details:", error);
+      toast.error("An error occurred while fetching ticket details");
+    }
+  };
 
   // Fetch support tickets
   const { data: supportData, isLoading: isLoadingSupportTickets } =
@@ -1132,7 +1209,8 @@ function ProfilePageContent({
                                   fill="#eab308"
                                 />
                               )}
-                              {purchase.status === "completed" && (
+                              {purchase.status === "completed" && 
+                               isWithinLastThreeDays(purchase.createdAt) && (
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -1366,12 +1444,9 @@ function ProfilePageContent({
                               key={index}
                               className={`bg-gray-50 rounded-lg p-4 flex items-center justify-between
                               ${isUnread ? "border-l-4 border-yellow-400" : ""}
-                              ${
-                                hasNotification
-                                  ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md"
-                                  : ""
-                              }`}
+                              cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md`}
                               onClick={() => {
+                                // Mark notification as read if needed
                                 if (
                                   matchingNotification &&
                                   !matchingNotification.isWatching
@@ -1380,6 +1455,9 @@ function ProfilePageContent({
                                     matchingNotification._id
                                   );
                                 }
+                                
+                                // Fetch and show refund details
+                                fetchRefundDetails(refund._id);
                               }}
                             >
                               <div className="flex items-center gap-4">
@@ -1527,11 +1605,7 @@ function ProfilePageContent({
                               key={index}
                               className={`bg-gray-50 rounded-lg p-4 flex items-center justify-between
                               ${isUnread ? "border-l-4 border-yellow-400" : ""}
-                              ${
-                                hasNotification
-                                  ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md"
-                                  : ""
-                              }`}
+                              cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md`}
                               onClick={() => {
                                 if (
                                   matchingNotification &&
@@ -1541,6 +1615,9 @@ function ProfilePageContent({
                                     matchingNotification._id
                                   );
                                 }
+                                
+                                // Fetch and show ticket details
+                                fetchTicketDetails(ticket._id);
                               }}
                             >
                               <div className="flex items-center gap-4">
@@ -1659,7 +1736,7 @@ function ProfilePageContent({
 
       {/* Refund Modal */}
       {showRefundModal && selectedPurchase && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6">
             {/* Modal Header */}
             <div className="flex items-center justify-between mb-4">
@@ -1813,7 +1890,7 @@ function ProfilePageContent({
 
       {/* Avatar Upload Modal */}
       {showAvatarModal && avatarPreview && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6">
             {/* Modal Header */}
             <div className="flex items-center justify-between mb-4">
@@ -1887,6 +1964,302 @@ function ProfilePageContent({
                     <span>Upload</span>
                   </div>
                 )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Refund Details Modal */}
+      {showRefundDetailsModal && selectedRefund && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center
+                  ${selectedRefund.status === "pending" ? "bg-yellow-100" : 
+                    selectedRefund.status === "approved" ? "bg-green-100" : "bg-red-100"}`}>
+                  <RefreshCcw className={`w-5 h-5 
+                    ${selectedRefund.status === "pending" ? "text-yellow-600" : 
+                      selectedRefund.status === "approved" ? "text-green-600" : "text-red-600"}`} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Refund Request Details
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    #{selectedRefund._id}
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setShowRefundDetailsModal(false);
+                  setSelectedRefund(null);
+                }}
+                className="p-2"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+
+            {/* Refund Status */}
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="font-medium text-gray-700">Status</h4>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium
+                  ${selectedRefund.status === "pending" ? "text-yellow-600 bg-yellow-100" : 
+                    selectedRefund.status === "approved" ? "text-green-600 bg-green-100" : "text-red-600 bg-red-100"}`}>
+                  {selectedRefund.status === "pending" ? "Pending" : 
+                    selectedRefund.status === "approved" ? "Approved" : "Rejected"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="font-medium text-gray-700">Created</h4>
+                <span className="text-gray-600">{formatDate(selectedRefund.createdAt)}</span>
+              </div>
+              {selectedRefund.processedAt && (
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="font-medium text-gray-700">Processed</h4>
+                  <span className="text-gray-600">{formatDate(selectedRefund.processedAt)}</span>
+                </div>
+              )}
+              <div className="flex justify-between items-center">
+                <h4 className="font-medium text-gray-700">Refund Amount</h4>
+                <span className="font-bold text-blue-600">{formatNumber(selectedRefund.amount || 0)} coins</span>
+              </div>
+            </div>
+
+            {/* Order Details */}
+            {selectedRefund.order && (
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-900 mb-2">Order Information</h4>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-center gap-3">
+                    <Image
+                      src={selectedRefund.order.productId.images}
+                      alt={selectedRefund.order.productId.name}
+                      width={50}
+                      height={50}
+                      className="rounded-lg object-cover"
+                    />
+                    <div>
+                      <h5 className="font-medium text-gray-900">
+                        {selectedRefund.order.productId.name}
+                      </h5>
+                      <p className="text-sm text-gray-600">
+                        {formatCurrency(selectedRefund.order.totalAmount)}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Order ID: #{selectedRefund.orderId}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Purchase date: {formatDate(selectedRefund.order.createdAt)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Refund Reason */}
+            <div className="mb-6">
+              <h4 className="font-medium text-gray-900 mb-2">Reason for Refund</h4>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-gray-700">{selectedRefund.description}</p>
+              </div>
+            </div>
+
+            {/* Admin Notes */}
+            {selectedRefund.adminNotes && (
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-900 mb-2">Admin Response</h4>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-gray-700">{selectedRefund.adminNotes}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Attachments */}
+            {((selectedRefund.attachments && selectedRefund.attachments.length > 0) || (selectedRefund.images && selectedRefund.images.length > 0)) && (
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-900 mb-2">Attachments</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {[...(selectedRefund.attachments || []), ...(selectedRefund.images || [])].map((attachment, index) => (
+                    <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
+                      <Image
+                        src={attachment}
+                        alt={`Attachment ${index + 1}`}
+                        fill
+                        sizes="100%"
+                        className="object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Modal Actions */}
+            <div className="flex justify-end">
+              <Button
+                onClick={() => {
+                  setShowRefundDetailsModal(false);
+                  setSelectedRefund(null);
+                }}
+                className="bg-gray-200 hover:bg-gray-300 text-gray-800"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Support Ticket Details Modal */}
+      {showTicketDetailsModal && selectedTicket && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center
+                  ${selectedTicket.status === "open" ? "bg-blue-100" :
+                    selectedTicket.status === "in_progress" ? "bg-yellow-100" :
+                    selectedTicket.status === "resolved" ? "bg-green-100" : "bg-green-100"}`}>
+                  <LifeBuoy className={`w-5 h-5 
+                    ${selectedTicket.status === "open" ? "text-blue-600" :
+                      selectedTicket.status === "in_progress" ? "text-yellow-600" :
+                      selectedTicket.status === "resolved" ? "text-green-600" : "text-green-600"}`} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Support Ticket Details
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    #{selectedTicket._id}
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setShowTicketDetailsModal(false);
+                  setSelectedTicket(null);
+                }}
+                className="p-2"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+
+            {/* Ticket Status */}
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="font-medium text-gray-700">Status</h4>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium
+                  ${selectedTicket.status === "open" ? "text-blue-600 bg-blue-100" :
+                    selectedTicket.status === "in_progress" ? "text-yellow-600 bg-yellow-100" :
+                    selectedTicket.status === "resolved" ? "text-green-600 bg-green-100" : "text-green-600 bg-green-100"}`}>
+                  {selectedTicket.status === "open" ? "Open" :
+                    selectedTicket.status === "in_progress" ? "In Progress" :
+                    selectedTicket.status === "resolved" ? "Resolved" : "Closed"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="font-medium text-gray-700">Created</h4>
+                <span className="text-gray-600">{formatDate(selectedTicket.createdAt)}</span>
+              </div>
+              {selectedTicket.updatedAt && selectedTicket.updatedAt !== selectedTicket.createdAt && (
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="font-medium text-gray-700">Last Updated</h4>
+                  <span className="text-gray-600">{formatDate(selectedTicket.updatedAt)}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Contact Information */}
+            <div className="mb-6">
+              <h4 className="font-medium text-gray-900 mb-2">Contact Information</h4>
+              <div className="bg-gray-50 rounded-lg p-4">
+                {selectedTicket.name && (
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-gray-600">Name:</span>
+                    <span className="font-medium">{selectedTicket.name}</span>
+                  </div>
+                )}
+                {selectedTicket.email && (
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-gray-600">Email:</span>
+                    <span className="font-medium">{selectedTicket.email}</span>
+                  </div>
+                )}
+                {selectedTicket.phone && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Phone:</span>
+                    <span className="font-medium">{selectedTicket.phone}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Ticket Subject & Message */}
+            <div className="mb-6">
+              <h4 className="font-medium text-gray-900 mb-2">Subject</h4>
+              <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                <p className="text-gray-700 font-medium">{selectedTicket.subject}</p>
+              </div>
+              
+              <h4 className="font-medium text-gray-900 mb-2">Message</h4>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-gray-700">{selectedTicket.message}</p>
+              </div>
+            </div>
+
+            {/* Admin Response */}
+            {selectedTicket.response && (
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-900 mb-2">Admin Response</h4>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-gray-700">{selectedTicket.response}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Attachments */}
+            {selectedTicket.attachments && selectedTicket.attachments.length > 0 && (
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-900 mb-2">Attachments</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {selectedTicket.attachments.map((attachment, index) => (
+                    <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
+                      <Image
+                        src={attachment}
+                        alt={`Attachment ${index + 1}`}
+                        fill
+                        sizes="100%"
+                        className="object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Modal Actions */}
+            <div className="flex justify-end">
+              <Button
+                onClick={() => {
+                  setShowTicketDetailsModal(false);
+                  setSelectedTicket(null);
+                }}
+                className="bg-gray-200 hover:bg-gray-300 text-gray-800"
+              >
+                Close
               </Button>
             </div>
           </div>
