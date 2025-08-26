@@ -40,14 +40,64 @@ function DepositSuccessContent() {
   // Check if the origin is VQR
   const origin = searchParams.get("origin");
 
+  // const fewt
   // Fetch user profile to get the latest balance
-  const {
-    profile: userProfile,
-    isLoading: isLoadingProfile,
-    fetchProfile: refetchProfile,
-  } = useUserProfile();
+  // const {
+  //   profile: userProfile,
+  //   isLoading: isLoadingProfile,
+  //   fetchProfile: refetchProfile,
+  // } = useUserProfile();
 
   useEffect(() => {
+    // Prevent running the effect if we don't have the necessary data yet
+    if (!paypalOrderId && origin !== "vqr") {
+      toast.error("Payment information not found");
+      router.push("/deposit");
+      return;
+    }
+
+    // Helper function to process payment with a token
+    const processPaymentWithToken = async (token: string, orderId: string) => {
+      try {
+        // Call the API to verify and process the payment
+        const response = await transactionApi.approvePayPalOrder(
+          token,
+          orderId
+        );
+
+        if (!response.success) {
+          throw new Error(response.message || "Payment processing failed");
+        }
+
+        // Update session to get the new balance
+        if (updateSession) {
+          await updateSession();
+        }
+
+        // Refetch user profile to get the latest balance
+        // if (refetchProfile) {
+        //   await refetchProfile();
+        // }
+
+        // Set success state
+        setIsSuccess(true);
+
+        // Store the new balance for display
+        if (
+          response.data &&
+          typeof response.data === "object" &&
+          "balance" in response.data
+        ) {
+          setNewBalance(response.data.balance as number);
+        }
+      } catch (error: unknown) {
+        console.error("Error in processPaymentWithToken:", error);
+        throw error;
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+
     const processPayment = async () => {
       try {
         setIsProcessing(true);
@@ -55,7 +105,9 @@ function DepositSuccessContent() {
         // If origin is VQR, just show success without processing
         if (origin === "vqr") {
           // Refetch user profile to get the latest balance
-          await refetchProfile();
+          // if (refetchProfile) {
+          //   await refetchProfile();
+          // }
           setIsSuccess(true);
           setIsProcessing(false);
           return;
@@ -107,52 +159,16 @@ function DepositSuccessContent() {
       }
     };
 
-    // Helper function to process payment with a token
-    const processPaymentWithToken = async (token: string, orderId: string) => {
-      try {
-        // Call the API to verify and process the payment
-        const response = await transactionApi.approvePayPalOrder(
-          token,
-          orderId
-        );
-
-        if (!response.success) {
-          throw new Error(response.message || "Payment processing failed");
-        }
-
-        // Update session to get the new balance
-        await updateSession();
-
-        // Refetch user profile to get the latest balance
-        await refetchProfile();
-
-        // Set success state
-        setIsSuccess(true);
-
-        // Store the new balance for display
-        if (
-          response.data &&
-          typeof response.data === "object" &&
-          "balance" in response.data
-        ) {
-          setNewBalance(response.data.balance as number);
-        }
-      } catch (error: unknown) {
-        console.error("Error in processPaymentWithToken:", error);
-        throw error;
-      } finally {
-        setIsProcessing(false);
-      }
+    // Only run the payment process once when the component mounts
+    // or when critical dependencies change
+    const runOnce = async () => {
+      await processPayment();
     };
-
-    if (!paypalOrderId && origin !== "vqr") {
-      toast.error("Payment information not found");
-      router.push("/deposit");
-      return;
-    }
-
-    processPayment();
-  }, [paypalOrderId, sessionData, accessToken, router, updateSession, refetchProfile, origin]);
+    
+    runOnce();
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paypalOrderId, origin, router]);
 
   return (
     <div className="container mx-auto py-12 max-w-3xl">
@@ -191,30 +207,6 @@ function DepositSuccessContent() {
             <p className="text-gray-600 text-center mb-6">
               Thank you for your deposit. Coins have been added to your account.
             </p>
-
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 flex items-center justify-center w-full mb-8">
-              <div className="flex items-center">
-                <span className="text-2xl font-bold text-gray-800 mr-2">
-                  Current Balance:
-                </span>
-                {isLoadingProfile ? (
-                  <span className="inline-block w-24 h-8 bg-gray-200 animate-pulse rounded"></span>
-                ) : (
-                  <span className="text-3xl font-bold text-yellow-600 flex items-center">
-                    {newBalance !== null
-                      ? newBalance.toLocaleString()
-                      : userProfile?.balance?.toLocaleString() || 0}
-                    <Image
-                      src="/icons/diamond.svg"
-                      alt="Diamond"
-                      width={28}
-                      height={28}
-                      className="ml-2"
-                    />
-                  </span>
-                )}
-              </div>
-            </div>
 
             <div className="flex space-x-4">
               <Link href="/models">

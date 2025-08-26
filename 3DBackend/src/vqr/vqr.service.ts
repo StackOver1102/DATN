@@ -83,7 +83,7 @@ export class VqrService {
       })
     })
     const data = await fe.json()
-    console.log('data', data)
+    // console.log('data', data)
     return { qrLink: data.qrLink, transactionId: transaction.id }
   }
 }

@@ -74,6 +74,7 @@ export class VqrController {
       serviceCode,
       subTerminalCode
     }
+    console.log('body', req.body)
     const result = await this.vqrService.transactionSync(body)
     return result;
   }
