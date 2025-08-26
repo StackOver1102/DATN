@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
         hostname: "r2-image-server.ngoctoanmtc.workers.dev",
       },
     ],
+    unoptimized: true,
   },
 };
 

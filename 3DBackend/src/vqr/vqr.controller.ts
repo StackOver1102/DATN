@@ -1,6 +1,6 @@
 import { Controller, Post, Headers, UnauthorizedException, Body, Req } from '@nestjs/common';
 import { VqrService } from './vqr.service';
-import { CreateVqrDto } from './dto/create-vqr.dto';
+// import { CreateVqrDto } from './dto/create-vqr.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { JwtService } from '@nestjs/jwt';
 import { UserPayload } from 'src/auth/types';
@@ -30,9 +30,10 @@ export class VqrController {
 
   @Public()
   @Post('/api/token_generate')
-  create(@Req() req: any) {
+  create(@Headers() headers: any) {
+    // console.log(createVqrDto);
     // const { username, password } = createVqrDto;
-    const authHeader = req.headers?.authorization;
+    const authHeader = headers.authorization;
     if (!authHeader || !authHeader.startsWith('Basic ')) {
       throw new UnauthorizedException('Authorization header is missing or invalid');
     }
