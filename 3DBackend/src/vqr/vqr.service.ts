@@ -22,7 +22,14 @@ export class VqrService {
     const { amount, orderId } = body
     const transaction = await this.transactionService.findByOrderIdAndUpdate(orderId, amount)
 
-    return transaction.orderId;
+    return {
+      error: false,
+      errorReason: "",
+      toastMessage: 'Transaction synced successfully',
+      object: {
+        reftransactionid: transaction._id
+      }
+    };
   }
 
   async getToken() {
