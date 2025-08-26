@@ -9,7 +9,6 @@ import { DriveModule } from 'src/drive/drive.module';
 import { ProductsModule } from 'src/products/products.module';
 import { CommonModule } from 'src/common/common.module';
 import { FilterModule } from 'src/common/filters/filter.module';
-import { ScheduleModule } from 'src/schedule/schedule.module';
 
 @Module({
   imports: [
@@ -19,8 +18,7 @@ import { ScheduleModule } from 'src/schedule/schedule.module';
     DriveModule,
     ProductsModule,
     CommonModule,
-    FilterModule,
-    ScheduleModule
+    FilterModule
   ],
   controllers: [OrdersController],
   providers: [OrdersService],

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Send, Upload, X } from "lucide-react";
 import Link from "next/link";
 import { supportApi } from "@/lib/api";
 import { toast } from "sonner";
+import { useAppSelector } from "@/lib/store/hooks";
 
 export default function SupportPage() {
   const [formData, setFormData] = useState({
@@ -14,9 +15,25 @@ export default function SupportPage() {
     email: "",
     message: "",
   });
-
+  const { profile, isLoading: isLoadingStore } = useAppSelector(
+    (state) => state.user
+  );
+  console.log(profile);
+  // const {}
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Auto-fill user data when profile is loaded
+  useEffect(() => {
+    if (profile) {
+      setFormData(prev => ({
+        ...prev,
+        name: profile.fullName || "",
+        email: profile.email || "",
+        phone: profile.phone || "",
+      }));
+    }
+  }, [profile]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -49,6 +66,7 @@ export default function SupportPage() {
     setIsSubmitting(true);
 
     try {
+      console.log(profile)
       // Submit data to API
       const response = await supportApi.createWithAttachments(
         {
@@ -56,6 +74,7 @@ export default function SupportPage() {
           phone: formData.phone,
           email: formData.email,
           message: formData.message || undefined,
+          ...(profile ? { userId: profile._id } : {})
         },
         uploadedFiles
       );

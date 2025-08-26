@@ -37,6 +37,8 @@ function DepositSuccessContent() {
 
   // Get the PayPal order ID from the URL query parameters
   const paypalOrderId = searchParams.get("token");
+  // Check if the origin is VQR
+  const origin = searchParams.get("origin");
 
   // Fetch user profile to get the latest balance
   const {
@@ -49,6 +51,15 @@ function DepositSuccessContent() {
     const processPayment = async () => {
       try {
         setIsProcessing(true);
+        
+        // If origin is VQR, just show success without processing
+        if (origin === "vqr") {
+          // Refetch user profile to get the latest balance
+          await refetchProfile();
+          setIsSuccess(true);
+          setIsProcessing(false);
+          return;
+        }
 
         // Check if we have a session and token
         if (!sessionData || !accessToken) {
@@ -134,14 +145,14 @@ function DepositSuccessContent() {
       }
     };
 
-    if (!paypalOrderId) {
+    if (!paypalOrderId && origin !== "vqr") {
       toast.error("Payment information not found");
       router.push("/deposit");
       return;
     }
 
     processPayment();
-  }, [paypalOrderId, sessionData, accessToken, router, updateSession, refetchProfile]);
+  }, [paypalOrderId, sessionData, accessToken, router, updateSession, refetchProfile, origin]);
 
   return (
     <div className="container mx-auto py-12 max-w-3xl">

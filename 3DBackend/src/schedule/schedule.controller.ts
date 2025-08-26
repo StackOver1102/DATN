@@ -153,15 +153,15 @@ export class ScheduleController {
       case 'hourlyTask':
         this.scheduleService.handleHourlyTask();
         break;
-      case 'every30MinutesTask':
-        this.scheduleService.handleEvery30MinutesTask();
+      case 'every3HoursTask':
+        this.scheduleService.handleEvery3HoursTask();
         break;
-      case 'intervalTask':
-        this.scheduleService.handleIntervalTask();
-        break;
-      case 'startupTask':
-        this.scheduleService.handleOnceAfterAppStart();
-        break;
+      // case 'intervalTask':
+      //   this.scheduleService.handleIntervalTask();
+      //   break;
+      // case 'startupTask':
+      //   this.scheduleService.handleOnceAfterAppStart();
+      //   break;
       default:
         // For custom tasks, we'll try to execute them if they have a handler
         if (task.handler) {

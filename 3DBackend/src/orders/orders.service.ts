@@ -17,7 +17,16 @@ import { FilterDto } from 'src/common/dto/filter.dto';
 import { PaginatedResult } from 'src/common/interfaces/pagination.interface';
 import { FilterService } from 'src/common/services/filter.service';
 import { TransactionDocument } from 'src/transactions/entities/transaction.entity';
+import { UserDocument } from 'src/users/types';
+import { ProductDocument } from 'src/products/entities/product.entity';
 
+interface OrderToRemoveGoogleDrive {
+  productId: ProductDocument;
+  userId: UserDocument;
+  isRemoveGoogleDrive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
 @Injectable()
 export class OrdersService {
   constructor(
@@ -200,8 +209,8 @@ export class OrdersService {
   }
 
   // get ra các bán ghi có isRemoveGoogleDrive = fasle + có thời gian tạo trong 3 tiếng đổ lại 
-  async getOrdersToRemoveGoogleDrive() {
+  async getOrdersToRemoveGoogleDrive(): Promise<OrderToRemoveGoogleDrive[]> {
     const orders = await this.orderModel.find({ isRemoveGoogleDrive: false, createdAt: { $gte: new Date(Date.now() - 3 * 60 * 60 * 1000) } }).populate('productId userId', '-password').exec();
-    return orders;
+    return orders as unknown as OrderToRemoveGoogleDrive[];
   }
 }

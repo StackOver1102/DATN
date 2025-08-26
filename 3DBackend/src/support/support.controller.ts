@@ -32,12 +32,7 @@ import { UploadService } from 'src/upload/upload.service';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { NotificationType } from 'src/types/notification';
 import { FilterDto } from 'src/common/dto/filter.dto';
-
-interface UserWithId {
-  _id: string;
-  [key: string]: any;
-}
-
+import { UserPayload } from 'src/auth/types';
 interface FileWithBuffer extends Express.Multer.File {
   buffer: Buffer;
   key: string;
@@ -49,7 +44,7 @@ export class SupportController {
     private readonly supportService: SupportService,
     private readonly uploadService: UploadService,
     private readonly notificationsService: NotificationsService,
-  ) {}
+  ) { }
 
   @Post()
   @Public()
@@ -88,7 +83,7 @@ export class SupportController {
   @UseInterceptors(FilesInterceptor('attachments', 5))
   async createWithUser(
     @Body() createSupportDto: CreateSupportDto,
-    @CurrentUser() user: UserWithId,
+    @CurrentUser() user: UserPayload,
     @UploadedFiles() files?: FileWithBuffer[],
   ) {
     // Upload files if any
@@ -112,7 +107,7 @@ export class SupportController {
         ...createSupportDto,
         attachments: [...(createSupportDto.attachments || []), ...attachments],
       },
-      user._id,
+      user.userId,
     );
   }
 
@@ -126,10 +121,12 @@ export class SupportController {
     return this.supportService.findAll();
   }
 
-  @Get('my-requests')
+  @Get('my-tickets')
+
   @UseGuards(JwtAuthGuard)
-  findMyRequests(@CurrentUser() user: UserWithId,@Query() filterDto: FilterDto) {
-    return this.supportService.findByUserId(user._id, filterDto);
+  findMyRequests(@CurrentUser() user: UserPayload, @Query() filterDto: FilterDto) {
+    console.log(user)
+    return this.supportService.findByUserId(user.userId, filterDto);
   }
 
   @Get(':id')
@@ -144,9 +141,9 @@ export class SupportController {
   update(
     @Param('id') id: string,
     @Body() updateSupportDto: UpdateSupportDto,
-    @CurrentUser() user: UserWithId,
+    @CurrentUser() user: UserPayload,
   ) {
-    return this.supportService.update(id, updateSupportDto, user._id);
+    return this.supportService.update(id, updateSupportDto, user.userId);
   }
 
   @Post(':id/respond')
@@ -155,9 +152,9 @@ export class SupportController {
   respond(
     @Param('id') id: string,
     @Body() respondToSupportDto: RespondToSupportDto,
-    @CurrentUser() admin: UserWithId,
+    @CurrentUser() admin: UserPayload,
   ) {
-    return this.supportService.respond(id, respondToSupportDto, admin._id);
+    return this.supportService.respond(id, respondToSupportDto, admin.userId);
   }
 
   @Delete(':id')

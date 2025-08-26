@@ -151,3 +151,11 @@ export class CreatePayPalOrderDto {
   @IsString()
   description?: string = 'Deposit to account';
 }
+
+export class CreateVQRCodeDto {
+  @ApiProperty({ description: 'Amount to deposit' })
+  @IsNumber()
+  @IsPositive()
+  @IsNotEmpty()
+  amount: number;
+}

@@ -178,6 +178,10 @@ export const transactionApi = {
   // Cancel PayPal order
   cancelPayPalOrder: (token: string, orderId: string) => 
     apiRequest(`transactions/${orderId}/cancel-order`, 'PATCH', undefined, token),
+
+  // Create VQR code
+  createVQRCode: (token: string, amount: number) => 
+    apiRequest(`vqr/api/qrcode_generate`, 'POST', { amount }, token),
 };
 
 /**
@@ -189,6 +193,7 @@ export interface CreateSupportRequest {
   email: string;
   message?: string;
   attachments?: string[];
+  userId?:string;
   [key: string]: unknown;
 }
 
@@ -205,6 +210,9 @@ export const supportApi = {
       formData.append('name', data.name);
       formData.append('phone', data.phone);
       formData.append('email', data.email);
+      if(data.userId){
+        formData.append('userId', data.userId)
+      }
       if (data.message) formData.append('message', data.message);
       
       // Add files

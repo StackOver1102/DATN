@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { fetchUserProfile } from "@/lib/store/userSlice";
 import { CircleDollarSign } from "lucide-react";
+import { transactionApi } from "@/lib/api";
 
 export default function DepositPage() {
   const { data: session, update: updateSession } = useSession();
@@ -108,6 +109,23 @@ export default function DepositPage() {
     }
   };
 
+  const handlePaymentVQR = async () => {
+    try {
+      setIsLoading(true);
+      const token = session?.accessToken as string | undefined;
+      if (!token) {
+        toast.error("Please login to deposit funds");
+        router.push("/signin?callbackUrl=" + encodeURIComponent("/deposit"));
+        return;
+      }
+      const result = await transactionApi.createVQRCode(token,coinAmount)
+      setIsLoading(false);
+      window.open(result.data.qrLink, "_blank");
+    } catch (error) {
+      console.error("Error processing payment:", error);
+    }
+  }
+
   // Handle payment error
   const handlePaymentError = (error: Error | unknown) => {
     console.error("Payment error:", error);
@@ -158,8 +176,8 @@ export default function DepositPage() {
                   {isLoadingStore ? (
                     <span className="inline-block w-16 h-4 bg-gray-200 animate-pulse rounded"></span>
                   ) : (
-                    <span className="text-gray-800 inline-flex items-center">
-                      {userBalance.toLocaleString()} 
+                    <span className="text-blue-600 inline-flex items-center">
+                      {userBalance.toLocaleString()}
                       <CircleDollarSign className="w-4 h-4 text-yellow-500 ml-1" />
                     </span>
                   )}
@@ -185,35 +203,42 @@ export default function DepositPage() {
                   onClick={() => {
                     setPaymentRegion("international");
                     setPaymentMethod("paypal");
-                    setCoinAmount(0);
+                    setCoinAmount(50);
                   }}
-                  className={`p-4 rounded-lg border-2 transition-all ${
-                    paymentRegion === "international"
+                  className={`p-4 rounded-lg border-2 transition-all ${paymentRegion === "international"
                       ? "border-blue-500 bg-blue-50"
                       : "border-gray-200 hover:border-blue-300"
-                  }`}
+                    }`}
                 >
                   <div className="text-center">
                     <h4 className="font-semibold text-gray-800 mb-2">International Payment</h4>
-                    <p className="text-sm text-gray-600 mb-2">PayPal Payment</p>
+                    <p className="text-sm text-gray-600 mb-2 flex items-center justify-center">
+                      <Image
+                        src="/icons/paypal.svg"
+                        alt="PayPal"
+                        width={16}
+                        height={16}
+                        className="mr-1"
+                      />
+                      PayPal Payment
+                    </p>
                     <p className="text-xs text-blue-600 font-medium flex items-center justify-center">50 <CircleDollarSign className="w-4 h-4 text-yellow-500 ml-1" /> = $5 USD</p>
                   </div>
                 </button>
                 <button
                   onClick={() => {
                     setPaymentRegion("vietnam");
-                    setPaymentMethod("momo");
-                    setCoinAmount(0);
+                    // setPaymentMethod("momo");
+                    setCoinAmount(50);
                   }}
-                  className={`p-4 rounded-lg border-2 transition-all ${
-                    paymentRegion === "vietnam"
+                  className={`p-4 rounded-lg border-2 transition-all ${paymentRegion === "vietnam"
                       ? "border-green-500 bg-green-50"
                       : "border-gray-200 hover:border-green-300"
-                  }`}
+                    }`}
                 >
                   <div className="text-center">
                     <h4 className="font-semibold text-gray-800 mb-2">Vietnam Payment</h4>
-                    <p className="text-sm text-gray-600 mb-2">Momo / Banking</p>
+                    <p className="text-sm text-gray-600 mb-2">Banking</p>
                     <p className="text-xs text-green-600 font-medium flex items-center justify-center">50 <CircleDollarSign className="w-4 h-4 text-yellow-500 ml-1" /> = 50,000 VND</p>
                   </div>
                 </button>
@@ -365,25 +390,7 @@ export default function DepositPage() {
                   </label>
                 ) : (
                   <>
-                    <label className="flex items-center gap-2 text-gray-700 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="momo"
-                        checked={paymentMethod === "momo"}
-                        onChange={() => setPaymentMethod("momo")}
-                      />
-                      Pay with Momo
-                      <div className="flex ml-auto">
-                        <Image
-                          src="/icons/momo.svg"
-                          alt="Momo"
-                          width={24}
-                          height={24}
-                        />
-                      </div>
-                    </label>
-
+            
                     <label className="flex items-center gap-2 text-gray-700 cursor-pointer">
                       <input
                         type="radio"
@@ -394,24 +401,7 @@ export default function DepositPage() {
                       />
                       Pay with Banking
                       <div className="flex gap-1 ml-auto">
-                        <Image
-                          src="/icons/vietcombank.png"
-                          alt="Vietcombank"
-                          width={24}
-                          height={24}
-                        />
-                        <Image
-                          src="/icons/agribank.png"
-                          alt="Agribank"
-                          width={24}
-                          height={24}
-                        />
-                        <Image
-                          src="/icons/tpbank.png"
-                          alt="TPBank"
-                          width={24}
-                          height={24}
-                        />
+                      
                       </div>
                     </label>
                   </>
@@ -468,6 +458,7 @@ export default function DepositPage() {
                   <Button
                     className="w-full bg-green-500 hover:bg-green-600 text-white py-3 text-lg font-medium"
                     disabled={isLoading || coinAmount < getMinimumAmount()}
+                    onClick={handlePaymentVQR}
                   >
                     {coinAmount < getMinimumAmount()
                       ? `Minimum amount is ${getMinimumAmount()} coin`

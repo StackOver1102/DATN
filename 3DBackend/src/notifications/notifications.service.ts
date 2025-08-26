@@ -107,6 +107,7 @@ export class NotificationsService {
       .find({
         userId: new Types.ObjectId(userId),
         isWatching: false,
+        isRead: true,
         originType: { $ne: NotificationType.COMMENT }, // Exclude comment notifications
       })
       .sort({ createdAt: -1 });

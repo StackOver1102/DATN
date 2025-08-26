@@ -2,6 +2,7 @@ export enum TransactionMethod {
   PAYPAL = 'paypal',
   MOMO = 'momo',
   BANK_TRANSFER = 'bank_transfer',
+  VQR = 'vqr',
 }
 
 export enum TransactionStatus {

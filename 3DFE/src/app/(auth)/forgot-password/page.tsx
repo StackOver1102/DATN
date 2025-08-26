@@ -134,7 +134,7 @@ function ForgotPasswordForm() {
               Remember your password?{" "}
               <Link
                 href="/signin"
-                className="font-medium text-yellow-400 hover:underline"
+                className="font-medium text-black hover:underline"
               >
                 Sign In
               </Link>

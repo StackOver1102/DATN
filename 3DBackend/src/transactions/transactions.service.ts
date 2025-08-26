@@ -106,7 +106,7 @@ export class TransactionsService {
     this.paypalWebhookId = configService.get<string>('PAYPAL_WEBHOOK_ID') || '';
   }
 
-  private async generateTransactionCode(): Promise<string> {
+  async generateTransactionCode(): Promise<string> {
     // Get the count of existing transactions to generate sequential number
     const count = await this.transactionModel.countDocuments();
     const nextNumber = (count + 1).toString().padStart(6, '0');
@@ -993,6 +993,41 @@ export class TransactionsService {
       throw new NotFoundException('Giao dịch không tồn tại');
     }
     transaction.status = TransactionStatus.CANCELLED;
+    await transaction.save();
+
+    return transaction;
+  }
+
+  async findByOrderIdAndUpdate(orderId: string, amount: number): Promise<Transaction> {
+    const transaction = await this.transactionModel.findOne({ orderId: orderId });
+    if (!transaction) {
+      throw new NotFoundException('Giao dịch không tồn tại');
+    }
+
+    if (transaction.status === TransactionStatus.SUCCESS) {
+      throw new BadRequestException('Giao dịch đã thành công');
+    }
+
+    if (transaction.status === TransactionStatus.CANCELLED) {
+      throw new BadRequestException('Giao dịch đã bị hủy');
+    }
+
+    if (Math.abs(transaction.amount - amount) > 0.01) {
+      throw new BadRequestException('Số tiền không khớp');
+    }
+
+    transaction.status = TransactionStatus.SUCCESS;
+    transaction.balanceAfter =
+      (transaction.balanceBefore || 0) + transaction.amount;
+    
+    const merchant = await this.usersService.findOne(transaction.userId.toString());
+    if (!merchant) {
+      throw new NotFoundException('Merchant không tồn tại');
+    }
+
+    merchant.balance += transaction.amount;
+
+    await merchant.save();
     await transaction.save();
 
     return transaction;

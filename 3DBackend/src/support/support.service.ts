@@ -32,7 +32,7 @@ export class SupportService {
     private mailService: MailService,
     private notificationsService: NotificationsService,
     private filterService: FilterService,
-  ) {}
+  ) { }
 
   async create(
     createSupportDto: CreateSupportDto,
@@ -84,22 +84,36 @@ export class SupportService {
   }
 
   async findByUserId(userId: string, filterDto: FilterDto): Promise<PaginatedResult<SupportRequestDocument>> {
-    const baseQuery = { userId: new Types.ObjectId(userId) };
-    
-    return this.filterService.applyFilters<SupportRequestDocument>(
-      this.supportRequestModel, 
-      filterDto, 
-      baseQuery, 
-      [
-        'name',
-        'message',
-        'email',
-      ]
-    );
-    // return this.supportRequestModel
-    //   .find({ userId: new Types.ObjectId(userId) })
-    //   .sort({ createdAt: -1 })
-    //   .exec();
+    // const baseQuery = { userId };
+
+    // return this.filterService.applyFilters<SupportRequestDocument>(
+    //   this.supportRequestModel, 
+    //   filterDto, 
+    //   baseQuery, 
+    //   [
+    //     'name',
+    //     'message',
+    //     'email',
+    //   ]
+    // );
+    const { page, limit } = filterDto;
+    if (!page || !limit) {
+      throw new BadRequestException('Page and limit are required');
+    }
+    console.log(userId)
+    const skip = (page - 1) * limit;
+    const total = await this.supportRequestModel.countDocuments({ userId: userId.toString() });
+    const supportRequests = await this.supportRequestModel.find({ userId: userId.toString() }).sort({ createdAt: -1 }).skip(skip).limit(limit).exec();
+    return {
+      items: supportRequests,
+      meta: {
+        totalItems: total,
+        itemCount: supportRequests.length,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page,
+      },
+    };
   }
 
   async findOne(id: string): Promise<SupportRequestDocument> {

@@ -37,7 +37,7 @@ const Footer = () => {
               <div className="flex gap-3">
                 {/* Facebook */}
                 <Link
-                  href="/facebook"
+                  href="https://www.facebook.com/3dvn.org"
                   className="w-8 h-8  hover:bg-blue-600 rounded-full flex items-center justify-center transition-colors"
                 >
                   <svg
@@ -51,7 +51,7 @@ const Footer = () => {
 
                 {/* Instagram */}
                 <Link
-                  href="#"
+                  href="https://www.instagram.com/3dvnorg/"
                   className="w-8 h-8  hover:bg-pink-600 rounded-full flex items-center justify-center transition-colors"
                 >
                   <svg
@@ -65,7 +65,7 @@ const Footer = () => {
 
                 {/* Twitter */}
                 <Link
-                  href="#"
+                  href="https://x.com/3dvn_org"
                   className="w-8 h-8  hover:bg-blue-400 rounded-full flex items-center justify-center transition-colors"
                 >
                   <svg
@@ -79,7 +79,7 @@ const Footer = () => {
 
                 {/* Pinterest */}
                 <Link
-                  href="#"
+                  href="https://www.pinterest.com/3dvn_org/"
                   className="w-8 h-8  hover:bg-red-600 rounded-full flex items-center justify-center transition-colors"
                 >
                   <svg
@@ -93,7 +93,7 @@ const Footer = () => {
 
                 {/* YouTube */}
                 <Link
-                  href="#"
+                  href="https://www.youtube.com/@3dvn-org/featured"
                   className="w-8 h-8  hover:bg-red-600 rounded-full flex items-center justify-center transition-colors"
                 >
                   <svg

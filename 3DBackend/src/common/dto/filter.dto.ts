@@ -117,4 +117,11 @@ export class FilterDto extends PaginationDto {
   @IsOptional()
   @IsString()
   isFree?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by userId',
+  })
+  @IsOptional()
+  @IsString()
+  userId?: string;
 }

@@ -185,8 +185,10 @@ export class GoogleDriveService {
     });
   }
 
-  async removeDrivePermission(fileId: string, email: string) {
+  async removeDrivePermission(fileUrl: string, email: string) {
     try {
+      if(!fileUrl) return false;
+      const fileId = this.getIdByUrl(fileUrl);
       // First, list permissions to find the permission ID for the email
       const response = await this.drive.permissions.list({
         fileId,
