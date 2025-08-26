@@ -119,8 +119,14 @@ export default function DepositPage() {
         return;
       }
       const result = await transactionApi.createVQRCode(token,coinAmount)
+      if(result.success){
+        const resultData = result.data as {qrLink:string, transactionId:string}
+        if(resultData.qrLink){
+          window.open(resultData.qrLink, "_blank");
+        }
+      }
       setIsLoading(false);
-      window.open(result.data.qrLink, "_blank");
+    
     } catch (error) {
       console.error("Error processing payment:", error);
     }

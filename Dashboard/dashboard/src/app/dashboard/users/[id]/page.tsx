@@ -94,7 +94,6 @@ export default function EditUserPage() {
   >("users", `/users/admin/${id}`, "patch");
 
 
-    console.log("id", id)
   // Handle form change
   const handleChange = (field: keyof User, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));

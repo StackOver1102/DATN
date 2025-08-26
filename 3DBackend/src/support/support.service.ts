@@ -100,7 +100,6 @@ export class SupportService {
     if (!page || !limit) {
       throw new BadRequestException('Page and limit are required');
     }
-    console.log(userId)
     const skip = (page - 1) * limit;
     const total = await this.supportRequestModel.countDocuments({ userId: userId.toString() });
     const supportRequests = await this.supportRequestModel.find({ userId: userId.toString() }).sort({ createdAt: -1 }).skip(skip).limit(limit).exec();

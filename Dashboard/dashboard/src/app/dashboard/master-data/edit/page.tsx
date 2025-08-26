@@ -49,7 +49,6 @@ const RichTextEditor = ({
     ? `/master-data/${contentId}`
     : `/master-data/type/${contentType}`;
 
-  console.log("API Endpoint:", endpoint);
 
   const { data, isLoading: isLoadingContent } = useApiQuery<{
     data: {
@@ -66,14 +65,12 @@ const RichTextEditor = ({
 
   // Use useEffect to handle the data changes
   useEffect(() => {
-    console.log("API Response:", data);
 
     if (!data) return;
 
     try {
       if (contentId && data?.data) {
         // Single item response when fetching by ID
-        console.log("Setting content from single item", data.data);
         setContent(data.data.content || "");
       } else if (
         data?.data &&
@@ -81,7 +78,6 @@ const RichTextEditor = ({
         data.data.length > 0
       ) {
         // Array response when fetching by type
-        console.log("Setting content from array item", data.data[0]);
         setContent(data.data[0].content || "");
       }
     } catch (error) {
@@ -100,9 +96,6 @@ const RichTextEditor = ({
 
   const handleSave = () => {
     setIsSaving(true);
-
-    // For logging purposes
-    console.log("Saving content...", { contentId, dataExists: !!data?.data });
 
     // Prepare the data for saving
     const saveData =

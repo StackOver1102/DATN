@@ -72,7 +72,6 @@ async function getProducts(
     );
 
     if (!res.ok) {
-      console.log(res);
       throw new Error("Failed to fetch products");
     }
 
@@ -147,14 +146,6 @@ export default async function ModelsPage({ searchParams }: ModelsPageProps) {
   const totalItems = productsData?.data?.meta?.totalItems || 0;
   // If there are no products, totalPages could be 0, but we'll handle this in the component
   const totalPages = productsData?.data?.meta?.totalPages ?? 0;
-
-  // Log for debugging
-  // console.log("Server-side products data:", {
-  //   items: products.length,
-  //   totalItems,
-  //   totalPages,
-  //   hasData: products.length > 0,
-  // });
 
   // Map the products to ensure they have the required 'name' property
   const mappedProducts = products.map((product: Product) => ({

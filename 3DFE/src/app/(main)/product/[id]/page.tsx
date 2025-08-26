@@ -97,7 +97,6 @@ export default function ProductDetailPage() {
     ["banners/position/product_detail"]
   );
 
-  console.log(bannersData);
   // Fetch comments for the product
   const {
     data: comments,

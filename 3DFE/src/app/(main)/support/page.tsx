@@ -15,10 +15,9 @@ export default function SupportPage() {
     email: "",
     message: "",
   });
-  const { profile, isLoading: isLoadingStore } = useAppSelector(
+  const { profile } = useAppSelector(
     (state) => state.user
   );
-  console.log(profile);
   // const {}
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,7 +65,6 @@ export default function SupportPage() {
     setIsSubmitting(true);
 
     try {
-      console.log(profile)
       // Submit data to API
       const response = await supportApi.createWithAttachments(
         {

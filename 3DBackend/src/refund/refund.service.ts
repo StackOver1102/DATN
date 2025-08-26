@@ -35,7 +35,6 @@ export class RefundService {
     // Check if order exists and belongs to the user
     const order = await this.ordersService.findOne(createRefundDto.orderId);
 
-    console.log(order);
     if (!order) {
       throw new NotFoundException(
         `Không tìm thấy đơn hàng với ID ${createRefundDto.orderId}`,

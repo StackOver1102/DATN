@@ -292,9 +292,7 @@ export default function BatchCreateProductPage() {
   // Hàm tải ảnh preview dựa trên tên và STT của sản phẩm
   const loadPreviewImage = useCallback(
     (index: number) => {
-debugger
       const product = products[index];
-      console.log("product", product)
       // Kiểm tra xem có đủ thông tin để tìm ảnh không
       if (!sharedFolderId || !product?.stt || !product?.categoryName) {
         return;
@@ -358,11 +356,9 @@ debugger
   useEffect(() => {
     if (lastSttData?.data && activeTab) {
       const index = parseInt(activeTab);
-      console.log("index", index);
       
       // Skip STT update for newly added products
       if (newProductIndexes.has(index)) {
-        console.log("Skipping STT update for newly added product at index", index);
         return;
       }
       
@@ -453,14 +449,12 @@ debugger
     // Get the last product's STT and increment it for the new product
     const lastProductStt =
       products.length > 0 ? products[products.length - 1].stt : 0;
-    console.log("lastProductStt", lastProductStt);
     const newProductStt = lastProductStt + 1;
 
     // Create new product with incremented STT
     const newProduct = getEmptyProduct();
     newProduct.stt = newProductStt;
 
-    console.log("newProduct", newProduct);
     const newProducts = [...products, newProduct];
     
     // Get the index of the new product
@@ -488,7 +482,6 @@ debugger
       // Thêm một lần tải ảnh nữa sau thời gian dài hơn để đảm bảo ảnh được tải
       setTimeout(() => {
         if (!previewImages[newIndex] && !loadingImages[newIndex]) {
-          console.log("Tải lại ảnh cho tab mới sau khi thêm");
           loadPreviewImage(newIndex);
         }
       }, 2000);
@@ -667,7 +660,6 @@ debugger
       return;
     }
 
-    console.log("products", products);
     // Validate required fields
     const invalidProducts = products.filter(
       (product) => !product.categoryId || !product.stt || product.stt < 1
@@ -744,7 +736,6 @@ debugger
     return <PageLoading text={text} />;
   }
 
-  console.log("products", products)
   return (
     <>
       <div className="px-4 lg:px-6">
@@ -1080,7 +1071,6 @@ debugger
                 // Thêm một lần tải ảnh nữa sau thời gian dài hơn để đảm bảo ảnh được tải
                 setTimeout(() => {
                   if (!previewImages[tabIndex] && !loadingImages[tabIndex]) {
-                    console.log("Tải lại ảnh cho tab sau khi chuyển tab");
                     loadPreviewImage(tabIndex);
                   }
                 }, 1500);

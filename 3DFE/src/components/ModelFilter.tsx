@@ -276,7 +276,6 @@ export default function ModelFilter({
         if (initialItemParam) {
           // Tìm item trong category
           const itemToFind = decodeURIComponent(initialItemParam).trim();
-          console.log("Looking for item:", itemToFind);
 
           const foundItemIndex = foundCategory.subcategories.findIndex(
             (subcat) => subcat.toLowerCase() === itemToFind.toLowerCase()
