@@ -1,11 +1,10 @@
 import { Controller, Post, Headers, UnauthorizedException, Body, Req } from '@nestjs/common';
 import { VqrService } from './vqr.service';
-// import { CreateVqrDto } from './dto/create-vqr.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
-import { JwtService } from '@nestjs/jwt';
 import { UserPayload } from 'src/auth/types';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
-import { CreatePayPalOrderDto, CreateTransactionDto, CreateVQRCodeDto } from 'src/transactions/dto/create-transaction.dto';
+import {  CreateVQRCodeDto } from 'src/transactions/dto/create-transaction.dto';
+import { AuthService } from 'src/auth/auth.service';
 // import { CreateVqrDto } from './dto/create-vqr.dto';
 // import { UpdateVqrDto } from './dto/update-vqr.dto';
 
@@ -26,7 +25,7 @@ export interface TransactionSyncBody {
 
 @Controller('vqr')
 export class VqrController {
-  constructor(private readonly vqrService: VqrService, private readonly jwtService: JwtService) { }
+  constructor(private readonly vqrService: VqrService, private readonly authService: AuthService) { }
 
   @Public()
   @Post('/api/token_generate')
@@ -57,7 +56,7 @@ export class VqrController {
     const token = authHeader.substring('Bearer '.length).trim();
 
     // Xác thực token
-    if (!this.jwtService.verify(token)) {
+    if (!this.authService.verifyToken(token)) {
       throw new UnauthorizedException('Invalid or expired token');
     }
 
@@ -76,6 +75,7 @@ export class VqrController {
       serviceCode,
       subTerminalCode
     }
+    console.log(' req.body',  req.body);
     const result = await this.vqrService.transactionSync(body)
     return result;
   }

@@ -999,7 +999,7 @@ export class TransactionsService {
   }
 
   async findByOrderIdAndUpdate(orderId: string, amount: number): Promise<Transaction> {
-    const transaction = await this.transactionModel.findOne({ orderId: orderId });
+    const transaction = await this.transactionModel.findOne({ _id: orderId });
     if (!transaction) {
       throw new NotFoundException('Giao dịch không tồn tại');
     }

@@ -53,6 +53,7 @@ export class VqrService {
     };
 
     const transaction = await this.transactionService.create(transactionDto, userId)
+    console.log('transaction', transaction)
 
     const token = await this.getToken()
     const fe = await fetch(`${this.configService.get('VQR_URL')}/vqr/api/qr/generate-customer`, {
@@ -63,7 +64,7 @@ export class VqrService {
       },
       body: JSON.stringify({
         "amount": amount,
-        "orderId": transaction.orderId,
+        "orderId": transaction._id.toString(),
         "content": "Thanh toán qua VQR",
         "bankAccount": "09838383856789",
         "bankCode": "MB",
