@@ -1434,7 +1434,7 @@ function ProfilePageContent({
                             refund._id,
                             "refund"
                           );
-                          const hasNotification = !!matchingNotification;
+                          // const hasNotification = !!matchingNotification;
                           const isUnread =
                             matchingNotification &&
                             !matchingNotification.isWatching;
