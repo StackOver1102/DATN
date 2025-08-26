@@ -8,8 +8,6 @@ import { Button } from "@/components/ui/button";
 import { transactionApi } from "@/lib/api";
 import Link from "next/link";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import Image from "next/image";
-import { useUserProfile } from "@/lib/hooks/useAuth";
 
 function DepositSuccessContent() {
   const router = useRouter();
@@ -17,7 +15,7 @@ function DepositSuccessContent() {
   const session = useSession();
   const [isProcessing, setIsProcessing] = useState(true);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [newBalance, setNewBalance] = useState<number | null>(null);
+  const [, setNewBalance] = useState<number | null>(null);
   
   // Safely destructure session data and update function
   const sessionData = session?.data;
