@@ -35,6 +35,7 @@ interface Support {
   description: string;
   status: "pending" | "resolved" | "rejected";
   images?: string[];
+  imagesByAdmin?: string[];
   attachments?: string[];
   response?: string;
   createdAt: string;
@@ -302,11 +303,11 @@ export default function SupportViewPage() {
             </Card>
           )}
 
-          {/* Attachments if available */}
+          {/* User Attachments if available */}
           {support.attachments && support.attachments.length > 0 && (
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Tệp đính kèm</CardTitle>
+                <CardTitle className="text-lg">Tệp đính kèm từ người dùng</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -332,6 +333,37 @@ export default function SupportViewPage() {
                       )}
                       <a
                         href={attachment}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="absolute bottom-2 right-2 bg-black/70 text-white p-1 rounded-full"
+                      >
+                        <IconPhoto className="h-4 w-4" />
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          {/* Admin Attachments if available */}
+          {support.imagesByAdmin && support.imagesByAdmin.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Hình ảnh phản hồi từ Admin</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {support.imagesByAdmin.map((image, index) => (
+                    <div key={index} className="relative h-48 border rounded-md overflow-hidden">
+                      <Image
+                        src={image}
+                        alt={`Hình ảnh Admin ${index + 1}`}
+                        fill
+                        className="object-cover"
+                      />
+                      <a
+                        href={image}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="absolute bottom-2 right-2 bg-black/70 text-white p-1 rounded-full"

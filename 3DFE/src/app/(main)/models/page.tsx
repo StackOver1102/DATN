@@ -65,7 +65,7 @@ async function getProducts(
     const res = await fetch(
       `${
         process.env.NEXT_PUBLIC_API_URL_SSR
-      }/products?${queryParams.toString()}`,
+      }/products?${queryParams.toString()}&sortBy=stt`,
       {
         next: { revalidate: 60 }, // Revalidate every 60 seconds
       }
@@ -138,6 +138,7 @@ export default async function ModelsPage({ searchParams }: ModelsPageProps) {
     getCategories(),
   ]);
 
+ console.log('productsData', productsData)
   // Process categories data
   const categories = categoriesData || [];
 
@@ -147,6 +148,8 @@ export default async function ModelsPage({ searchParams }: ModelsPageProps) {
   // If there are no products, totalPages could be 0, but we'll handle this in the component
   const totalPages = productsData?.data?.meta?.totalPages ?? 0;
 
+  // console.log('totalItems', totalItems)
+  // console.log('totalItems', categories)
   // Map the products to ensure they have the required 'name' property
   const mappedProducts = products.map((product: Product) => ({
     ...product,

@@ -35,7 +35,7 @@ export class FilterService {
       subSearch,
       categoryName,
       sortBy,
-      sortDirection = 'desc',
+      sortDirection = 'asc',
       // Extract additional filter fields
       style,
       materials,

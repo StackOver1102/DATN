@@ -137,22 +137,48 @@ export class SupportController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  update(
+  @UseInterceptors(FilesInterceptor('attachments', 5))
+  async update(
     @Param('id') id: string,
     @Body() updateSupportDto: UpdateSupportDto,
     @CurrentUser() user: UserPayload,
+    @UploadedFiles() files?: FileWithBuffer[],
   ) {
+    // Process uploaded files if any
+    if (files && files.length > 0) {
+      const attachments = files.map((file: FileWithBuffer) => {
+        const url = this.uploadService.getFileUrl(file.key);
+        return url;
+      });
+      
+      // Add new attachments to the DTO
+      updateSupportDto.imagesByAdmin = attachments;
+    }
+    
     return this.supportService.update(id, updateSupportDto, user.userId);
   }
 
   @Post(':id/respond')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  respond(
+  @UseInterceptors(FilesInterceptor('attachments', 5))
+  async respond(
     @Param('id') id: string,
     @Body() respondToSupportDto: RespondToSupportDto,
     @CurrentUser() admin: UserPayload,
+    @UploadedFiles() files?: FileWithBuffer[],
   ) {
+    // Process uploaded files if any
+    if (files && files.length > 0) {
+      const attachments = files.map((file: FileWithBuffer) => {
+        const url = this.uploadService.getFileUrl(file.key);
+        return url;
+      });
+      
+      // Add new attachments to the DTO
+      respondToSupportDto.imagesByAdmin = attachments;
+    }
+    
     return this.supportService.respond(id, respondToSupportDto, admin.userId);
   }
 

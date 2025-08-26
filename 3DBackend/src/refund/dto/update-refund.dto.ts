@@ -1,5 +1,5 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
 import { CreateRefundDto } from './create-refund.dto';
 import { RefundStatus } from '../entities/refund.entity';
 
@@ -15,4 +15,12 @@ export class UpdateRefundDto extends PartialType(CreateRefundDto) {
   @IsString()
   @IsOptional()
   processedBy?: string;
+
+  @IsArray()
+  @IsOptional()
+  imagesByAdmin?: string[];
+
+  @IsArray()
+  @IsOptional()
+  attachments?: string[];
 }

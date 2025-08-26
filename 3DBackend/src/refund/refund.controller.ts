@@ -74,15 +74,31 @@ export class RefundController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  update(
+  @UseInterceptors(FilesInterceptor('attachments', 5))
+  async update(
     @Param('id') id: string,
     @Body() updateRefundDto: UpdateRefundDto,
     @CurrentUser() user: UserPayload,
+    @UploadedFiles() files?: FileWithBuffer[],
   ) {
+    console.log('updateRefundDto', updateRefundDto)
     // Add admin user ID as the processor
     if (updateRefundDto.status) {
-      updateRefundDto.processedBy = user.userId;
+      updateRefundDto.processedBy = user.userId.toString();
     }
+
+    // Process uploaded files if any
+    
+    if (files && files.length > 0) {
+      const attachments = files.map((file: FileWithBuffer) => {
+        const url = this.uploadService.getFileUrl(file.key);
+        return url;
+      });
+      
+      // Add new attachments to the DTO
+      updateRefundDto.imagesByAdmin = attachments;
+    }
+    
     return this.refundService.update(id, updateRefundDto);
   }
 

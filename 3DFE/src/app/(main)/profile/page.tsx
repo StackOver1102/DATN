@@ -104,13 +104,14 @@ interface RefundRequest {
   processedBy?: string;
   attachments?: string[];
   images?: string[];
+  imagesByAdmin?: string[];
 }
 
 interface SupportTicket {
   _id: string;
   subject: string;
   message: string;
-  status: "open" | "in_progress" | "closed" | "resolved";
+  status: "pending" | "in_progress" | "resolved" | "closed";
   createdAt: string;
   updatedAt: string;
   notificationId?: string;
@@ -121,6 +122,7 @@ interface SupportTicket {
   response?: string;
   respondedBy?: string;
   attachments?: string[];
+  imagesByAdmin?: string[];
 }
 
 // Schema validation for user profile form
@@ -1624,7 +1626,7 @@ function ProfilePageContent({
                                 <div
                                   className={`w-12 h-12 rounded-lg flex items-center justify-center relative
                                 ${
-                                  ticket.status === "open"
+                                  ticket.status === "pending"
                                     ? "bg-blue-100"
                                     : ticket.status === "in_progress"
                                     ? "bg-yellow-100"
@@ -1634,7 +1636,7 @@ function ProfilePageContent({
                                   <LifeBuoy
                                     className={`w-6 h-6 
                                   ${
-                                    ticket.status === "open"
+                                    ticket.status === "pending"
                                       ? "text-blue-600"
                                       : ticket.status === "in_progress"
                                       ? "text-yellow-600"
@@ -1670,14 +1672,14 @@ function ProfilePageContent({
                                     <span
                                       className={`px-2 py-1 rounded-full text-xs font-medium 
                                       ${
-                                        ticket.status === "open"
+                                        ticket.status === "pending"
                                           ? "text-blue-600 bg-blue-100"
                                           : ticket.status === "in_progress"
                                           ? "text-yellow-600 bg-yellow-100"
                                           : "text-green-600 bg-green-100"
                                       }`}
                                     >
-                                      {ticket.status === "open"
+                                      {ticket.status === "pending"
                                         ? "Open"
                                         : ticket.status === "in_progress"
                                         ? "In Progress"
@@ -2072,6 +2074,24 @@ function ProfilePageContent({
                 <p className="text-gray-700">{selectedRefund.description}</p>
               </div>
             </div>
+            {((selectedRefund.attachments && selectedRefund.attachments.length > 0) || (selectedRefund.images && selectedRefund.images.length > 0)) && (
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-900 mb-2">Attachments</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {[...(selectedRefund.attachments || []), ...(selectedRefund.images || [])].map((attachment, index) => (
+                    <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
+                      <Image
+                        src={attachment}
+                        alt={`Attachment ${index + 1}`}
+                        fill
+                        sizes="100%"
+                        className="object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Admin Notes */}
             {selectedRefund.adminNotes && (
@@ -2086,9 +2106,9 @@ function ProfilePageContent({
             {/* Attachments */}
             {((selectedRefund.attachments && selectedRefund.attachments.length > 0) || (selectedRefund.images && selectedRefund.images.length > 0)) && (
               <div className="mb-6">
-                <h4 className="font-medium text-gray-900 mb-2">Attachments</h4>
+                <h4 className="font-medium text-gray-900 mb-2">Attachments admin</h4>
                 <div className="grid grid-cols-2 gap-2">
-                  {[...(selectedRefund.attachments || []), ...(selectedRefund.images || [])].map((attachment, index) => (
+                  {[...(selectedRefund.imagesByAdmin || [])].map((attachment, index) => (
                     <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
                       <Image
                         src={attachment}
@@ -2127,11 +2147,11 @@ function ProfilePageContent({
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center
-                  ${selectedTicket.status === "open" ? "bg-blue-100" :
+                  ${selectedTicket.status === "pending" ? "bg-blue-100" :
                     selectedTicket.status === "in_progress" ? "bg-yellow-100" :
                     selectedTicket.status === "resolved" ? "bg-green-100" : "bg-green-100"}`}>
                   <LifeBuoy className={`w-5 h-5 
-                    ${selectedTicket.status === "open" ? "text-blue-600" :
+                    ${selectedTicket.status === "pending" ? "text-blue-600" :
                       selectedTicket.status === "in_progress" ? "text-yellow-600" :
                       selectedTicket.status === "resolved" ? "text-green-600" : "text-green-600"}`} />
                 </div>
@@ -2162,10 +2182,10 @@ function ProfilePageContent({
               <div className="flex justify-between items-center mb-2">
                 <h4 className="font-medium text-gray-700">Status</h4>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium
-                  ${selectedTicket.status === "open" ? "text-blue-600 bg-blue-100" :
+                  ${selectedTicket.status === "pending" ? "text-blue-600 bg-blue-100" :
                     selectedTicket.status === "in_progress" ? "text-yellow-600 bg-yellow-100" :
                     selectedTicket.status === "resolved" ? "text-green-600 bg-green-100" : "text-green-600 bg-green-100"}`}>
-                  {selectedTicket.status === "open" ? "Open" :
+                  {selectedTicket.status === "pending" ? "Open" :
                     selectedTicket.status === "in_progress" ? "In Progress" :
                     selectedTicket.status === "resolved" ? "Resolved" : "Closed"}
                 </span>
@@ -2219,6 +2239,25 @@ function ProfilePageContent({
                 <p className="text-gray-700">{selectedTicket.message}</p>
               </div>
             </div>
+            {/* Attachments */}
+            {selectedTicket.attachments && selectedTicket.attachments.length > 0 && (
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-900 mb-2">Attachments</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {selectedTicket.attachments.map((attachment, index) => (
+                    <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
+                      <Image
+                        src={attachment}
+                        alt={`Attachment ${index + 1}`}
+                        fill
+                        sizes="100%"
+                        className="object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Admin Response */}
             {selectedTicket.response && (
@@ -2230,12 +2269,12 @@ function ProfilePageContent({
               </div>
             )}
 
-            {/* Attachments */}
-            {selectedTicket.attachments && selectedTicket.attachments.length > 0 && (
+          {/* Attachments ADMIn */}
+          {selectedTicket.imagesByAdmin && selectedTicket.imagesByAdmin.length > 0 && (
               <div className="mb-6">
                 <h4 className="font-medium text-gray-900 mb-2">Attachments</h4>
                 <div className="grid grid-cols-2 gap-2">
-                  {selectedTicket.attachments.map((attachment, index) => (
+                  {selectedTicket.imagesByAdmin.map((attachment, index) => (
                     <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
                       <Image
                         src={attachment}

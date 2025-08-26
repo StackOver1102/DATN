@@ -27,6 +27,9 @@ export class SupportRequest {
 
   @Prop({ type: [String], default: [] })
   attachments: string[]; // URLs hoặc tên file upload
+  
+  @Prop({ type: [String], default: [] })
+  imagesByAdmin: string[]; // Hình ảnh do admin upload khi phản hồi
 
   @Prop({ enum: SupportStatus, default: SupportStatus.PENDING })
   status: SupportStatus;

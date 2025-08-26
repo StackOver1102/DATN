@@ -9,7 +9,7 @@ import Image from "next/image";
 import ClientSideModelFilter from "./ClientSideModelFilter";
 import Pagination from "@/components/Pagination";
 import ProductCard from "@/components/ProductCard";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface Model {
   _id: string;
@@ -65,6 +65,7 @@ export default function ClientSideModelsPage({
   itemParam,
 }: ClientSideModelsPageProps) {
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   const [showFilters, setShowFilters] = useState(true);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -74,17 +75,14 @@ export default function ClientSideModelsPage({
   const [currentApiParams, setCurrentApiParams] =
     useState<ApiFilterParams | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'pro' | 'free'>('all');
+  const [currentTotalPages, setCurrentTotalPages] = useState(totalPages);
+
 
   // Function to fetch models based on filter parameters
   const fetchModels = useCallback(
     async (apiParams: ApiFilterParams) => {
-      // Skip if the parameters haven't changed
-      if (
-        currentApiParams &&
-        JSON.stringify(currentApiParams) === JSON.stringify(apiParams)
-      ) {
-        return;
-      }
+      // Force fetch data regardless of parameter changes
+      console.log("Fetching models with params:", apiParams);
 
       try {
         setLoading(true);
@@ -110,7 +108,7 @@ export default function ClientSideModelsPage({
         const response = await fetch(
           `${
             process.env.NEXT_PUBLIC_API_URL
-          }/products?${queryParams.toString()}`
+          }/products?${queryParams.toString()}&sortBy=stt`
         );
         const data = await response.json();
 
@@ -121,18 +119,24 @@ export default function ClientSideModelsPage({
           const items = data.data.items || [];
           setModels(items);
           setCount(data.data.meta?.totalItems || 0);
-
+          setCurrentTotalPages(data.data.meta?.totalPages || 1);
         
           setCurrentApiParams(apiParams);
         } else if (data && data.results) {
           // Handle the old response format for backward compatibility
           setModels(data.results || []);
           setCount(data.total || data.results?.length || 0);
+          // Calculate total pages for old response format
+          const itemsPerPage = apiParams.limit || 20;
+          const totalItems = data.total || data.results?.length || 0;
+          const calculatedTotalPages = Math.ceil(totalItems / itemsPerPage);
+          setCurrentTotalPages(calculatedTotalPages);
           setCurrentApiParams(apiParams);
         } else {
           // If no valid data format is found, set empty models
           setModels([]);
           setCount(0);
+          setCurrentTotalPages(1);
           setCurrentApiParams(apiParams);
         }
       } catch (error) {
@@ -210,20 +214,25 @@ export default function ClientSideModelsPage({
 
     // Get all search parameters
     searchParams.forEach((value, key) => {
-      // Skip pagination parameters as they're handled separately
-      if (key !== "page" && key !== "limit") {
-        (params as Record<string, string>)[key] = value;
-      }
+      // Include all parameters including pagination
+      (params as Record<string, string>)[key] = value;
     });
 
-    // Add pagination parameters
-    params.page = parseInt(searchParams.get("page") || "1", 10);
-    params.limit = 20; // Default limit
-
-    // Fetch models with the extracted parameters
-    if (Object.keys(params).length > 0) {
-      fetchModels(params);
+    // Ensure pagination parameters are set
+    if (!params.page) {
+      params.page = 1;
+    } else {
+      // Convert string to number if it's from searchParams
+      params.page = parseInt(params.page.toString(), 10);
     }
+    
+    params.limit = params.limit ? parseInt(params.limit.toString(), 10) : 20;
+
+    console.log("Fetching data with params:", params);
+    
+    // Always fetch models when URL parameters change
+    fetchModels(params);
+    
   }, [searchParams, fetchModels, isInitialRender]);
 
   return (
@@ -430,16 +439,33 @@ export default function ClientSideModelsPage({
             </Suspense>
 
             {/* Pagination - only show if we have pages to display */}
-            {totalPages > 0 && models.length > 0 && (
+            {currentTotalPages > 0 && models.length > 0 && (
               <div className="mt-8 flex justify-center">
                 <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages || 1} /* Ensure minimum of 1 page */
-                  currentPageHref={(page) =>
-                    `?page=${page}${
-                      categoryParam ? `&category=${categoryParam}` : ""
-                    }${itemParam ? `&item=${itemParam}` : ""}`
-                  }
+                  currentPage={parseInt(searchParams.get("page") || "1", 10)}
+                  totalPages={currentTotalPages || 1} /* Ensure minimum of 1 page */
+                  onPageChange={(page) => {
+                    // Create a new URLSearchParams object from the current search params
+                    const params = new URLSearchParams(searchParams.toString());
+                    // Update or add the page parameter
+                    params.set('page', page.toString());
+                    
+                    // Directly fetch data for the new page
+                    const apiParams: ApiFilterParams = {};
+                    params.forEach((value, key) => {
+                      (apiParams as Record<string, string>)[key] = value;
+                    });
+                    
+                    // Convert page to number
+                    apiParams.page = parseInt(apiParams.page?.toString() || "1", 10);
+                    
+                    // Fetch data directly
+                    console.log("Directly fetching data for page:", page);
+                    fetchModels(apiParams);
+                    
+                    // Also update the URL (this won't cause a full page reload)
+                    router.push(`?${params.toString()}`);
+                  }}
                 />
               </div>
             )}

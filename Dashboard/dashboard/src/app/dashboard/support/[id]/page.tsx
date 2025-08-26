@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useApiQuery, useApiMutation } from "@/lib/hooks/useApi";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,10 +19,11 @@ import {
   BreadcrumbItem,
   BreadcrumbLink,
 } from "@/components/ui/breadcrumb";
-import { IconHome, IconHeadset } from "@tabler/icons-react";
+import { IconHome, IconHeadset, IconPhoto, IconX } from "@tabler/icons-react";
 import { PageLoading, Loading } from "@/components/ui/loading";
 import { toast } from "sonner";
 import { User } from "../../users/page";
+import Image from "next/image";
 
 interface Support {
   _id: string;
@@ -31,6 +32,7 @@ interface Support {
   description: string;
   status: "pending" | "resolved" | "rejected";
   images?: string[];
+  imagesByAdmin?: string[];
   attachments?: string[];
   adminResponse?: string;
   createdAt: string;
@@ -54,6 +56,11 @@ export default function SupportEditPage() {
     status: "resolved",
     response: "",
   });
+  
+  // State for file upload
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Ensure component is mounted before rendering
   useEffect(() => {
@@ -102,6 +109,43 @@ export default function SupportEditPage() {
     }));
   };
 
+  // Handle file selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    const newFiles: File[] = [];
+    const newPreviews: string[] = [];
+    
+    Array.from(files).forEach(file => {
+      // Only accept images
+      if (!file.type.startsWith('image/')) {
+        toast.error(`${file.name} không phải là hình ảnh`);
+        return;
+      }
+      
+      newFiles.push(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') {
+          newPreviews.push(reader.result);
+          setPreviewImages(prev => [...prev, reader.result as string]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    
+    setSelectedFiles(prev => [...prev, ...newFiles]);
+  };
+  
+  // Remove a selected file
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    setPreviewImages(prev => prev.filter((_, i) => i !== index));
+  };
+
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,11 +155,18 @@ export default function SupportEditPage() {
       return;
     }
 
+    // Create FormData object for multipart/form-data submission
+    const submitData = new FormData();
+    submitData.append('status', formData.status);
+    submitData.append('response', formData.response);
+    
+    // Add selected files
+    selectedFiles.forEach(file => {
+      submitData.append('attachments', file);
+    });
+
     updateSupport(
-      { 
-        status: formData.status,
-        response: formData.response
-      },
+      submitData as any,
       {
         onSuccess: () => {
           toast.success(`Yêu cầu hỗ trợ đã được ${formData.status === "resolved" ? "giải quyết" : "từ chối"}`);
@@ -274,6 +325,62 @@ export default function SupportEditPage() {
                 className="w-full"
                 required
               />
+            </div>
+            
+            {/* Image Upload Section */}
+            <div>
+              <Label htmlFor="images" className="block mb-2">
+                Hình ảnh đính kèm (tối đa 5 ảnh)
+              </Label>
+              
+              <div className="flex items-center gap-2 mb-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-2"
+                >
+                  <IconPhoto className="h-4 w-4" />
+                  Chọn ảnh
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  id="images"
+                  accept="image/*"
+                  multiple
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <span className="text-sm text-gray-500">
+                  {selectedFiles.length > 0 ? `${selectedFiles.length} ảnh đã chọn` : 'Chưa có ảnh nào được chọn'}
+                </span>
+              </div>
+              
+              {/* Image Previews */}
+              {previewImages.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
+                  {previewImages.map((preview, index) => (
+                    <div key={index} className="relative h-32 rounded-md overflow-hidden border">
+                      <Image 
+                        src={preview} 
+                        alt={`Preview ${index + 1}`} 
+                        fill
+                        className="object-cover"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6 rounded-full"
+                        onClick={() => removeFile(index)}
+                      >
+                        <IconX className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
