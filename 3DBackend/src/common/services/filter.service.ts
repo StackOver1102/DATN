@@ -155,7 +155,6 @@ export class FilterService {
       findQuery = findQuery.populate(populateOptions);
     }
 
-    console.log("query", query);
 
     const [items, totalItems] = await Promise.all([
       findQuery.exec(),

@@ -108,7 +108,6 @@ export class UsersService implements OnModuleInit {
     if (sendWelcomeEmail) {
       try {
         await this.mailService.sendNewUserCredentials(user, generatedPassword);
-        console.log(`Credentials email sent to ${email}`);
       } catch (error) {
         console.error(`Failed to send credentials email to ${email}:`, error);
         // Don't fail the user creation if email sending fails

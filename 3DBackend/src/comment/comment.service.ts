@@ -34,7 +34,7 @@ export class CommentService {
       userId: userId ? new Types.ObjectId(userId) : undefined,
       // originType: NotificationType.COMMENT 
     });
-    console.log(result);
+    
     return savedComment
   }
 

@@ -114,8 +114,6 @@ export default function ClientSideModelsPage({
         );
         const data = await response.json();
 
-        // Log for debugging
-        console.log("Client-side fetch response:", data);
 
         // Check for the correct response format
         if (data && data.data) {
@@ -124,11 +122,7 @@ export default function ClientSideModelsPage({
           setModels(items);
           setCount(data.data.meta?.totalItems || 0);
 
-          // If we have no items, ensure we show the empty state
-          if (items.length === 0) {
-            console.log("No products found in API response");
-          }
-
+        
           setCurrentApiParams(apiParams);
         } else if (data && data.results) {
           // Handle the old response format for backward compatibility
@@ -137,7 +131,6 @@ export default function ClientSideModelsPage({
           setCurrentApiParams(apiParams);
         } else {
           // If no valid data format is found, set empty models
-          console.log("No valid data format found in API response");
           setModels([]);
           setCount(0);
           setCurrentApiParams(apiParams);

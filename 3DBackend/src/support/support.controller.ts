@@ -125,7 +125,6 @@ export class SupportController {
 
   @UseGuards(JwtAuthGuard)
   findMyRequests(@CurrentUser() user: UserPayload, @Query() filterDto: FilterDto) {
-    console.log(user)
     return this.supportService.findByUserId(user.userId, filterDto);
   }
 

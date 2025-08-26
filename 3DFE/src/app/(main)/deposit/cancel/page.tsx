@@ -17,7 +17,6 @@ function CancelContent() {
   // const paypalToken = searchParams.get("token");
 
   useEffect(() => {
-    console.log(session);
 
     // Check if we have a session
     if (!session) {

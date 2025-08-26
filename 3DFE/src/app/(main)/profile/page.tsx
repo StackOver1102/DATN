@@ -447,7 +447,6 @@ function ProfilePageContent({
 
   // Calculate notification counts for each tab
   const getTabNotificationCount = (type: "refund" | "support") => {
-    // console.log(notifications);
     if (!notifications || notifications.length === 0) return 0;
     return notifications.filter(
       (notification) =>
@@ -565,7 +564,6 @@ function ProfilePageContent({
   };
 
   const handleRefundRequest = (purchase: Purchase) => {
-    console.log(purchase);
     setSelectedPurchase(purchase);
     setShowRefundModal(true);
   };

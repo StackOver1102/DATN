@@ -78,7 +78,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       getBanners(),
     ]);
 
-  // console.log(categoriesData);
   const paginatedProducts = paginatedProductsData?.data;
 
   // Ensure categories data has the correct structure

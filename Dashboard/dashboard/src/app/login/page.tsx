@@ -37,7 +37,6 @@ export default function Login() {
       if (result?.error) {
         setError("Invalid email or password");
       } else {
-        console.log("result", result);
         router.push("/dashboard");
         // router.refresh();
       }

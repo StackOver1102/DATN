@@ -93,7 +93,6 @@ export class ProductsController {
     @Body() createProductDto: CreateProductDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    console.log('file', file);
     // console.log(createProductDto);
     return this.productsService.createProductWithImageUpload(
       createProductDto,
