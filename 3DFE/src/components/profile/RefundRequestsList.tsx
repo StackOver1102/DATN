@@ -16,6 +16,11 @@ interface RefundRequest {
   status: "pending" | "approved" | "rejected";
   createdAt: string;
   updatedAt: string;
+  images?: string[];
+  imagesByAdmin?: string[];
+  attachments?: string[];
+  adminNotes?: string;
+  processedAt?: string;
   order?: {
     productId: {
       name: string;

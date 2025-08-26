@@ -26,7 +26,7 @@ export class RefundService {
     private transactionsService: TransactionsService,
     private notificationsService: NotificationsService,
     private filterService: FilterService,
-  ) {}
+  ) { }
 
   async create(
     createRefundDto: CreateRefundDto,
@@ -55,8 +55,8 @@ export class RefundService {
     if (order.status === OrderStatus.CANCELLED) {
       throw new BadRequestException('Đơn hàng đã hủy không thể hoàn tiền');
     }
-    
-    const existingRefund = await this.refundModel.findOne({orderId: new Types.ObjectId(createRefundDto.orderId), status: RefundStatus.PENDING})
+
+    const existingRefund = await this.refundModel.findOne({ orderId: new Types.ObjectId(createRefundDto.orderId), status: RefundStatus.PENDING })
     if (existingRefund) {
       throw new BadRequestException('Đơn hàng này đã có yêu cầu hoàn tiền');
     }
@@ -107,7 +107,7 @@ export class RefundService {
   }
 
   async findOne(id: string): Promise<RefundDocument> {
-    const refund = await this.refundModel.findById(id).exec();
+    const refund = await this.refundModel.findById({ _id: new Types.ObjectId(id) }).populate('userId orderId', '-password').exec();
 
     if (!refund) {
       throw new NotFoundException(
@@ -119,18 +119,23 @@ export class RefundService {
   }
 
   async update(id: string, updateRefundDto: UpdateRefundDto): Promise<Refund> {
-    const refund = await this.findOne(id);
+    // console.log(id)
+    const refund: RefundDocument | null = await this.refundModel.findById({ _id: new Types.ObjectId(id) }).exec();
 
+    console.log(refund)
     // If status is being updated to APPROVED, process the refund
     if (
+      refund &&
       updateRefundDto.status === RefundStatus.APPROVED &&
       refund.status !== RefundStatus.APPROVED
     ) {
       await this.processRefund(refund);
     }
 
+
     // If status is being updated to COMPLETED, mark the order as refunded
     if (
+      refund &&
       updateRefundDto.status === RefundStatus.COMPLETED &&
       refund.status !== RefundStatus.COMPLETED
     ) {

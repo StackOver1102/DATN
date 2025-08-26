@@ -31,7 +31,7 @@ export class Refund {
   description: string;
 
   @Prop([{ type: String }])
-  images: string[];
+  imagesByAdmin: string[];
 
   @Prop()
   adminNotes: string;

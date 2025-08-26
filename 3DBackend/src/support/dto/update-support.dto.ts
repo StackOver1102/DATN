@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsString,
   MaxLength,
+  IsArray,
 } from 'class-validator';
 import { SupportStatus } from '../entities/support.entity';
 import { Types } from 'mongoose';
@@ -23,6 +24,10 @@ export class UpdateSupportDto extends PartialType(CreateSupportDto) {
   @IsMongoId()
   @IsOptional()
   respondedBy?: Types.ObjectId;
+  
+  @IsArray()
+  @IsOptional()
+  imagesByAdmin?: string[];
 }
 
 export class RespondToSupportDto {
@@ -33,4 +38,8 @@ export class RespondToSupportDto {
   @IsEnum(SupportStatus)
   @IsOptional()
   status?: SupportStatus = SupportStatus.RESOLVED;
+  
+  @IsArray()
+  @IsOptional()
+  imagesByAdmin?: string[];
 }
