@@ -1595,7 +1595,7 @@ function ProfilePageContent({
                             ticket._id,
                             "support"
                           );
-                          const hasNotification = !!matchingNotification;
+                          // const hasNotification = !!matchingNotification;
                           const isUnread =
                             matchingNotification &&
                             !matchingNotification.isRead;
