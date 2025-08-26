@@ -25,7 +25,14 @@ export class ProductsService {
   ) {}
 
   async create(createProductDto: CreateProductDto[]): Promise<Product[]> {
-    return this.productModel.insertMany(createProductDto) as unknown as Promise<
+    // Add createdAt and updatedAt explicitly for each product
+    const productsWithTimestamps = createProductDto.map(product => ({
+      ...product,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }));
+    
+    return this.productModel.insertMany(productsWithTimestamps) as unknown as Promise<
       Product[]
     >;
   }
@@ -83,6 +90,9 @@ export class ProductsService {
         ? `https://drive.google.com/uc?id=${folderInfo.rar.id}`
         : createProductDto.urlDownload || '',
       size: folderInfo?.rar?.size_mb || 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    
     };
 
     const createdProduct = new this.productModel(productData);
@@ -110,6 +120,8 @@ export class ProductsService {
     const productData = {
       ...createProductDto,
       images: imageUrl,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     try {

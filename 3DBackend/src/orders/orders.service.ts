@@ -122,6 +122,7 @@ export class OrdersService {
     return this.orderModel
       .find()
       .populate('productId userId', '-password')
+      .sort({ createdAt: -1 })
       .exec();
   }
 

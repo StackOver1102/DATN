@@ -145,7 +145,7 @@ export class FilterService {
     // Create the sort object
     const sort: Record<string, SortOrder> = sortBy
       ? { [sortBy]: sortDirection === 'asc' ? 1 : -1 }
-      : { createdAt: -1 };
+      : { updatedAt: -1 };
 
     // Execute queries
     let findQuery = model.find(query).sort(sort).skip(skip).limit(limit);

@@ -40,6 +40,13 @@ interface DataTableProps<TData, TValue> {
       icon?: React.ComponentType<{ className?: string }>;
     }[];
   }[];
+  pagination?: {
+    pageIndex: number;
+    pageSize: number;
+    pageCount: number;
+    onPageChange: (pageIndex: number) => void;
+    onPageSizeChange: (pageSize: number) => void;
+  };
 }
 
 export function DataTable<TData, TValue>({
@@ -48,6 +55,7 @@ export function DataTable<TData, TValue>({
   searchKey,
   searchPlaceholder = "Tìm kiếm...",
   filters,
+  pagination,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -63,7 +71,13 @@ export function DataTable<TData, TValue>({
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    // Use manual pagination if external pagination is provided
+    ...(pagination ? {
+      manualPagination: true,
+      pageCount: pagination.pageCount,
+    } : {
+      getPaginationRowModel: getPaginationRowModel(),
+    }),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
@@ -73,7 +87,29 @@ export function DataTable<TData, TValue>({
       columnFilters,
       columnVisibility,
       rowSelection,
+      ...(pagination ? {
+        pagination: {
+          pageIndex: pagination.pageIndex,
+          pageSize: pagination.pageSize,
+        },
+      } : {}),
     },
+    ...(pagination ? {
+      onPaginationChange: (updater) => {
+        if (typeof updater === 'function') {
+          const newState = updater({
+            pageIndex: pagination.pageIndex,
+            pageSize: pagination.pageSize,
+          });
+          if (newState.pageIndex !== pagination.pageIndex) {
+            pagination.onPageChange(newState.pageIndex);
+          }
+          if (newState.pageSize !== pagination.pageSize) {
+            pagination.onPageSizeChange(newState.pageSize);
+          }
+        }
+      },
+    } : {}),
   });
 
   return (

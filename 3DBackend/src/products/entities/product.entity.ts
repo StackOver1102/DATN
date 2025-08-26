@@ -87,9 +87,31 @@ export class Product {
 
   @Prop({ type: String })
   platform?: string;
+
+  // Timestamps added by Mongoose but explicitly defined for TypeScript
+  createdAt?: Date;
+  
+  updatedAt?: Date;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
+
+// Explicitly set timestamps option
+ProductSchema.set('timestamps', {
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Ensure createdAt is always set when creating a new document
+ProductSchema.pre('save', function(next) {
+  if (this.isNew && !this.createdAt) {
+    this.createdAt = new Date();
+  }
+  if (!this.updatedAt) {
+    this.updatedAt = new Date();
+  }
+  next();
+});
 
 // Tạo các chỉ mục để tối ưu truy vấn
 ProductSchema.index({ categoryId: 1 });

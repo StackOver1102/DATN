@@ -36,6 +36,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 import { productToasts } from "@/lib/toast";
 import { PageLoading, Loading } from "@/components/ui/loading";
+import { useCallback } from "react";
 
 interface Product {
   _id: string;
@@ -54,11 +55,16 @@ export default function ProductsPage() {
   const router = useRouter();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
 
   // Set staleTime to 0 to always refetch when component mounts
   const { data, isLoading, error, refetch } = useApiQuery<
     ApiResponse<PaginatedResult<Product>>
-  >("products", "/products", {
+  >(["products", String(pagination.pageIndex), String(pagination.pageSize)], 
+    `/products?page=${String(pagination.pageIndex + 1)}&limit=${String(pagination.pageSize)}`, {
     refetchOnMount: true,
     staleTime: 0, // Consider data always stale
   });
@@ -186,6 +192,15 @@ export default function ProductsPage() {
       },
     },
     {
+      accessorKey: "updatedAt",
+      header: "Ngày tạo",
+      cell: ({ row }) => {
+        const updatedAt = row.getValue("updatedAt") as string;
+        const date = new Date(updatedAt);
+        return <div>{date.getDate().toString().padStart(2, '0')}/{(date.getMonth() + 1).toString().padStart(2, '0')}/{date.getFullYear()} {date.getHours().toString().padStart(2, '0')}:{date.getMinutes().toString().padStart(2, '0')}</div>;
+      },
+    },
+    {
       id: "actions",
       cell: ({ row }) => {
         const product = row.original;
@@ -283,6 +298,13 @@ export default function ProductsPage() {
                   ],
                 },
               ]}
+              pagination={{
+                pageIndex: pagination.pageIndex,
+                pageSize: pagination.pageSize,
+                pageCount: data?.data.meta.totalPages || 1,
+                              onPageChange: (pageIndex: number) => setPagination(prev => ({ ...prev, pageIndex })),
+              onPageSizeChange: (pageSize: number) => setPagination({ pageIndex: 0, pageSize }),
+              }}
             />
           </CardContent>
         </Card>
