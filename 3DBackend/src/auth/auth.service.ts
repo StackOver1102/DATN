@@ -12,6 +12,7 @@ import { JwtPayload, JwtToken } from './types/auth.types';
 import * as bcrypt from 'bcrypt';
 import { MailService } from 'src/mail/mail.service';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +20,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private mailService: MailService,
+    private configService: ConfigService,
   ) { }
 
   async login(loginDto: LoginDto): Promise<JwtToken> {
@@ -147,5 +149,9 @@ export class AuthService {
       token_type: 'Bearer',
       expires_in: 86400
     };
+  }
+
+  async verifyToken(token: string) {
+    return this.jwtService.verify(token, { secret: this.configService.get('JWT_SECRET') });
   }
 }
