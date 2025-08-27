@@ -101,7 +101,7 @@ export default function ClientSideModelsPage({
         }
 
         if (!apiParams.limit) {
-          queryParams.append("limit", "20");
+          queryParams.append("limit", "60");
         }
 
         // Make API request
@@ -127,7 +127,7 @@ export default function ClientSideModelsPage({
           setModels(data.results || []);
           setCount(data.total || data.results?.length || 0);
           // Calculate total pages for old response format
-          const itemsPerPage = apiParams.limit || 20;
+          const itemsPerPage = apiParams.limit || 60;
           const totalItems = data.total || data.results?.length || 0;
           const calculatedTotalPages = Math.ceil(totalItems / itemsPerPage);
           setCurrentTotalPages(calculatedTotalPages);
@@ -226,7 +226,7 @@ export default function ClientSideModelsPage({
       params.page = parseInt(params.page.toString(), 10);
     }
     
-    params.limit = params.limit ? parseInt(params.limit.toString(), 10) : 20;
+    params.limit = params.limit ? parseInt(params.limit.toString(), 10) : 60;
 
     console.log("Fetching data with params:", params);
     

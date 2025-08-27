@@ -348,6 +348,8 @@ function ProfilePageContent({
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
+
+  
   // Extract data from paginated responses
   const purchases = purchasesData?.items || [];
   const purchasesTotalPages = purchasesData?.meta.totalPages || 1;
@@ -1600,7 +1602,7 @@ function ProfilePageContent({
                           // const hasNotification = !!matchingNotification;
                           const isUnread =
                             matchingNotification &&
-                            !matchingNotification.isRead;
+                            !matchingNotification.isWatching;
 
                           return (
                             <div
@@ -1611,7 +1613,7 @@ function ProfilePageContent({
                               onClick={() => {
                                 if (
                                   matchingNotification &&
-                                  !matchingNotification.isRead
+                                  !matchingNotification.isWatching
                                 ) {
                                   markNotificationAsRead(
                                     matchingNotification._id

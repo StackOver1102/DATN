@@ -31,4 +31,8 @@ export class CreateSupportDto {
   @IsString({ each: true })
   @IsOptional()
   attachments?: string[];
+
+  @IsString()
+  @IsOptional()
+  userId?: string;
 }

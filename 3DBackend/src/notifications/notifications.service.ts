@@ -103,6 +103,7 @@ export class NotificationsService {
   }
 
   async getNotificationsByUser(userId: string) {
+    console.log(userId);
     const notifications = await this.notificationModel
       .find({
         userId: new Types.ObjectId(userId),
@@ -110,7 +111,7 @@ export class NotificationsService {
         isRead: true,
         originType: { $ne: NotificationType.COMMENT }, // Exclude comment notifications
       })
-      .sort({ createdAt: -1 });
+      .sort({ updatedAt: -1 });
     return notifications;
   }
 

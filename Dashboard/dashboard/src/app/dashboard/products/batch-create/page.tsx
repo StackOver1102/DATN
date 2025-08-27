@@ -999,7 +999,10 @@ export default function BatchCreateProductPage() {
                               CategoryGroup[]
                             >
                           )?.data || []
-                        ).map((group: CategoryGroup) => (
+                        )
+                        // Sort parent categories alphabetically by title
+                        .sort((a, b) => a.title.localeCompare(b.title))
+                        .map((group: CategoryGroup) => (
                           <div key={group._id} className="mb-2">
                             {/* Danh mục cha */}
                             <SelectItem
@@ -1010,9 +1013,12 @@ export default function BatchCreateProductPage() {
                               {group.title}
                             </SelectItem>
 
-                            {/* Danh mục con - hiển thị thụt vào */}
+                            {/* Danh mục con - hiển thị thụt vào và sắp xếp theo tên */}
                             <div className="pl-4">
-                              {group.items.map((category: CategoryItem) => (
+                              {[...group.items]
+                                // Sort child categories alphabetically by name
+                                .sort((a, b) => a.name.localeCompare(b.name))
+                                .map((category: CategoryItem) => (
                                 <SelectItem
                                   key={category._id}
                                   value={category._id}
