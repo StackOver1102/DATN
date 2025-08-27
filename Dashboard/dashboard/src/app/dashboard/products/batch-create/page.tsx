@@ -348,7 +348,7 @@ export default function BatchCreateProductPage() {
         }
       );
     },
-    [products, sharedFolderId, searchImage, loadingImages, failedImages]
+    [products, sharedFolderId, searchImage, failedImages]
   );
 
   // Update the current product's STT when we get new data from the API
@@ -917,15 +917,15 @@ export default function BatchCreateProductPage() {
                       >;
                       if (apiData?.data) {
                         let found = false;
-                        let updatedCategoryName = "";
-                        let updatedRootCategoryId = "";
+                        // let updatedCategoryName = "";
+                        // let updatedRootCategoryId = "";
 
                         // Kiểm tra xem đây là danh mục cha
                         for (const group of apiData.data) {
                           if (group._id === value) {
                             setSelectedCategoryId(group._id);
-                            updatedCategoryName = group.title;
-                            updatedRootCategoryId = group._id;
+                            // updatedCategoryName = group.title;
+                            // updatedRootCategoryId = group._id;
 
                             // Cập nhật tất cả sản phẩm với danh mục cha
                             setProducts((prevProducts) => {
@@ -946,8 +946,8 @@ export default function BatchCreateProductPage() {
                             for (const category of group.items) {
                               if (category._id === value) {
                                 setSelectedCategoryId(group._id);
-                                updatedCategoryName = category.name;
-                                updatedRootCategoryId = group._id;
+                                // updatedCategoryName = category.name;
+                                // updatedRootCategoryId = group._id;
 
                                 // Cập nhật tất cả sản phẩm với danh mục con
                                 setProducts((prevProducts) => {

@@ -2,7 +2,6 @@ import {
   useQuery,
   useMutation,
   useQueryClient,
-  QueryOptions,
 } from "@tanstack/react-query";
 import { api } from "../api";
 

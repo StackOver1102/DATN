@@ -20,6 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { PageLoading } from "@/components/ui/loading";
 import { useApiMutation } from "@/lib/hooks/useApi";
 import { showSuccessToast, showErrorToast } from "@/lib/toast";
+import Image from "next/image";
 
 interface BannerFormData {
   title: string;
@@ -44,7 +45,7 @@ export default function CreateBannerPage() {
   const [mounted, setMounted] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
-  const [isUploading, setIsUploading] = useState(false);
+  const [isUploading, ] = useState(false);
 
   // Ensure component is mounted before rendering
   useEffect(() => {
@@ -140,7 +141,7 @@ export default function CreateBannerPage() {
           showErrorToast("Lỗi khi tạo banner: " + error.message);
         },
       });
-    } catch (error) {
+    } catch  {
       showErrorToast("Đã có lỗi xảy ra khi tạo banner");
     }
   };
@@ -230,7 +231,7 @@ export default function CreateBannerPage() {
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                   {previewUrl ? (
                     <div className="space-y-4">
-                      <img
+                      <Image
                         src={previewUrl}
                         alt="Preview"
                         className="max-h-48 mx-auto rounded-lg"

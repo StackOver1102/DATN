@@ -12,7 +12,6 @@ import {
   BreadcrumbLink,
 } from "@/components/ui/breadcrumb";
 import { use } from "react";
-import { DialogFooter } from "@/components/ui/dialog";
 import { formatNumber } from "@/lib/formatMoney";
 import { RefundDetailView } from "../components";
 import { useNotifications } from "@/lib/hooks/useNotifications";

@@ -28,6 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { PageLoading } from "@/components/ui/loading";
 import { useApiQuery, useApiMutation } from "@/lib/hooks/useApi";
 import { showSuccessToast, showErrorToast } from "@/lib/toast";
+import Image from "next/image";
 
 interface Banner {
   _id: string;
@@ -176,7 +177,7 @@ export default function BannerPage() {
         const imageUrl = row.getValue("imageUrl") as string;
         return (
           <div className="w-16 h-12 rounded-md overflow-hidden bg-gray-100">
-            <img
+            <Image
               src={imageUrl}
               alt={row.original.title}
               className="w-full h-full object-cover"

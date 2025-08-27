@@ -37,7 +37,6 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
-import Link from "next/link";
 import { ApiResponse } from "@/interface/pagination";
 
 interface Category {

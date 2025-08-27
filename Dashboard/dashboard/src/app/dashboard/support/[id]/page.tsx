@@ -19,7 +19,7 @@ import {
   BreadcrumbItem,
   BreadcrumbLink,
 } from "@/components/ui/breadcrumb";
-import { IconHome, IconHeadset, IconPhoto, IconX } from "@tabler/icons-react";
+import { IconHome, IconPhoto, IconX } from "@tabler/icons-react";
 import { PageLoading, Loading } from "@/components/ui/loading";
 import { toast } from "sonner";
 import { User } from "../../users/page";
@@ -166,7 +166,7 @@ export default function SupportEditPage() {
     });
 
     updateSupport(
-      submitData as any,
+      submitData as unknown as { status: "resolved" | "rejected"; response: string },
       {
         onSuccess: () => {
           toast.success(`Yêu cầu hỗ trợ đã được ${formData.status === "resolved" ? "giải quyết" : "từ chối"}`);

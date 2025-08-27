@@ -24,7 +24,6 @@ export function DataTablePagination<TData>({
   table,
 }: DataTablePaginationProps<TData>) {
   // Check if the table has manual pagination enabled
-  const isManualPagination = table.options.manualPagination;
   return (
     <div className="flex items-center justify-between px-2">
       <div className="flex-1 text-sm text-muted-foreground">

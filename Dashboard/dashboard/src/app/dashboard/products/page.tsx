@@ -1,7 +1,6 @@
 "use client";
 
 import { useApiQuery, useApiMutation } from "@/lib/hooks/useApi";
-import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -36,7 +35,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 import { productToasts } from "@/lib/toast";
 import { PageLoading, Loading } from "@/components/ui/loading";
-import { useCallback } from "react";
 
 interface Product {
   _id: string;

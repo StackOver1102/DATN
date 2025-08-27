@@ -75,8 +75,8 @@ interface Support {
 }
 
 export default function SupportPage() {
-  const [activeTab, setActiveTab] = useState<string>("all");
-  const [selectedSupport, setSelectedSupport] = useState<Support | null>(null);
+  const [activeTab, ] = useState<string>("all");
+  const [selectedSupport, ] = useState<Support | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [processingTab, setProcessingTab] = useState<"resolve" | "reject">("resolve");
   const [adminResponse, setAdminResponse] = useState("");

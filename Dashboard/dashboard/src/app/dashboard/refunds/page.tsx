@@ -71,7 +71,7 @@ interface Refund {
 
 export default function RefundsPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<string>("all");
+  const [activeTab, ] = useState<string>("all");
 
   const { refundNoti } = useNotifications();
   const { data, isLoading, error } = useApiQuery<{
@@ -299,16 +299,16 @@ export default function RefundsPage() {
   ];
 
   // Format date helper function
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(date);
-  };
+  // const formatDate = (dateString: string) => {
+  //   const date = new Date(dateString);
+  //   return new Intl.DateTimeFormat("vi-VN", {
+  //     day: "2-digit",
+  //     month: "2-digit",
+  //     year: "numeric",
+  //     hour: "2-digit",
+  //     minute: "2-digit",
+  //   }).format(date);
+  // };
 
   return (
     <div className="px-4 lg:px-6">

@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
 import { useApiQuery, useApiMutation } from "@/lib/hooks/useApi";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,7 +25,8 @@ import {
 import { IconHome, IconPlus } from "@tabler/icons-react";
 import { PageLoading } from "@/components/ui/loading";
 import { ApiResponse } from "@/interface/pagination";
-import * as z from "zod";
+import Image from "next/image";
+// import * as z from "zod";
 
 // Mảng các vật liệu
 const materials = [
@@ -101,29 +101,28 @@ const colors = [
 ];
 
 // Zod schema for product validation (not used in this file but kept for reference)
-// eslint-disable-next-line
-const productSchema = z.object({
-  name: z.string().min(1, "Tên sản phẩm không được để trống"),
-  description: z.string().optional(),
-  price: z.number().min(0, "Giá không được âm"),
-  discount: z.number().min(0, "Giảm giá không được âm").max(100, "Giảm giá tối đa 100%"),
-  folderId: z.string().optional(),
-  images: z.string().optional(),
-  isActive: z.boolean().default(true),
-  isPro: z.boolean().default(false),
-  stt: z.number().min(1, "STT phải lớn hơn 0"),
-  categoryId: z.string().min(1, "Vui lòng chọn danh mục"),
-  materials: z.string().optional(),
-  style: z.string().optional(),
-  render: z.string().optional(),
-  form: z.string().optional(),
-  color: z.string().optional(),
-  platform: z.string().optional(),
-  urlDownload: z.string().optional(),
-  categoryName: z.string().optional(),
-  categoryPath: z.string().optional(),
-  rootCategoryId: z.string().optional(),
-});
+// const productSchema = z.object({
+//   name: z.string().min(1, "Tên sản phẩm không được để trống"),
+//   description: z.string().optional(),
+//   price: z.number().min(0, "Giá không được âm"),
+//   discount: z.number().min(0, "Giảm giá không được âm").max(100, "Giảm giá tối đa 100%"),
+//   folderId: z.string().optional(),
+//   images: z.string().optional(),
+//   isActive: z.boolean().default(true),
+//   isPro: z.boolean().default(false),
+//   stt: z.number().min(1, "STT phải lớn hơn 0"),
+//   categoryId: z.string().min(1, "Vui lòng chọn danh mục"),
+//   materials: z.string().optional(),
+//   style: z.string().optional(),
+//   render: z.string().optional(),
+//   form: z.string().optional(),
+//   color: z.string().optional(),
+//   platform: z.string().optional(),
+//   urlDownload: z.string().optional(),
+//   categoryName: z.string().optional(),
+//   categoryPath: z.string().optional(),
+//   rootCategoryId: z.string().optional(),
+// });
 
 interface Product {
   _id: string;
@@ -197,7 +196,7 @@ export default function ProductDetailPage() {
   const [mounted, setMounted] = useState(false);
   const isCreating = id === "create";
   const pageTitle = isCreating ? "Thêm sản phẩm mới" : "Chỉnh sửa sản phẩm";
-  const urlBE = process.env.NEXT_PUBLIC_IMAGE;
+  // const urlBE = process.env.NEXT_PUBLIC_IMAGE;
 
   // Ensure component is mounted before rendering
   useEffect(() => {
