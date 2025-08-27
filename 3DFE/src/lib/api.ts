@@ -177,7 +177,7 @@ export const transactionApi = {
 
   // Cancel PayPal order
   cancelPayPalOrder: (token: string, orderId: string) => 
-    apiRequest(`transactions/${orderId}/cancel-order`, 'PATCH', undefined, token),
+    apiRequest(`transactions/paypal/${orderId}/cancel`, 'PATCH', undefined, token),
 
   // Create VQR code
   createVQRCode: (token: string, amount: number) => 

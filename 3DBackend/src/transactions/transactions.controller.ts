@@ -195,7 +195,7 @@ export class TransactionsController {
   // @UseGuards(RolesGuard)
   // @Roles(UserRole.ADMIN)
   // @ApiBearerAuth()
-  @Patch(':id/cancel')
+  @Patch('paypal/:id/cancel')
   @ApiOperation({ summary: 'Cancel transaction' })
   @ApiParam({ name: 'id', description: 'Transaction MongoDB ObjectId' })
   @ApiResponse({ status: 200, description: 'Transaction cancelled successfully' })
