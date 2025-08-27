@@ -59,7 +59,7 @@ export default function ClientSideModelsPage({
   categories,
   initialModels,
   totalModels,
-  currentPage,
+  // currentPage,
   totalPages,
   categoryParam,
   itemParam,
