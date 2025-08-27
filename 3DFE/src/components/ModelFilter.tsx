@@ -229,10 +229,30 @@ export default function ModelFilter({
     },
   ];
 
+  const sortedCategories = categories.map((category) => {
+    try {
+      // Check if items exists and is an array before spreading
+      const items = Array.isArray(category.items)
+        ? [...category.items].sort((a, b) => a.name.localeCompare(b.name))
+        : [];
+
+      return {
+        ...category,
+        items: items,
+      };
+    } catch (error) {
+      console.error(`Error processing category: ${category.title}`, error);
+      return {
+        ...category,
+        items: [], // Return empty array if there was an error
+      };
+    }
+  });
+
   // Transform API categories to the format expected by the component
   const transformedCategories =
     categories.length > 0
-      ? categories.map((category) => ({
+      ? sortedCategories.map((category) => ({
         id: category.title.toLowerCase().replace(/\s+/g, "-"),
         name: category.title,
         count: category.items?.length || 0,
@@ -241,25 +261,25 @@ export default function ModelFilter({
       : defaultCategories;
 
 
-  const sortedCategories = transformedCategories.map((category) => {
-    try {
-      // Check if items exists and is an array before spreading
-      const items = Array.isArray(category.subcategories)
-        ? [...category.subcategories].sort((a, b) => a.localeCompare(b))
-        : [];
+  // const sortedCategories = transformedCategories.map((category) => {
+  //   try {
+  //     // Check if items exists and is an array before spreading
+  //     const items = Array.isArray(category.subcategories)
+  //       ? [...category.subcategories].sort((a, b) => a.localeCompare(b))
+  //       : [];
 
-      return {
-        ...category,
-        items: items,
-      };
-    } catch (error) {
-      console.error(`Error processing category: ${category.name}`, error);
-      return {
-        ...category,
-        items: [], // Return empty array if there was an error
-      };
-    }
-  });
+  //     return {
+  //       ...category,
+  //       items: items,
+  //     };
+  //   } catch (error) {
+  //     console.error(`Error processing category: ${category.name}`, error);
+  //     return {
+  //       ...category,
+  //       items: [], // Return empty array if there was an error
+  //     };
+  //   }
+  // });
   // Ref để kiểm tra xem đã khởi tạo filter chưa
   const isInitialized = React.useRef(false);
   // Ref để theo dõi lần cập nhật filter cuối cùng để tránh duplicate API calls
@@ -408,6 +428,8 @@ export default function ModelFilter({
       icon: <Image src="/corona.svg" alt="Corona" width={17} height={16} />,
     },
     { id: "standard", name: "Standard" },
+    { id: "vray+corona", name: "Vray + Corona" },
+    { id: "mentalray", name: "Mental Ray" },
   ];
 
   const colors = [
@@ -497,9 +519,11 @@ export default function ModelFilter({
   // };
 
   const handleRenderEngineChange = (engineId: string) => {
+    // If the render engine is already selected, deselect it
+    // Otherwise, replace any existing render engine with the new one
     const newEngines = filters.renderEngine.includes(engineId)
-      ? filters.renderEngine.filter((id) => id !== engineId)
-      : [...filters.renderEngine, engineId];
+      ? []
+      : [engineId];
 
     const newFilters = { ...filters, renderEngine: newEngines };
     setFilters(newFilters);
@@ -516,9 +540,11 @@ export default function ModelFilter({
   };
 
   const handleColorChange = (colorHex: string) => {
+    // If the color is already selected, deselect it
+    // Otherwise, replace any existing color with the new one
     const newColors = filters.colors.includes(colorHex)
-      ? filters.colors.filter((c) => c !== colorHex)
-      : [...filters.colors, colorHex];
+      ? []
+      : [colorHex];
 
     const newFilters = { ...filters, colors: newColors };
     setFilters(newFilters);
@@ -535,9 +561,11 @@ export default function ModelFilter({
   };
 
   const handleFormChange = (formId: string) => {
+    // If the form is already selected, deselect it
+    // Otherwise, replace any existing form with the new one
     const newForms = filters.forms.includes(formId)
-      ? filters.forms.filter((f) => f !== formId)
-      : [...filters.forms, formId];
+      ? []
+      : [formId];
 
     const newFilters = { ...filters, forms: newForms };
     setFilters(newFilters);
@@ -591,9 +619,11 @@ export default function ModelFilter({
   ];
 
   const handleStyleChange = (styleId: string) => {
+    // If the style is already selected, deselect it
+    // Otherwise, replace any existing style with the new one
     const newStyles = filters.styles.includes(styleId)
-      ? filters.styles.filter((id) => id !== styleId)
-      : [...filters.styles, styleId];
+      ? []
+      : [styleId];
 
     const newFilters = { ...filters, styles: newStyles };
     setFilters(newFilters);
@@ -610,9 +640,11 @@ export default function ModelFilter({
   };
 
   const handleMaterialChange = (materialId: string) => {
+    // If the material is already selected, deselect it
+    // Otherwise, replace any existing material with the new one
     const newMaterials = filters.materials.includes(materialId)
-      ? filters.materials.filter((id) => id !== materialId)
-      : [...filters.materials, materialId];
+      ? []
+      : [materialId];
 
     const newFilters = { ...filters, materials: newMaterials };
     setFilters(newFilters);
@@ -793,7 +825,7 @@ export default function ModelFilter({
                 <Loading variant="spinner" size="md" />
               </div>
             ) : (
-              sortedCategories.map((category) => (
+              transformedCategories.map((category) => (
                 <div key={category.id} className="space-y-1">
                   {/* Main Category */}
                   <div className="flex items-center justify-between">
@@ -959,7 +991,7 @@ export default function ModelFilter({
           </span>
         </div>
         <div className="px-3 lg:px-4 pb-3 lg:pb-4">
-          <div className="flex flex-wrap gap-1.5 lg:gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {renderEngines.map((engine) => (
               <Button
                 key={engine.id}
@@ -970,13 +1002,18 @@ export default function ModelFilter({
                 }
                 size="sm"
                 onClick={() => handleRenderEngineChange(engine.id)}
-                className={`h-auto px-2 py-1 lg:px-2.5 lg:py-1.5 ${filters.renderEngine.includes(engine.id)
-                    ? "bg-blue-50 border-blue-200 text-blue-700"
+                className={`h-auto px-2 py-1.5 w-full justify-center ${
+                  filters.renderEngine.includes(engine.id)
+                    ? "bg-blue-50 border-blue-200 text-blue-700 font-medium"
                     : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
-                  }`}
+                }`}
               >
-                {engine.icon && <span className="mr-1.5">{engine.icon}</span>}
-                <span className="text-xs lg:text-sm font-medium">
+                {engine.icon && (
+                  <span className="mr-1.5 flex items-center justify-center">
+                    {engine.icon}
+                  </span>
+                )}
+                <span className="text-xs lg:text-sm">
                   {engine.name}
                 </span>
               </Button>
@@ -985,46 +1022,6 @@ export default function ModelFilter({
         </div>
       </div>
 
-      {/* Format */}
-      {/* <div className="border-b border-gray-200">
-        <div className="px-3 lg:px-4 py-2.5 lg:py-3">
-          <span className="font-medium text-gray-900 text-sm lg:text-base">
-            Format
-          </span>
-        </div>
-        <div className="px-3 lg:px-4 pb-3 lg:pb-4">
-          <div className="flex flex-wrap gap-1.5 lg:gap-2">
-            <Button
-              variant={
-                filters.formats.includes("obj") ? "secondary" : "outline"
-              }
-              size="sm"
-              onClick={() => handleFormatChange("obj")}
-              className={`h-auto px-2 py-1 lg:px-2.5 lg:py-1.5 ${
-                filters.formats.includes("obj")
-                  ? "bg-blue-50 border-blue-200 text-blue-700"
-                  : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <span className="text-xs lg:text-sm font-medium">.obj</span>
-            </Button>
-            <Button
-              variant={
-                filters.formats.includes("fbx") ? "secondary" : "outline"
-              }
-              size="sm"
-              onClick={() => handleFormatChange("fbx")}
-              className={`h-auto px-2 py-1 lg:px-2.5 lg:py-1.5 ${
-                filters.formats.includes("fbx")
-                  ? "bg-blue-50 border-blue-200 text-blue-700"
-                  : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <span className="text-xs lg:text-sm font-medium">.fbx</span>
-            </Button>
-          </div>
-        </div>
-      </div> */}
 
       {/* Form */}
       <div className="border-b border-gray-200">

@@ -35,7 +35,7 @@ export class FilterService {
       subSearch,
       categoryName,
       sortBy,
-      sortDirection = 'asc',
+      sortDirection = 'desc',
       // Extract additional filter fields
       style,
       materials,
@@ -87,30 +87,71 @@ export class FilterService {
     }
 
     // Process additional filter fields
-    // For text fields, use regex for case-insensitive partial matching
+    // Hỗ trợ cả tìm kiếm chính xác và tìm kiếm gần đúng
+    
+    // Xử lý style
     if (style) {
-      const styleRegex = new RegExp(style, 'i');
-      andConditions.push({ style: styleRegex });
+      // Kiểm tra nếu có nhiều giá trị (ngăn cách bởi dấu phẩy)
+      if (style.includes(',')) {
+        // Tìm kiếm một trong các giá trị chính xác (OR)
+        const styleValues = style.split(',');
+        andConditions.push({ style: { $in: styleValues } });
+      } else {
+        // Tìm kiếm chính xác
+        andConditions.push({ style: style });
+      }
     }
 
+    // Xử lý materials
     if (materials) {
-      const materialsRegex = new RegExp(materials, 'i');
-      andConditions.push({ materials: materialsRegex });
+      // Kiểm tra nếu có nhiều giá trị (ngăn cách bởi dấu phẩy)
+      if (materials.includes(',')) {
+        // Tìm kiếm một trong các giá trị chính xác (OR)
+        const materialsValues = materials.split(',');
+        andConditions.push({ materials: { $in: materialsValues } });
+      } else {
+        // Tìm kiếm chính xác
+        andConditions.push({ materials: materials });
+      }
     }
 
+    // Xử lý render
     if (render) {
-      const renderRegex = new RegExp(render, 'i');
-      andConditions.push({ render: renderRegex });
+      // Kiểm tra nếu có nhiều giá trị (ngăn cách bởi dấu phẩy)
+      if (render.includes(',')) {
+        // Tìm kiếm một trong các giá trị chính xác (OR)
+        const renderValues = render.split(',');
+        andConditions.push({ render: { $in: renderValues } });
+      } else {
+        // Tìm kiếm chính xác (không sử dụng regex)
+        andConditions.push({ render: render });
+      }
     }
 
+    // Xử lý form
     if (form) {
-      const formRegex = new RegExp(form, 'i');
-      andConditions.push({ form: formRegex });
+      // Kiểm tra nếu có nhiều giá trị (ngăn cách bởi dấu phẩy)
+      if (form.includes(',')) {
+        // Tìm kiếm một trong các giá trị chính xác (OR)
+        const formValues = form.split(',');
+        andConditions.push({ form: { $in: formValues } });
+      } else {
+        // Tìm kiếm chính xác
+        andConditions.push({ form: form });
+      }
     }
 
+    // Xử lý color
     if (color) {
-      const colorRegex = new RegExp(color, 'i');
-      andConditions.push({ color: colorRegex });
+      // Kiểm tra nếu có nhiều giá trị (ngăn cách bởi dấu phẩy)
+      if (color.includes(',')) {
+        // Tìm kiếm một trong các giá trị chính xác (OR)
+        const colorValues = color.split(',');
+        andConditions.push({ color: { $in: `#${colorValues}` } });
+      } else {
+        // Tìm kiếm chính xác
+        andConditions.push({ color: `#${color}` });
+      }
     }
 
     // For numeric fields, use exact matching

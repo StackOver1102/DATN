@@ -14,12 +14,13 @@ import { GoogleDriveService } from 'src/drive/google-drive.service';
 export class ScheduleService {
   private readonly logger = new Logger(ScheduleService.name);
   private tasks: Map<string, ScheduledTask> = new Map();
-  private ordersService: OrdersService;
-  private driveService: GoogleDriveService;
+ 
 
   constructor(
     private schedulerRegistry: SchedulerRegistry,
-    @InjectModel(Schedule.name) private scheduleModel: Model<ScheduleDocument>
+    @InjectModel(Schedule.name) private scheduleModel: Model<ScheduleDocument>,
+    private ordersService: OrdersService,
+    private driveService: GoogleDriveService
   ) {
     // Initialize tasks map
     this.initializeTasksMap();
