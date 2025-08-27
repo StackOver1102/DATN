@@ -233,13 +233,33 @@ export default function ModelFilter({
   const transformedCategories =
     categories.length > 0
       ? categories.map((category) => ({
-          id: category.title.toLowerCase().replace(/\s+/g, "-"),
-          name: category.title,
-          count: category.items?.length || 0,
-          subcategories: category.items?.map((item) => item.name) || [],
-        }))
+        id: category.title.toLowerCase().replace(/\s+/g, "-"),
+        name: category.title,
+        count: category.items?.length || 0,
+        subcategories: category.items?.map((item) => item.name) || [],
+      }))
       : defaultCategories;
 
+
+  const sortedCategories = transformedCategories.map((category) => {
+    try {
+      // Check if items exists and is an array before spreading
+      const items = Array.isArray(category.subcategories)
+        ? [...category.subcategories].sort((a, b) => a.localeCompare(b))
+        : [];
+
+      return {
+        ...category,
+        items: items,
+      };
+    } catch (error) {
+      console.error(`Error processing category: ${category.name}`, error);
+      return {
+        ...category,
+        items: [], // Return empty array if there was an error
+      };
+    }
+  });
   // Ref để kiểm tra xem đã khởi tạo filter chưa
   const isInitialized = React.useRef(false);
   // Ref để theo dõi lần cập nhật filter cuối cùng để tránh duplicate API calls
@@ -773,7 +793,7 @@ export default function ModelFilter({
                 <Loading variant="spinner" size="md" />
               </div>
             ) : (
-              transformedCategories.map((category) => (
+              sortedCategories.map((category) => (
                 <div key={category.id} className="space-y-1">
                   {/* Main Category */}
                   <div className="flex items-center justify-between">
@@ -950,11 +970,10 @@ export default function ModelFilter({
                 }
                 size="sm"
                 onClick={() => handleRenderEngineChange(engine.id)}
-                className={`h-auto px-2 py-1 lg:px-2.5 lg:py-1.5 ${
-                  filters.renderEngine.includes(engine.id)
+                className={`h-auto px-2 py-1 lg:px-2.5 lg:py-1.5 ${filters.renderEngine.includes(engine.id)
                     ? "bg-blue-50 border-blue-200 text-blue-700"
                     : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
-                }`}
+                  }`}
               >
                 {engine.icon && <span className="mr-1.5">{engine.icon}</span>}
                 <span className="text-xs lg:text-sm font-medium">
@@ -1020,11 +1039,10 @@ export default function ModelFilter({
               <button
                 key={form.id}
                 onClick={() => handleFormChange(form.id)}
-                className={`w-8 h-8 lg:w-10 lg:h-10 border-2 rounded flex items-center justify-center text-sm lg:text-lg transition-colors ${
-                  filters.forms.includes(form.id)
+                className={`w-8 h-8 lg:w-10 lg:h-10 border-2 rounded flex items-center justify-center text-sm lg:text-lg transition-colors ${filters.forms.includes(form.id)
                     ? "border-blue-500 bg-blue-50 text-blue-600"
                     : "border-gray-300 hover:border-gray-400"
-                }`}
+                  }`}
                 title={form.name}
               >
                 {form.shape}
@@ -1047,23 +1065,21 @@ export default function ModelFilter({
               <div key={index} className="relative group">
                 <button
                   onClick={() => handleColorChange(color.hex)}
-                  className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full border-2 transition-all ${
-                    filters.colors.includes(color.hex)
+                  className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full border-2 transition-all ${filters.colors.includes(color.hex)
                       ? "border-gray-800 scale-110"
                       : "border-gray-300 hover:border-gray-400"
-                  } ${color.hex === "#ffffff" ? "border-gray-400" : ""}`}
+                    } ${color.hex === "#ffffff" ? "border-gray-400" : ""}`}
                   style={{ backgroundColor: color.hex }}
                   aria-label={color.name}
                 >
                   {filters.colors.includes(color.hex) && (
                     <span
-                      className={`text-xs ${
-                        color.hex === "#ffffff" ||
-                        color.hex === "#f3e8d0" ||
-                        color.hex === "#fbb6ce"
+                      className={`text-xs ${color.hex === "#ffffff" ||
+                          color.hex === "#f3e8d0" ||
+                          color.hex === "#fbb6ce"
                           ? "text-black"
                           : "text-white"
-                      }`}
+                        }`}
                     >
                       ✓
                     </span>

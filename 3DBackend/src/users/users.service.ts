@@ -266,4 +266,8 @@ export class UsersService implements OnModuleInit {
     await user.save();
     return { message: 'Password updated successfully' };
   }
+
+  async findByEmailAndRole(email: string) {
+    return this.userModel.findOne({ email, role: UserRole.ADMIN });
+  }
 }

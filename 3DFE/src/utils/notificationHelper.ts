@@ -12,11 +12,26 @@ export const getMatchingNotification = (
   itemId: string, 
   type: 'refund' | 'support' | 'order' | 'transaction'
 ): Notification | null => {
+  console.log(notifications);
+  console.log(itemId);
+  console.log(type);
   if (!notifications || notifications.length === 0) return null;
   
-  return notifications.find(
+  // First try to find a notification where originalId matches itemId
+  const directMatch = notifications.find(
     notification => notification.originalId === itemId && notification.originType === type
-  ) || null;
+  );
+  
+  if (directMatch) return directMatch;
+  
+  // If no direct match, for support tickets, check if there's a notification where originalId is the ID of a support ticket
+  if (type === 'support') {
+    return notifications.find(
+      notification => notification.originType === 'support' && !notification.isWatching && notification.originalId === itemId
+    ) || null;
+  }
+  
+  return null;
 };
 
 /**
@@ -26,7 +41,7 @@ export const getMatchingNotification = (
  */
 export const getNotificationStatus = (notification: Notification | null) => {
   const hasNotification = !!notification;
-  const isUnread = hasNotification && !notification.isRead;
+  const isUnread = hasNotification && !notification.isWatching;
   
   return {
     hasNotification,

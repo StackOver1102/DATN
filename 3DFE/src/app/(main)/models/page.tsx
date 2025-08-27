@@ -43,7 +43,7 @@ interface Product {
 
 async function getProducts(
   page = 1,
-  limit = 30,
+  limit = 60,
   category?: string,
   item?: string
 ) {

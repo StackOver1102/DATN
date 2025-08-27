@@ -65,15 +65,16 @@ export class SupportController {
     const support: SupportRequestDocument = await this.supportService.create({
       ...createSupportDto,
       attachments: [...(createSupportDto.attachments || []), ...attachments],
-    });
+    }, createSupportDto?.userId);
 
-    if (support && support._id) {
-      await this.notificationsService.create({
-        message: `New support request from ${createSupportDto.name}`,
-        originalId: support._id.toString(),
-        originType: NotificationType.SUPPORT,
-      });
-    }
+    // if (support && support._id) {
+    //   await this.notificationsService.create({
+    //     message: `New support request from ${createSupportDto.name}`,
+    //     originalId: support._id.toString(),
+    //     originType: NotificationType.SUPPORT,
+    //     userId: support?.userId || undefined,
+    //   });
+    // }
 
     return support;
   }
@@ -122,7 +123,6 @@ export class SupportController {
   }
 
   @Get('my-tickets')
-
   @UseGuards(JwtAuthGuard)
   findMyRequests(@CurrentUser() user: UserPayload, @Query() filterDto: FilterDto) {
     return this.supportService.findByUserId(user.userId, filterDto);

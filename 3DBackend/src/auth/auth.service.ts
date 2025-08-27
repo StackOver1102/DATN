@@ -127,7 +127,7 @@ export class AuthService {
 
   async loginByVQR(loginDto: LoginDto) {
     const { email, password } = loginDto;
- 
+
     const user = await this.usersService.findByEmail(email);
 
     if (!user) {
@@ -153,5 +153,39 @@ export class AuthService {
 
   async verifyToken(token: string) {
     return this.jwtService.verify(token, { secret: this.configService.get('JWT_SECRET') });
+  }
+
+  async loginByAdmin(loginDto: LoginDto): Promise<JwtToken> {
+    const { email, password } = loginDto;
+
+    const user = await this.usersService.findByEmailAndRole(email);
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const payload: JwtPayload = {
+      sub: user?._id?.toString() || '',
+      email: user.email,
+      role: user.role,
+    };
+
+    return {
+      access_token: this.jwtService.sign(payload),
+      user: {
+        _id: user._id.toString(),
+        email: user.email,
+        role: user.role,
+        fullName: user.fullName,
+        address: user.address,
+        phone: user.phone,
+        balance: user.balance,
+      },
+    };
   }
 }

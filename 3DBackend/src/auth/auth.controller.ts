@@ -81,4 +81,17 @@ export class AuthController {
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return this.authService.resetPassword(resetPasswordDto);
   }
+
+  @Public()
+  @Post('admin-login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Admin login' })
+  @ApiResponse({
+    status: 200,
+    description: 'Admin logged in successfully',
+  })
+  @ApiBody({ type: LoginDto })
+  async adminLogin(@Body() loginDto: LoginDto) {
+    return this.authService.loginByAdmin(loginDto);
+  }
 }
