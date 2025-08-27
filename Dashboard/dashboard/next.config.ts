@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "r2-image-server.ngoctoanmtc.workers.dev",
       },
+      {
+        protocol: "https",
+        hostname: "zalomini.inhoanglinh.click",
+      },
     ],
     unoptimized: true,
   },

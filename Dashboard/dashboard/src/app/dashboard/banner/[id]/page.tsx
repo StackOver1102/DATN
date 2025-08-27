@@ -20,6 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { PageLoading } from "@/components/ui/loading";
 import { useApiQuery, useApiMutation } from "@/lib/hooks/useApi";
 import { showSuccessToast, showErrorToast } from "@/lib/toast";
+import Image from "next/image";
 
 interface Banner {
   _id: string;
@@ -54,7 +55,7 @@ export default function EditBannerPage() {
   const [mounted, setMounted] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
-  const [isUploading, setIsUploading] = useState(false);
+  const [isUploading, ] = useState(false);
 
   // Ensure component is mounted before rendering
   useEffect(() => {
@@ -193,7 +194,7 @@ export default function EditBannerPage() {
           },
         });
       }
-    } catch (error) {
+    } catch  {
       showErrorToast("Đã có lỗi xảy ra khi cập nhật banner");
     }
   };
@@ -307,7 +308,7 @@ export default function EditBannerPage() {
                 <div className="space-y-4">
                   <div className="border rounded-lg p-4 bg-gray-50">
                     <p className="text-sm font-medium mb-2">Hình ảnh hiện tại:</p>
-                    <img
+                    <Image
                       src={currentImageUrl}
                       alt="Current banner"
                       className="max-h-48 rounded-lg"

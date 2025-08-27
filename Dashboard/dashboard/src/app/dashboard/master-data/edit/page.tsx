@@ -41,7 +41,7 @@ const RichTextEditor = ({
   contentId,
 }: RichTextEditorProps) => {
   const [content, setContent] = useState("");
-  const [isLoading, setIsLoading] = useState(true); // Start with loading state
+  const [, setIsLoading] = useState(true); // Start with loading state
   const [isSaving, setIsSaving] = useState(false);
 
   // Fetch content - either by ID or by type

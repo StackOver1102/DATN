@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useApiQuery } from "@/lib/hooks/useApi";
 import {
   Table,
@@ -19,8 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MoreHorizontal, Edit, Trash2, Eye } from "lucide-react";
+import { MoreHorizontal, Edit, Eye } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,7 +65,7 @@ const contentTypes = [
 
 export default function ContentManagementPage() {
   // Fetch all master data
-  const { data, isLoading, refetch } = useApiQuery<{ data: MasterData[] }>(
+  const { data, isLoading } = useApiQuery<{ data: MasterData[] }>(
     `masterdata-list-all`,
     `/master-data`,
     {

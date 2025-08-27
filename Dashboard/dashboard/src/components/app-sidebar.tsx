@@ -10,7 +10,6 @@ import {
   IconFileDescription,
   IconHelp,
   IconInnerShadowTop,
-  IconSearch,
   IconSettings,
   IconUsers,
   IconCoin,
@@ -20,7 +19,6 @@ import {
 import { useNotifications } from "@/lib/hooks/useNotifications";
 
 import { NavMain } from "@/components/nav-main";
-import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,

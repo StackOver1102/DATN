@@ -50,7 +50,7 @@ import {
 import {
   Textarea
 } from "@/components/ui/textarea";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { User } from "../users/page";
 import { Product } from "@/interface/product";
@@ -71,8 +71,8 @@ interface Report {
 }
 
 export default function ReportsPage() {
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState<string>("all");
+  // const router = useRouter();
+  const [activeTab, ] = useState<string>("all");
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [processingTab, setProcessingTab] = useState<"resolve" | "reject">("resolve");

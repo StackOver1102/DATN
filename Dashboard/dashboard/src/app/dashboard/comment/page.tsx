@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useApiQuery, useApiMutation } from "@/lib/hooks/useApi";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,7 +57,6 @@ interface Comment {
 }
 
 export default function CommentsPage() {
-  const router = useRouter();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedComment, setSelectedComment] = useState<Comment | null>(null);
@@ -89,7 +87,7 @@ export default function CommentsPage() {
     );
   };
 
-  // Delete mutation
+  // Delete mutation1
   const { mutate: deleteComment, isPending: isDeleting } = useApiMutation<
     { success: boolean; message: string },
     { id: string }
@@ -162,7 +160,7 @@ export default function CommentsPage() {
   const formatDate = (dateString: string) => {
     try {
       return format(new Date(dateString), "dd/MM/yyyy HH:mm");
-    } catch (e) {
+    } catch  {
       return dateString;
     }
   };
