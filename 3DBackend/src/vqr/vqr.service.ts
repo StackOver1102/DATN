@@ -106,7 +106,7 @@ export class VqrService {
           userBankName: 'TRUONG NGOC TOAN',
           transType: 'C',
           qrType: '0',
-          terminalCode: 'OU0PVSWPJW',
+          terminalCode: '9edRdt4RuB',
           urlLink: `${this.configService.get('FRONTEND_URL')}/deposit/success?origin=vqr`,
         }),
       },
