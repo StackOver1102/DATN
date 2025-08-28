@@ -10,7 +10,7 @@ import { LoadingButton } from "@/components/ui/loading-button";
 
 // Define validation schema with Zod
 const forgotPasswordSchema = z.object({
-  email: z.string().email("Email không hợp lệ"),
+  email: z.string().email("Invalid email address"),
 });
 
 // Define form data type from schema
@@ -41,17 +41,24 @@ function ForgotPasswordForm() {
 
     try {
       // Call the API to request password reset
-      const { authApi } = await import('@/lib/api');
+      const { authApi } = await import("@/lib/api");
       const response = await authApi.forgotPassword(data.email);
-      
+
       if (response.success) {
-        setSuccess("Một email đặt lại mật khẩu đã được gửi đến địa chỉ email của bạn.");
+        setSuccess(
+          "A password reset email has been sent to your email address."
+        );
       } else {
-        setError(response.message || "Có lỗi xảy ra khi gửi yêu cầu đặt lại mật khẩu.");
+        setError(
+          response.message ||
+            "An error occurred while sending the password reset request."
+        );
       }
     } catch (error) {
       console.error("Password reset error:", error);
-      setError("Có lỗi xảy ra khi gửi yêu cầu đặt lại mật khẩu. Vui lòng thử lại sau.");
+      setError(
+        "An error occurred while sending the password reset request. Please try again later."
+      );
     } finally {
       setLoading(false);
     }
@@ -62,7 +69,7 @@ function ForgotPasswordForm() {
       <Loading
         variant="spinner"
         size="lg"
-        text="Đang gửi yêu cầu..."
+        text="Sending request..."
         fullScreen
       />
     );

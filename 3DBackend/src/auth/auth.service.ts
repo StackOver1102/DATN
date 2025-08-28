@@ -65,10 +65,10 @@ export class AuthService {
   async registerUser(createUserDto: CreateUserDto) {
     // Hash the password before creating the user
     try {
-      const hashedPassword = await this.hashPassword(createUserDto.password);
+      // const hashedPassword = await this.hashPassword(createUserDto.password);
       const user = await this.usersService.create({
         ...createUserDto,
-        password: hashedPassword,
+        // password: hashedPassword,
       });
 
       await this.mailService.sendWelcomeEmail(user);
