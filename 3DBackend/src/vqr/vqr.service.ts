@@ -74,7 +74,7 @@ export class VqrService {
       await this.transactionService.generateTransactionCode();
 
     const transactionDto: CreateTransactionDto = {
-      amount: amount,
+      amount: createVQRCodeDto.amount,
       type: TransactionType.DEPOSIT,
       method: TransactionMethod.VQR,
       description: 'Deposit via VQR',

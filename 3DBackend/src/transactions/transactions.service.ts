@@ -1019,7 +1019,7 @@ export class TransactionsService {
       throw new BadRequestException('Giao dịch đã bị hủy');
     }
 
-    if (Math.abs(transaction.amount - amount) > 0.01) {
+    if (Math.abs(transaction.amount - (amount / 1000)) > 0.01) {
       throw new BadRequestException('Số tiền không khớp');
     }
 
