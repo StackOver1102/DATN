@@ -431,7 +431,7 @@ export class ProductsService {
 
     if (product.images) {
       const imageKey = this.uploadService.getKeyFromUrl(product.images);
-      console.log('imageKey', imageKey);
+      // console.log('imageKey', imageKey);
       if (imageKey) {
         await this.uploadService.deleteFile(`products/${imageKey}`);
       }
