@@ -13,8 +13,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "3D Studio",
-  description: "Your 3D Model Marketplace",
+  title: "3dvn.org",
+  description: "3Dvn.org - Your 3D Model Marketplace",
 };
 
 export default function RootLayout({
