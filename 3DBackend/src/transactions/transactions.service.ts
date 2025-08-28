@@ -134,9 +134,9 @@ export class TransactionsService {
 
     // Calculate new balance based on transaction type
     switch (createTransactionDto.type) {
-      case TransactionType.DEPOSIT:
-        balanceAfter = balanceBefore + createTransactionDto.amount;
-        break;
+      // case TransactionType.DEPOSIT:
+      //   balanceAfter = balanceBefore + createTransactionDto.amount;
+      //   break;
       case TransactionType.WITHDRAWAL:
       case TransactionType.PAYMENT:
         if (balanceBefore < createTransactionDto.amount) {
@@ -161,8 +161,10 @@ export class TransactionsService {
     // Save transaction
     const savedTransaction = await transaction.save();
 
-    // Update user balance
-    await this.usersService.updateBalance(userId, balanceAfter);
+    if (createTransactionDto.type !== TransactionType.DEPOSIT) {
+      // Update user balance
+      await this.usersService.updateBalance(userId, balanceAfter);
+    }
 
     return savedTransaction;
   }
@@ -1019,8 +1021,10 @@ export class TransactionsService {
     transaction.status = TransactionStatus.SUCCESS;
     transaction.balanceAfter =
       (transaction.balanceBefore || 0) + transaction.amount;
-    
-    const merchant = await this.usersService.findOne(transaction.userId.toString());
+
+    const merchant = await this.usersService.findOne(
+      transaction.userId.toString(),
+    );
     if (!merchant) {
       throw new NotFoundException('Merchant không tồn tại');
     }

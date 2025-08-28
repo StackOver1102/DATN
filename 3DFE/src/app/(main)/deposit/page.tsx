@@ -118,19 +118,21 @@ export default function DepositPage() {
         router.push("/signin?callbackUrl=" + encodeURIComponent("/deposit"));
         return;
       }
-      const result = await transactionApi.createVQRCode(token,coinAmount)
-      if(result.success){
-        const resultData = result.data as {qrLink:string, transactionId:string}
-        if(resultData.qrLink){
+      const result = await transactionApi.createVQRCode(token, coinAmount);
+      if (result.success) {
+        const resultData = result.data as {
+          qrLink: string;
+          transactionId: string;
+        };
+        if (resultData.qrLink) {
           window.open(resultData.qrLink, "_blank");
         }
       }
       setIsLoading(false);
-    
     } catch (error) {
       console.error("Error processing payment:", error);
     }
-  }
+  };
 
   // Handle payment error
   const handlePaymentError = (error: Error | unknown) => {
@@ -203,7 +205,9 @@ export default function DepositPage() {
           {/* Payment Region Selection */}
           <div className="bg-white rounded-lg p-6 space-y-6 shadow-md">
             <div>
-              <h3 className="font-medium text-gray-800 mb-4">Choose Payment Region:</h3>
+              <h3 className="font-medium text-gray-800 mb-4">
+                Choose Payment Region:
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <button
                   onClick={() => {
@@ -211,13 +215,16 @@ export default function DepositPage() {
                     setPaymentMethod("paypal");
                     setCoinAmount(50);
                   }}
-                  className={`p-4 rounded-lg border-2 transition-all ${paymentRegion === "international"
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    paymentRegion === "international"
                       ? "border-blue-500 bg-blue-50"
                       : "border-gray-200 hover:border-blue-300"
-                    }`}
+                  }`}
                 >
                   <div className="text-center">
-                    <h4 className="font-semibold text-gray-800 mb-2">International Payment</h4>
+                    <h4 className="font-semibold text-gray-800 mb-2">
+                      International Payment
+                    </h4>
                     <p className="text-base text-gray-600 mb-2 flex items-center justify-center">
                       <Image
                         src="/icons/paypal.svg"
@@ -228,24 +235,44 @@ export default function DepositPage() {
                       />
                       PayPal Payment
                     </p>
-                    <p className="text-base text-blue-600 font-medium flex items-center justify-center">50 <CircleDollarSign className="w-4 h-4 text-yellow-500 ml-1" /> = $5 USD</p>
+                    <p className="text-base text-blue-600 font-medium flex items-center justify-center">
+                      50{" "}
+                      <CircleDollarSign className="w-4 h-4 text-yellow-500 ml-1" />{" "}
+                      = $5 USD
+                    </p>
                   </div>
                 </button>
                 <button
                   onClick={() => {
                     setPaymentRegion("vietnam");
-                    // setPaymentMethod("momo");
+                    setPaymentMethod("banking");
                     setCoinAmount(50);
                   }}
-                  className={`p-4 rounded-lg border-2 transition-all ${paymentRegion === "vietnam"
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    paymentRegion === "vietnam"
                       ? "border-green-500 bg-green-50"
                       : "border-gray-200 hover:border-green-300"
-                    }`}
+                  }`}
                 >
                   <div className="text-center">
-                    <h4 className="font-semibold text-gray-800 mb-2">Vietnam Payment</h4>
-                    <p className="text-base text-gray-600 mb-2">Banking</p>
-                    <p className="text-base text-green-600 font-medium flex items-center justify-center">50 <CircleDollarSign className="w-4 h-4 text-yellow-500 ml-1" /> = 50,000 VND</p>
+                    <h4 className="font-semibold text-gray-800 mb-2">
+                      Vietnam Payment
+                    </h4>
+                    <p className="text-base text-gray-600 mb-2 flex items-center justify-center">
+                      <Image
+                        src="/icons/bank.png"
+                        alt="Banking"
+                        width={20}
+                        height={20}
+                        className="mr-1"
+                      />
+                      Banking Payment
+                    </p>
+                    <p className="text-base text-green-600 font-medium flex items-center justify-center">
+                      50{" "}
+                      <CircleDollarSign className="w-4 h-4 text-yellow-500 ml-1" />{" "}
+                      = 50,000 VND
+                    </p>
                   </div>
                 </button>
               </div>
@@ -269,8 +296,15 @@ export default function DepositPage() {
                   </div>
                   <div className="text-base text-gray-500">
                     Equivalent to{" "}
-                    <span className={`font-semibold ${paymentRegion === "international" ? "text-blue-600" : "text-green-600"}`}>
-                      {getPaymentAmount().toLocaleString()} {getPaymentCurrency()}
+                    <span
+                      className={`font-semibold ${
+                        paymentRegion === "international"
+                          ? "text-blue-600"
+                          : "text-green-600"
+                      }`}
+                    >
+                      {getPaymentAmount().toLocaleString()}{" "}
+                      {getPaymentCurrency()}
                     </span>
                   </div>
                 </div>
@@ -319,7 +353,9 @@ export default function DepositPage() {
                     <Button
                       onClick={() => {
                         const currentValue = coinAmount || 0;
-                        setCoinAmount(Math.max(getMinimumAmount(), currentValue + 50));
+                        setCoinAmount(
+                          Math.max(getMinimumAmount(), currentValue + 50)
+                        );
                       }}
                       variant="outline"
                       className="flex-1 md:flex-none"
@@ -332,8 +368,15 @@ export default function DepositPage() {
                   <p className="text-base text-gray-500">
                     Minimum amount: {getMinimumAmount()} coins
                   </p>
-                  <p className={`text-base font-bold ${paymentRegion === "international" ? "text-blue-600" : "text-green-600"}`}>
-                    = {getPaymentAmount().toLocaleString()} {getPaymentCurrency()}
+                  <p
+                    className={`text-base font-bold ${
+                      paymentRegion === "international"
+                        ? "text-blue-600"
+                        : "text-green-600"
+                    }`}
+                  >
+                    = {getPaymentAmount().toLocaleString()}{" "}
+                    {getPaymentCurrency()}
                   </p>
                 </div>
               </div>
@@ -366,7 +409,6 @@ export default function DepositPage() {
                   </label>
                 ) : (
                   <>
-            
                     <label className="flex items-center gap-2 text-gray-700 cursor-pointer">
                       <input
                         type="radio"
@@ -376,9 +418,13 @@ export default function DepositPage() {
                         onChange={() => setPaymentMethod("banking")}
                       />
                       Pay with Banking
-                      <div className="flex gap-1 ml-auto">
-                      
-                      </div>
+                      <Image
+                        src="/icons/bank.png"
+                        alt="Banking"
+                        width={22}
+                        height={22}
+                        className="ml-auto"
+                      />
                     </label>
                   </>
                 )}
@@ -391,7 +437,13 @@ export default function DepositPage() {
                 Payment Amount:
               </h3>
 
-              <div className={`text-5xl font-bold text-center ${paymentRegion === "international" ? "text-blue-600" : "text-green-600"}`}>
+              <div
+                className={`text-5xl font-bold text-center ${
+                  paymentRegion === "international"
+                    ? "text-blue-600"
+                    : "text-green-600"
+                }`}
+              >
                 {getPaymentAmount().toLocaleString()} {getPaymentCurrency()}
               </div>
 
@@ -406,28 +458,29 @@ export default function DepositPage() {
                 </Link>
               </div>
 
-              {paymentMethod === "paypal" && paymentRegion === "international" && (
-                <div className="mt-4">
-                  {coinAmount < getMinimumAmount() ? (
-                    <Button
-                      className="w-full bg-gray-400 text-white py-3 text-lg font-medium cursor-not-allowed"
-                      disabled={true}
-                    >
-                      Minimum amount is {getMinimumAmount()} coin
-                    </Button>
-                  ) : (
-                    <PayPalButton
-                      amount={getPaymentAmount()}
-                      onSuccess={() => handlePaymentSuccess()}
-                      onError={handlePaymentError}
-                      description={`Purchase ${coinAmount.toLocaleString()} coin`}
-                      currency="USD"
-                      returnUrl={returnUrl}
-                      cancelUrl={cancelUrl}
-                    />
-                  )}
-                </div>
-              )}
+              {paymentMethod === "paypal" &&
+                paymentRegion === "international" && (
+                  <div className="mt-4">
+                    {coinAmount < getMinimumAmount() ? (
+                      <Button
+                        className="w-full bg-gray-400 text-white py-3 text-lg font-medium cursor-not-allowed"
+                        disabled={true}
+                      >
+                        Minimum amount is {getMinimumAmount()} coin
+                      </Button>
+                    ) : (
+                      <PayPalButton
+                        amount={getPaymentAmount()}
+                        onSuccess={() => handlePaymentSuccess()}
+                        onError={handlePaymentError}
+                        description={`Purchase ${coinAmount.toLocaleString()} coin`}
+                        currency="USD"
+                        returnUrl={returnUrl}
+                        cancelUrl={cancelUrl}
+                      />
+                    )}
+                  </div>
+                )}
 
               {paymentRegion === "vietnam" && (
                 <div className="mt-4">
@@ -461,12 +514,14 @@ export default function DepositPage() {
               </div>
 
               <div>
-                <p className="text-gray-700 mb-1">
-                  2. Exchange rate:
-                </p>
+                <p className="text-gray-700 mb-1">2. Exchange rate:</p>
                 <div className="ml-4 text-base">
-                  <p className="text-blue-600">• International: 50 coins = $5 USD</p>
-                  <p className="text-green-600">• Vietnam: 50 coins = 50,000 VND</p>
+                  <p className="text-blue-600">
+                    • International: 50 coins = $5 USD
+                  </p>
+                  <p className="text-green-600">
+                    • Vietnam: 50 coins = 50,000 VND
+                  </p>
                 </div>
               </div>
 
@@ -478,8 +533,8 @@ export default function DepositPage() {
 
               <div>
                 <p className="text-gray-700 mb-1">
-                  4. After payment confirmation, coins will be immediately added to
-                  your account.
+                  4. After payment confirmation, coins will be immediately added
+                  to your account.
                 </p>
               </div>
 
@@ -499,8 +554,8 @@ export default function DepositPage() {
 
               <div>
                 <p className="text-gray-700 mb-1">
-                  7. When contacting Customer Service, always quote your
-                  order number.
+                  7. When contacting Customer Service, always quote your order
+                  number.
                 </p>
               </div>
             </div>
