@@ -156,7 +156,8 @@ export class ScheduleService {
   /**
    * This cronjob runs every 3 hours
    */
-  @Cron('0 0 */3 * * *')
+  @Cron('0 */1 * * * *')
+
   async handleEvery3HoursTask() {
     // Update task metadata
     const task = this.tasks.get('every3HoursTask');
@@ -168,7 +169,8 @@ export class ScheduleService {
     let count = 0;
     const orders = await this.ordersService.getOrdersToRemoveGoogleDrive();
     for (const order of orders) {
-      await this.driveService.removeDrivePermission(order.productId.urlDownload || "", order.userId.email);
+      await this.driveService.removeDrivePermission(order.productId.urlDownload || "", order.userId.email, order._id);
+      await this.ordersService.updateIsRemoveGoogleDrive(order._id);
       count++;
     }
     this.logger.debug(`Removed ${count} drive permissions`);
