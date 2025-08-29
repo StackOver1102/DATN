@@ -156,8 +156,7 @@ export class ScheduleService {
   /**
    * This cronjob runs every 3 hours
    */
-  @Cron('0 */1 * * * *')
-
+  @Cron('0 0 */3 * * *')
   async handleEvery3HoursTask() {
     // Update task metadata
     const task = this.tasks.get('every3HoursTask');
