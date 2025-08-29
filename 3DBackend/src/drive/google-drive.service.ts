@@ -202,6 +202,7 @@ export class GoogleDriveService {
           fileId,
           permissionId: permission.id,
         });
+        // console.log(`Đã xóa quyền truy cập cho file ${fileUrl} và email ${email}`);
         return true;
       }
       return false;
