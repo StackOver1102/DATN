@@ -63,11 +63,11 @@ const styles = [
 
 // Mảng các render engine
 const renderEngines = [
-  { id: "vray+corona", name: "Vray + Corona" },
-  { id: "corona", name: "Corona" },
-  { id: "vray", name: "Vray" },
-  { id: "mentalray", name: "Mental Ray" },
-  { id: "standard", name: "Standard" },
+  { id: "vray+corona", name: "Vray + Corona", active: true },
+  { id: "corona", name: "Corona", active: false },
+  { id: "vray", name: "Vray", active: false },
+  { id: "mentalray", name: "Mental Ray", active: false },
+  { id: "standard", name: "Standard", active: false },
 ];
 
 // Mảng các hình dạng
@@ -280,7 +280,7 @@ export default function BatchCreateProductPage() {
       stt: 1,
       materials: [],
       style: [],
-      render: [],
+      render: ["vray+corona"],
       form: [],
       color: [],
     };
@@ -1081,36 +1081,11 @@ export default function BatchCreateProductPage() {
                   }
                 }, 1500);
               }
-            }}>
-            <TabsList className="mb-4 flex-wrap bg-while p-1 rounded-lg">
-              {products.map((_, index) => (
-                <TabsTrigger
-                  key={index}
-                  value={index.toString()}
-                  className="relative rounded-md data-[state=active]:bg-gray-400 data-[state=active]:shadow-sm min-w-[120px] py-2"
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="bg-primary/10 text-primary w-5 h-5 rounded-full flex items-center justify-center font-medium text-xs">
-                      {index + 1}
-                    </div>
-                    <span>Sản phẩm {index + 1}</span>
-                  </div>
-                  {products.length > 1 && (
-                    <span
-                      role="button"
-                      className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center cursor-pointer shadow-sm transition-colors"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveProduct(index);
-                      }}
-                    >
-                      <IconTrash className="h-3 w-3" />
-                    </span>
-                  )}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-
+            }}
+          >
+          <div className="flex gap-4 min-h-[600px]">
+            <div className="w-3/4">
+            
             {products.map((product, index) => (
               <TabsContent key={index} value={index.toString()}>
                 <Card className="py-0 gap-0">
@@ -1653,6 +1628,45 @@ export default function BatchCreateProductPage() {
                 </Card>
               </TabsContent>
             ))}
+            </div>
+            <div className="w-1/4">
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full">
+                <h3 className="text-sm font-medium mb-3 text-gray-700">Danh sách sản phẩm</h3>
+                <TabsList className={`grid ${
+                  products.length > 36 ? 'grid-cols-3' : 
+                  products.length > 18 ? 'grid-cols-2' : 
+                  'grid-cols-1'
+                } auto-rows-max gap-2 bg-transparent p-0`}>
+                  {products.map((_, index) => (
+                    <TabsTrigger
+                      key={index}
+                      value={index.toString()}
+                      className="relative rounded-md data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm w-full py-2 justify-start"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="bg-primary/10 text-primary w-5 h-5 rounded-full flex items-center justify-center font-medium text-xs">
+                          {index + 1}
+                        </div>
+                        <span>SP {index + 1}</span>
+                      </div>
+                      {products.length > 1 && (
+                        <span
+                          role="button"
+                          className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center cursor-pointer shadow-sm transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveProduct(index);
+                          }}
+                        >
+                          <IconTrash className="h-3 w-3" />
+                        </span>
+                      )}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </div>
+            </div>
+          </div>
           </Tabs>
 
           <div className="flex justify-end gap-3 mt-6">
