@@ -26,6 +26,7 @@ interface OrderToRemoveGoogleDrive {
   isRemoveGoogleDrive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  _id: string;
 }
 @Injectable()
 export class OrdersService {
@@ -209,9 +210,24 @@ export class OrdersService {
     return deletedOrder;
   }
 
-  // get ra các bán ghi có isRemoveGoogleDrive = fasle + có thời gian tạo trong 3 tiếng đổ lại 
+  // get ra các bán ghi có isRemoveGoogleDrive = fasle + có thời gian tạo lớn hơn 3 tiếng
   async getOrdersToRemoveGoogleDrive(): Promise<OrderToRemoveGoogleDrive[]> {
-    const orders = await this.orderModel.find({ isRemoveGoogleDrive: false, createdAt: { $gte: new Date(Date.now() - 3 * 60 * 60 * 1000) } }).populate('productId userId', '-password').exec();
+    const orders = await this.orderModel.find({ isRemoveGoogleDrive: false, createdAt: { $lte: new Date(Date.now() - 3 * 60 * 60 * 1000) } }).populate({
+      path: 'productId',
+      select: 'urlDownload'
+    })
+    .populate({
+      path: 'userId',
+      select: '-password'
+    }).exec();
     return orders as unknown as OrderToRemoveGoogleDrive[];
+  }
+
+  async updateIsRemoveGoogleDrive(orderId: string): Promise<Order> {
+    const order = await this.orderModel.findByIdAndUpdate(orderId, { isRemoveGoogleDrive: true }, { new: true }).exec();
+    if (!order) {
+      throw new NotFoundException(`Không tìm thấy đơn hàng với ID ${orderId}`);
+    }
+    return order;
   }
 }

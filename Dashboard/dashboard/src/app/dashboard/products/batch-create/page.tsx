@@ -1082,12 +1082,12 @@ export default function BatchCreateProductPage() {
                 }, 1500);
               }
             }}>
-            <TabsList className="mb-4 flex-wrap bg-gray-100 p-1 rounded-lg">
+            <TabsList className="mb-4 flex-wrap bg-while p-1 rounded-lg">
               {products.map((_, index) => (
                 <TabsTrigger
                   key={index}
                   value={index.toString()}
-                  className="relative rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm min-w-[120px] py-2"
+                  className="relative rounded-md data-[state=active]:bg-gray-400 data-[state=active]:shadow-sm min-w-[120px] py-2"
                 >
                   <div className="flex items-center gap-2">
                     <div className="bg-primary/10 text-primary w-5 h-5 rounded-full flex items-center justify-center font-medium text-xs">

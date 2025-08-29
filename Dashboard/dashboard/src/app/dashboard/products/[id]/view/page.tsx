@@ -67,6 +67,7 @@ export default function ProductViewPage() {
 
   // Format date
   const formatDate = (dateString: string) => {
+    if (!dateString) return "Không có ngày tạo";
     const date = new Date(dateString);
     return new Intl.DateTimeFormat("vi-VN", {
       day: "2-digit",
@@ -236,7 +237,7 @@ export default function ProductViewPage() {
                 <div>
                   <p className="text-sm text-gray-500">Ngày tạo</p>
                   <p className="font-semibold">
-                    {formatDate(product.createdAt)}
+                    {formatDate(product?.createdAt || product.updatedAt)}
                   </p>
                 </div>
                 <div className="md:col-span-2">

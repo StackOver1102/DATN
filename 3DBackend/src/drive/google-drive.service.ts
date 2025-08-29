@@ -185,7 +185,7 @@ export class GoogleDriveService {
     });
   }
 
-  async removeDrivePermission(fileUrl: string, email: string) {
+  async removeDrivePermission(fileUrl: string, email: string, orderId?: string) {
     try {
       if(!fileUrl) return false;
       const fileId = this.getIdByUrl(fileUrl);
@@ -198,10 +198,11 @@ export class GoogleDriveService {
       const permission = permissions.find((p) => p.emailAddress === email);
       if (permission && permission.id) {
         // Delete the permission using its ID
-        await this.drive.permissions.delete({
+         await this.drive.permissions.delete({
           fileId,
           permissionId: permission.id,
         });
+        // console.log(`Đã xóa quyền truy cập cho file ${fileUrl} và email ${email}`);
         return true;
       }
       return false;

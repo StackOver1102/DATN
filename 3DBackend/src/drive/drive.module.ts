@@ -8,4 +8,4 @@ import { GoogleDriveController } from './google-drive.controller';
   providers: [GoogleDriveService],
   exports: [GoogleDriveService],
 })
-export class DriveModule {}
+export class DriveModule { }
