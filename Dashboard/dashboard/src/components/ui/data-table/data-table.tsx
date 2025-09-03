@@ -47,6 +47,14 @@ interface DataTableProps<TData, TValue> {
     onPageChange: (pageIndex: number) => void;
     onPageSizeChange: (pageSize: number) => void;
   };
+  enableRowSelection?: boolean;
+  onRowSelectionChange?: (selectedRows: number[]) => void;
+  bulkActions?: {
+    label: string;
+    icon?: React.ReactNode;
+    variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+    onClick: () => void;
+  }[];
 }
 
 export function DataTable<TData, TValue>({
@@ -56,6 +64,9 @@ export function DataTable<TData, TValue>({
   searchPlaceholder = "Tìm kiếm...",
   filters,
   pagination,
+  enableRowSelection = false,
+  onRowSelectionChange,
+  bulkActions,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -112,6 +123,14 @@ export function DataTable<TData, TValue>({
     } : {}),
   });
 
+  // Effect to notify parent of row selection changes
+  React.useEffect(() => {
+    if (enableRowSelection && onRowSelectionChange) {
+      const selectedRowIndices = Object.keys(rowSelection).map(Number);
+      onRowSelectionChange(selectedRowIndices);
+    }
+  }, [rowSelection, enableRowSelection, onRowSelectionChange]);
+
   return (
     <div className="space-y-4">
       <DataTableToolbar
@@ -119,6 +138,8 @@ export function DataTable<TData, TValue>({
         searchKey={searchKey}
         searchPlaceholder={searchPlaceholder}
         filters={filters}
+        bulkActions={bulkActions}
+        rowSelection={rowSelection}
       />
 
       <div className="rounded-md border">

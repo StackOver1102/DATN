@@ -35,6 +35,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 import { productToasts } from "@/lib/toast";
 import { PageLoading, Loading } from "@/components/ui/loading";
+import { toast } from "sonner";
 
 interface Product {
   _id: string;
@@ -53,6 +54,8 @@ export default function ProductsPage() {
   const router = useRouter();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
+  const [isBulkDelete, setIsBulkDelete] = useState(false);
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
@@ -72,6 +75,12 @@ export default function ProductsPage() {
     { success: boolean; message: string },
     { id: string }
   >("products", `/products/${productToDelete?._id}`, "delete");
+  
+  // Bulk delete mutation
+  const { mutate: bulkDeleteProducts, isPending: isBulkDeleting } = useApiMutation<
+    { success: boolean; message: string },
+    { ids: string[] }
+  >("products", "/products/delete/batch", "post");
 
   // Handle delete confirmation
   const handleDeleteClick = (product: Product) => {
@@ -81,28 +90,65 @@ export default function ProductsPage() {
 
   // Handle delete confirmation
   const handleDeleteConfirm = () => {
-    if (!productToDelete) return;
+    if (isBulkDelete) {
+      // Handle bulk delete
+      const ids = selectedProducts.map(product => product._id);
+      
+      bulkDeleteProducts(
+        { ids },
+        {
+          onSuccess: () => {
+            toast.success(`Đã xóa ${ids.length} sản phẩm thành công`);
+            setDeleteModalOpen(false);
+            setSelectedProducts([]);
+            setIsBulkDelete(false);
+            refetch(); // Refresh the data
+          },
+          onError: (error) => {
+            productToasts.error(error.message);
+          },
+        }
+      );
+    } else {
+      // Handle single delete
+      if (!productToDelete) return;
 
-    deleteProduct(
-      { id: productToDelete._id },
-      {
-        onSuccess: () => {
-          productToasts.deleted();
-          setDeleteModalOpen(false);
-          setProductToDelete(null);
-          refetch(); // Refresh the data
-        },
-        onError: (error) => {
-          productToasts.error(error.message);
-        },
-      }
-    );
+      deleteProduct(
+        { id: productToDelete._id },
+        {
+          onSuccess: () => {
+            productToasts.deleted();
+            setDeleteModalOpen(false);
+            setProductToDelete(null);
+            refetch(); // Refresh the data
+          },
+          onError: (error) => {
+            productToasts.error(error.message);
+          },
+        }
+      );
+    }
   };
 
   // Handle delete cancel
   const handleDeleteCancel = () => {
     setDeleteModalOpen(false);
     setProductToDelete(null);
+    if (isBulkDelete) {
+      setIsBulkDelete(false);
+    }
+  };
+  
+  // Handle bulk delete click
+  const handleBulkDeleteClick = (selectedRows: Product[]) => {
+    if (selectedRows.length === 0) {
+      productToasts.error("Vui lòng chọn ít nhất một sản phẩm để xóa");
+      return;
+    }
+    
+    setSelectedProducts(selectedRows);
+    setIsBulkDelete(true);
+    setDeleteModalOpen(true);
   };
 
   // Custom filter function to handle boolean values
@@ -300,9 +346,32 @@ export default function ProductsPage() {
                 pageIndex: pagination.pageIndex,
                 pageSize: pagination.pageSize,
                 pageCount: data?.data.meta.totalPages || 1,
-                              onPageChange: (pageIndex: number) => setPagination(prev => ({ ...prev, pageIndex })),
-              onPageSizeChange: (pageSize: number) => setPagination({ pageIndex: 0, pageSize }),
+                onPageChange: (pageIndex: number) => setPagination(prev => ({ ...prev, pageIndex })),
+                onPageSizeChange: (pageSize: number) => setPagination({ pageIndex: 0, pageSize }),
               }}
+              enableRowSelection
+              onRowSelectionChange={(selectedRows) => {
+                // Chỉ cập nhật selectedProducts khi thực sự cần thiết để tránh vòng lặp vô hạn
+                const products = selectedRows.map(index => data?.data.items[index] as Product);
+                // Sử dụng hàm callback để đảm bảo chúng ta không tạo vòng lặp cập nhật
+                setSelectedProducts(prevSelected => {
+                  // Chỉ cập nhật nếu có sự thay đổi thực sự
+                  if (prevSelected.length !== products.length || 
+                      JSON.stringify(prevSelected.map(p => p._id).sort()) !== 
+                      JSON.stringify(products.map(p => p._id).sort())) {
+                    return products;
+                  }
+                  return prevSelected;
+                });
+              }}
+              bulkActions={[
+                {
+                  label: "Xóa đã chọn",
+                  icon: <IconTrash className="h-4 w-4" />,
+                  variant: "destructive",
+                  onClick: () => handleBulkDeleteClick(selectedProducts),
+                },
+              ]}
             />
           </CardContent>
         </Card>
@@ -312,31 +381,47 @@ export default function ProductsPage() {
       <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Xác nhận xóa sản phẩm</DialogTitle>
+            <DialogTitle>
+              {isBulkDelete 
+                ? `Xác nhận xóa ${selectedProducts.length} sản phẩm` 
+                : "Xác nhận xóa sản phẩm"}
+            </DialogTitle>
             <DialogDescription>
-              Bạn có chắc chắn muốn xóa sản phẩm{" "}
-              <span className="font-semibold text-red-600">
-                &ldquo;{productToDelete?.name}&rdquo;
-              </span>
-              ? Hành động này không thể hoàn tác.
+              {isBulkDelete ? (
+                <>
+                  Bạn có chắc chắn muốn xóa <span className="font-semibold text-red-600">{selectedProducts.length} sản phẩm</span> đã chọn? Hành động này không thể hoàn tác.
+                </>
+              ) : (
+                <>
+                  Bạn có chắc chắn muốn xóa sản phẩm{" "}
+                  <span className="font-semibold text-red-600">
+                    &ldquo;{productToDelete?.name}&rdquo;
+                  </span>
+                  ? Hành động này không thể hoàn tác.
+                </>
+              )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button
               variant="outline"
               onClick={handleDeleteCancel}
-              disabled={isDeleting}
+              disabled={isDeleting || isBulkDeleting}
             >
               Hủy
             </Button>
             <Button
               variant="destructive"
               onClick={handleDeleteConfirm}
-              disabled={isDeleting}
+              disabled={isDeleting || isBulkDeleting}
               className="inline-flex items-center justify-center gap-2"
             >
-              {isDeleting && <Loading size="sm" variant="spinner" />}
-              {isDeleting ? "Đang xóa..." : "Xóa sản phẩm"}
+              {(isDeleting || isBulkDeleting) && <Loading size="sm" variant="spinner" />}
+              {isDeleting || isBulkDeleting 
+                ? "Đang xóa..." 
+                : isBulkDelete 
+                  ? `Xóa ${selectedProducts.length} sản phẩm` 
+                  : "Xóa sản phẩm"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -485,4 +485,12 @@ export class ProductsService {
       );
     }
   }
+
+  async removeProducts(ids: string[]): Promise<void> {
+    console.log(ids)
+    // for (const id of ids) {
+    //    await this.remove(id);
+    // }
+    // return;
+  }
 }

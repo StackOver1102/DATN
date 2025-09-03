@@ -20,6 +20,13 @@ interface DataTableToolbarProps<TData> {
       icon?: React.ComponentType<{ className?: string }>;
     }[];
   }[];
+  bulkActions?: {
+    label: string;
+    icon?: React.ReactNode;
+    variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+    onClick: () => void;
+  }[];
+  rowSelection?: Record<string, boolean>;
 }
 
 export function DataTableToolbar<TData>({
@@ -27,12 +34,35 @@ export function DataTableToolbar<TData>({
   searchKey,
   searchPlaceholder = "Tìm kiếm...",
   filters,
+  bulkActions,
+  rowSelection,
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 p-2">
       <div className="flex flex-1 flex-wrap items-center gap-2">
+        {/* Bulk action buttons */}
+        {rowSelection && Object.keys(rowSelection).length > 0 && bulkActions && (
+          <div className="flex items-center gap-2 mr-2">
+            <span className="text-sm text-muted-foreground">
+              {Object.keys(rowSelection).length} đã chọn
+            </span>
+            {bulkActions.map((action, index) => (
+              <Button
+                key={index}
+                variant={action.variant || "outline"}
+                size="sm"
+                onClick={action.onClick}
+                className="h-8"
+              >
+                {action.icon && <span className="mr-2">{action.icon}</span>}
+                {action.label}
+              </Button>
+            ))}
+          </div>
+        )}
+      
         {searchKey && (
           <div className="flex items-center border rounded-md px-3 w-72">
             <IconSearch className="h-4 w-4 text-muted-foreground" />
