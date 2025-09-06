@@ -77,8 +77,8 @@ export class CreateProductDto {
   urlDownload?: string;
 
   @IsOptional()
-  @IsString()
-  stt?: string;
+  @IsNumber()
+  stt?: number;
 
   @IsOptional()
   @IsString()

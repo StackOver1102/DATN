@@ -55,6 +55,7 @@ interface DataTableProps<TData, TValue> {
     variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
     onClick: () => void;
   }[];
+  initialColumnVisibility?: VisibilityState;
 }
 
 export function DataTable<TData, TValue>({
@@ -67,13 +68,14 @@ export function DataTable<TData, TValue>({
   enableRowSelection = false,
   onRowSelectionChange,
   bulkActions,
+  initialColumnVisibility,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
   const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
+    React.useState<VisibilityState>(initialColumnVisibility || {});
   const [rowSelection, setRowSelection] = React.useState({});
 
   const table = useReactTable({
@@ -130,6 +132,13 @@ export function DataTable<TData, TValue>({
       onRowSelectionChange(selectedRowIndices);
     }
   }, [rowSelection, enableRowSelection, onRowSelectionChange]);
+  
+  // Reset pagination to first page when filters change
+  React.useEffect(() => {
+    if (pagination && columnFilters.length > 0) {
+      pagination.onPageChange(0); // Reset to first page when filters change
+    }
+  }, [columnFilters, pagination]);
 
   return (
     <div className="space-y-4">

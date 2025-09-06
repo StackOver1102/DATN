@@ -246,7 +246,7 @@ export default function ProductDetailPage() {
   >(
     "product",
     isCreating ? "/products" : `/products/${id}`,
-    isCreating ? "post" : "put"
+    isCreating ? "post" : "patch"
   );
 
   // Set form data when product data is loaded

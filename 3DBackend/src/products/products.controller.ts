@@ -180,5 +180,11 @@ export class ProductsController {
     }
   }
 
- 
+
+  // @Public()
+  @Get('getAll/admin')
+  @ApiOperation({ summary: 'Get all products group by category' })
+  getAllProductGroupByCategory() {
+    return this.productsService.getAllProductGroupByCategory();
+  }
 }
