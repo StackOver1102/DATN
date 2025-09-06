@@ -139,7 +139,9 @@ export default function ClientSideModelFilter({
       // Check if it's a category-subcategory pair
       const categoryItem = filters.categories[0];
       if (categoryItem.includes("-")) {
-        const [category, subcategory] = categoryItem.split("-");
+        const parts = categoryItem.split("-");
+        const category = parts[0];
+        const subcategory = parts.slice(1).join("-");
         params.categoryName = category;
         params.subSearch = subcategory;
       } else {

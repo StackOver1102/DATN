@@ -79,11 +79,14 @@ export class FilterService {
     }
 
     if (subSearch) {
+      console.log("subSearch", subSearch)
       // Replace hyphens with spaces and make search case-insensitive
-      const subSearchRegex = subSearch.replace(/-/g, ' ');
-      // Using 'i' flag for case-insensitive search
-      const categoryNameRegex = new RegExp(subSearchRegex, 'i');
-      andConditions.push({ categoryName: categoryNameRegex });
+      // const subSearchRegex = subSearch.replace(/-/g, ' ');
+      // console.log("subSearchRegex", subSearchRegex)
+      // // Using 'i' flag for case-insensitive search
+      // const categoryNameRegex = new RegExp(subSearchRegex, 'i');
+      // console.log("categoryNameRegex", categoryNameRegex)
+      andConditions.push({ categoryName: subSearch });
     }
 
     // Process additional filter fields

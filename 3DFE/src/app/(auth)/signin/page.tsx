@@ -10,14 +10,14 @@ import { z } from "zod";
 import { Loading } from "@/components/ui/loading";
 import { LoadingButton } from "@/components/ui/loading-button";
 
-// Định nghĩa schema validation với Zod
+// Define validation schema with Zod
 const loginSchema = z.object({
-  email: z.string().email("Email không hợp lệ"),
-  password: z.string().min(1, "Mật khẩu không được để trống"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(1, "Password cannot be empty"),
   rememberMe: z.boolean().optional(),
 });
 
-// Định nghĩa kiểu dữ liệu từ schema
+// Define data type from schema
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 function SignInForm() {
@@ -28,7 +28,7 @@ function SignInForm() {
   const error = searchParams.get("error");
   const message = searchParams.get("message");
 
-  // Khởi tạo React Hook Form với Zod resolver
+  // Initialize React Hook Form with Zod resolver
   const {
     register,
     handleSubmit,
@@ -42,7 +42,7 @@ function SignInForm() {
     },
   });
 
-  // Xử lý đăng nhập
+  // Handle login
   const onSubmit = async (data: LoginFormValues) => {
     setLoading(true);
     setAuthError(null);
@@ -51,19 +51,19 @@ function SignInForm() {
       const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
-        redirect: false, // Ngăn chặn chuyển hướng tự động
+        redirect: false, // Prevent automatic redirection
       });
 
       if (result?.error) {
-        // Xử lý lỗi từ NextAuth
+        // Handle error from NextAuth
         setAuthError(result.error);
       } else if (result?.ok) {
-        // Chuyển hướng thủ công nếu đăng nhập thành công
+        // Manual redirect if login is successful
         window.location.href = "/";
       }
     } catch (error) {
       console.error("Sign in error:", error);
-      setAuthError("Có lỗi xảy ra khi đăng nhập. Vui lòng thử lại sau.");
+      setAuthError("An error occurred during sign in. Please try again later.");
     } finally {
       setLoading(false);
     }
@@ -74,7 +74,7 @@ function SignInForm() {
       <Loading
         variant="spinner"
         size="lg"
-        text="Đang đăng nhập..."
+        text="Signing in..."
         fullScreen
       />
     );

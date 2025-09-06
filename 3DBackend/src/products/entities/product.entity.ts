@@ -88,6 +88,9 @@ export class Product {
   @Prop({ type: String })
   platform?: string;
 
+  @Prop({ type: Number, default: 0 })
+  quantityCommand?: number;
+
   // Timestamps added by Mongoose but explicitly defined for TypeScript
   createdAt?: Date;
   

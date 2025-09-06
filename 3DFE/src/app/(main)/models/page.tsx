@@ -62,6 +62,8 @@ async function getProducts(
       queryParams.append("categoryName", item);
     }
 
+    console.log('queryParams', queryParams.toString())
+
     const res = await fetch(
       `${
         process.env.NEXT_PUBLIC_API_URL_SSR
@@ -122,13 +124,19 @@ interface ModelsPageProps {
     page?: string;
     category?: string;
     item?: string;
+    categoryName?: string;
+    subSearch?: string;
   }>;
 }
 
 export default async function ModelsPage({ searchParams }: ModelsPageProps) {
   // Get query parameters from URL
-  const categoryParam = (await searchParams).category;
-  const itemParam = (await searchParams).item;
+  const categoryParam = (await searchParams).categoryName;
+ console.log("categoryParam", categoryParam)
+
+  const itemParam = (await searchParams).subSearch;
+
+  console.log("itemParam", itemParam)
 
   const currentPage = Number((await searchParams).page) || 1;
 

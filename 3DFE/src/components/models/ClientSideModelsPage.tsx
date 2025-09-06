@@ -82,13 +82,13 @@ export default function ClientSideModelsPage({
   const fetchModels = useCallback(
     async (apiParams: ApiFilterParams) => {
       // Force fetch data regardless of parameter changes
-      console.log("Fetching models with params:", apiParams);
 
       try {
         setLoading(true);
 
         // Build query string from API parameters
         const queryParams = new URLSearchParams();
+        console.log("apiParams", apiParams)
         Object.entries(apiParams).forEach(([key, value]) => {
           if (value !== undefined && value !== null) {
             queryParams.append(key, value.toString());
@@ -154,6 +154,8 @@ export default function ClientSideModelsPage({
     apiParams: ApiFilterParams
   ) => {
     if (apiParams) {
+      console.log(apiParams)
+      console.log("vao day chay")
       fetchModels(apiParams);
     }
   };
