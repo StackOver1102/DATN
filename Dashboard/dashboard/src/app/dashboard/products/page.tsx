@@ -508,13 +508,13 @@ export default function ProductsPage() {
                   ).map(value => ({ label: value as string, value: value as string })),
                 },
               ]}
-              pagination={{
-                pageIndex: pagination.pageIndex,
-                pageSize: pagination.pageSize,
-                pageCount: Math.ceil((data?.data.length || 0) / pagination.pageSize),
-                onPageChange: (pageIndex: number) => setPagination(prev => ({ ...prev, pageIndex })),
-                onPageSizeChange: (pageSize: number) => setPagination({ pageIndex: 0, pageSize }),
-              }}
+              // pagination={{
+              //   pageIndex: pagination.pageIndex,
+              //   pageSize: pagination.pageSize,
+              //   pageCount: Math.ceil((data?.data.length || 0) / pagination.pageSize),
+              //   onPageChange: (pageIndex: number) => setPagination(prev => ({ ...prev, pageIndex })),
+              //   onPageSizeChange: (pageSize: number) => setPagination({ pageIndex: 0, pageSize }),
+              // }}
               enableRowSelection
               onRowSelectionChange={(selectedRows) => {
                 // Chỉ cập nhật selectedProducts khi thực sự cần thiết để tránh vòng lặp vô hạn

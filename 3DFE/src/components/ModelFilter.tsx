@@ -71,6 +71,8 @@ export default function ModelFilter({
   initialCategoryParam,
   initialItemParam,
 }: ModelFilterProps) {
+  console.log("initialCategoryParam", initialCategoryParam)
+  console.log("initialItemParam", initialItemParam)
   const [filters, setFilters] = useState<FilterState>(initialFilterState);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -315,7 +317,7 @@ export default function ModelFilter({
 
         if (initialItemParam) {
           // Tìm item trong category
-          const itemToFind = decodeURIComponent(initialItemParam).trim();
+          const itemToFind = decodeURIComponent(initialItemParam).replace(/%20/g, '+').trim();
 
           const foundItemIndex = foundCategory.subcategories.findIndex(
             (subcat) => subcat.toLowerCase() === itemToFind.toLowerCase()
@@ -324,7 +326,7 @@ export default function ModelFilter({
           if (foundItemIndex >= 0) {
             // Tạo ID cho category-item và cập nhật filters
             const subcatName = foundCategory.subcategories[foundItemIndex];
-            const itemId = subcatName.toLowerCase().replace(/\s+/g, "-");
+            const itemId = subcatName;
             const categoryItemId = `${foundCategory.id}-${itemId}`;
 
             // Cập nhật categories trong filters
@@ -397,6 +399,7 @@ export default function ModelFilter({
       const updateKey = JSON.stringify(apiParams);
       lastFilterUpdate.current = updateKey;
 
+      console.log("updatedFilters", updatedFilters)
       onFilterChange(updatedFilters, apiParams);
     }
 
@@ -492,6 +495,7 @@ export default function ModelFilter({
 
     // Prevent duplicate API calls
     const updateKey = JSON.stringify(apiParams);
+    console.log("updateKey", updateKey)
     if (lastFilterUpdate.current !== updateKey) {
       lastFilterUpdate.current = updateKey;
       onFilterChange(newFilters, apiParams);
@@ -710,8 +714,12 @@ export default function ModelFilter({
     if (filters.categories.length > 0) {
       // Check if it's a category-subcategory pair
       const categoryItem = filters.categories[0];
+      console.log("categoryItem 1", categoryItem)
       if (categoryItem.includes("-")) {
-        const [category, subcategory] = categoryItem.split("-");
+        const parts = categoryItem.split("-");
+        const category = parts[0];
+        const subcategory = parts.slice(1).join("-");
+
         params.categoryName = category;
         params.subSearch = subcategory;
       } else {
@@ -785,10 +793,29 @@ export default function ModelFilter({
 
   // Tạo một hàm trợ giúp để kiểm tra liệu một subcategory có được chọn không
   const isSubcategoryChecked = (categoryId: string, subcategory: string) => {
-    const itemId = `${categoryId}-${subcategory
-      .toLowerCase()
-      .replace(/\s+/g, "-")}`;
-    return filters.categories.includes(itemId);
+    // Direct match with category-subcategory format
+    const itemId = `${categoryId}-${subcategory}`;
+    
+    // Check if it's selected in filters.categories
+    if (filters.categories.includes(itemId)) {
+      return true;
+    }
+    
+    // Check if it matches the URL parameters (categoryName and subSearch)
+    const urlCategoryName = searchParams.get('categoryName');
+    const urlSubSearch = searchParams.get('subSearch');
+    
+    if (urlCategoryName && urlSubSearch) {
+      const normalizedCategoryId = categoryId.toLowerCase();
+      const normalizedUrlCategory = urlCategoryName.toLowerCase();
+      const normalizedSubcategory = subcategory.toLowerCase();
+      const normalizedUrlSubSearch = urlSubSearch.toLowerCase().replace(/\+/g, ' ');
+      
+      return (normalizedCategoryId === normalizedUrlCategory && 
+              normalizedSubcategory === normalizedUrlSubSearch);
+    }
+    
+    return false;
   };
 
   return (
@@ -867,6 +894,7 @@ export default function ModelFilter({
                         category.subcategories.map((subcategory, index) => (
                           <label
                             key={`${category.id}-${index}`}
+                            id={`${category.id}-${subcategory}`}
                             className="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded"
                           >
                             <input
@@ -877,9 +905,7 @@ export default function ModelFilter({
                               )}
                               onChange={() =>
                                 handleCategoryChange(
-                                  `${category.id}-${subcategory
-                                    .toLowerCase()
-                                    .replace(/\s+/g, "-")}`
+                                  `${category.id}-${subcategory}`
                                 )
                               }
                               className="w-3 h-3 lg:w-3.5 lg:h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
@@ -898,103 +924,6 @@ export default function ModelFilter({
         )}
       </div>
 
-      {/* Price Range */}
-      {/* <div className="border-b border-gray-200">
-        <Button
-          variant="ghost"
-          onClick={() => toggleSection("price")}
-          className="w-full px-3 lg:px-4 py-2.5 lg:py-3 h-auto justify-between text-left hover:bg-gray-50"
-        >
-          <span className="font-medium text-gray-900 text-sm lg:text-base">
-            Price Range
-          </span>
-          {expandedSections.price ? (
-            <ChevronUp className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-gray-500" />
-          ) : (
-            <ChevronDown className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-gray-500" />
-          )}
-        </Button>
-
-        {expandedSections.price && (
-          <div className="px-3 lg:px-4 pb-3 lg:pb-4 space-y-2 lg:space-y-3">
-            <div className="flex items-center space-x-2">
-              <input
-                type="number"
-                value={filters.priceRange[0]}
-                onChange={(e) => handlePriceChange(Number(e.target.value), 0)}
-                className="w-full px-2 lg:px-3 py-1.5 lg:py-2 border border-gray-300 rounded text-xs lg:text-sm"
-                placeholder="Min"
-              />
-              <span className="text-gray-500 text-xs lg:text-sm">-</span>
-              <input
-                type="number"
-                value={filters.priceRange[1]}
-                onChange={(e) => handlePriceChange(Number(e.target.value), 1)}
-                className="w-full px-2 lg:px-3 py-1.5 lg:py-2 border border-gray-300 rounded text-xs lg:text-sm"
-                placeholder="Max"
-              />
-            </div>
-
-            <label className="flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={filters.free}
-                onChange={(e) => {
-                  const newFilters = { ...filters, free: e.target.checked };
-                  setFilters(newFilters);
-                  onFilterChange(newFilters);
-                }}
-                className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <span className="ml-2 text-xs lg:text-sm text-gray-700">
-                Free models only
-              </span>
-            </label>
-          </div>
-        )}
-      </div> */}
-
-      {/* File Formats */}
-      {/* <div className="border-b border-gray-200">
-        <Button
-          variant="ghost"
-          onClick={() => toggleSection("formats")}
-          className="w-full px-3 lg:px-4 py-2.5 lg:py-3 h-auto justify-between text-left hover:bg-gray-50"
-        >
-          <span className="font-medium text-gray-900 text-sm lg:text-base">
-            File Formats
-          </span>
-          {expandedSections.formats ? (
-            <ChevronUp className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-gray-500" />
-          ) : (
-            <ChevronDown className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-gray-500" />
-          )}
-        </Button>
-
-        {expandedSections.formats && (
-          <div className="px-3 lg:px-4 pb-3 lg:pb-4 space-y-1.5 lg:space-y-2">
-            {fileFormats.map((format) => (
-              <label
-                key={format.id}
-                className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-1 rounded"
-              >
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={filters.formats.includes(format.id)}
-                    onChange={() => handleFormatChange(format.id)}
-                    className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <span className="ml-2 text-xs lg:text-sm text-gray-700">
-                    {format.name}
-                  </span>
-                </div>
-                <span className="text-xs text-gray-500">({format.count})</span>
-              </label>
-            ))}
-          </div>
-        )}
-      </div> */}
 
       {/* Render */}
       <div className="border-b border-gray-200">

@@ -497,4 +497,16 @@ export class ProductsService {
   async getAllProductGroupByCategory(): Promise<Product[]> {
     return await this.productModel.find().populate('categoryId').sort({ stt: -1 }).exec();
   }
+
+  async updateQuantityCommand(id: string, quantityCommand: number): Promise<Product | null> {
+    return this.productModel.findByIdAndUpdate(id, { quantityCommand }, { new: true }).exec();
+  }
+
+  async incrementQuantityCommand(id: string): Promise<Product | null> {
+    return this.productModel.findByIdAndUpdate(
+      id, 
+      { $inc: { quantityCommand: 1 } }, 
+      { new: true }
+    ).exec();
+  }
 }

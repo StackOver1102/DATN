@@ -92,7 +92,7 @@ function SignUpForm() {
                   id="fullName"
                   type="text"
                   autoComplete="fullName"
-                  placeholder="Nhập tên của bạn"
+                  placeholder="Enter your name"
                   className={`h-12 w-full rounded-lg border px-4 ${
                     errors.fullName ? "border-red-500" : ""
                   }`}

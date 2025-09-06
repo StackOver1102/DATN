@@ -2,11 +2,13 @@
  * Category-related interfaces
  */
 export interface CategoryItem {
+  _id :string;
   name: string;
   subcategories?: string[];
 }
 
 export interface CategorySection {
+  _id: string;
   title: string;
   items: CategoryItem[];
 }

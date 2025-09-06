@@ -6,13 +6,15 @@ import { UpdateCommentDto } from './dto/update-comment.dto';
 import { Comment, CommentDocument } from './entities/comment.entity';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { NotificationType } from 'src/types/notification';
+import { ProductsService } from 'src/products/products.service';
 
 @Injectable()
 export class CommentService {
   constructor(
     @InjectModel(Comment.name) private commentModel: Model<CommentDocument>,
     private notificationService: NotificationsService,
-  ) {}
+    private productsService: ProductsService,
+  ) { }
 
   async create(
     createCommentDto: CreateCommentDto,
@@ -25,16 +27,17 @@ export class CommentService {
       isApproved: false, // Auto-approve comments for now
     });
 
-    const savedComment:CommentDocument = await newComment.save();
+    const savedComment: CommentDocument = await newComment.save();
 
-    const result = await this.notificationService.create({
+    await this.productsService.incrementQuantityCommand(createCommentDto.productId);
+    await this.notificationService.create({
       message: `New Comment : ${createCommentDto.productId}`,
       originalId: savedComment._id.toString(),
       originType: NotificationType.COMMENT,
       userId: userId ? new Types.ObjectId(userId) : undefined,
       // originType: NotificationType.COMMENT 
     });
-    
+
     return savedComment
   }
 
