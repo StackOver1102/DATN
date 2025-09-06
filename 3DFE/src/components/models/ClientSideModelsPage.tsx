@@ -168,6 +168,14 @@ export default function ClientSideModelsPage({
       page: 1 // Reset to first page when changing tabs
     };
     
+    // Update URL to remove page parameter
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search);
+      searchParams.delete("page");
+      const newUrl = `${window.location.pathname}?${searchParams.toString()}`;
+      window.history.pushState({ path: newUrl }, "", newUrl);
+    }
+    
     // Apply filter based on selected tab
     if (tab === 'pro') {
       newParams.isPro = 'true';
@@ -233,7 +241,12 @@ export default function ClientSideModelsPage({
     // Always fetch models when URL parameters change
     fetchModels(params);
     
-  }, [searchParams, fetchModels, isInitialRender]);
+    // Scroll to top when page changes (optional)
+    if (typeof window !== "undefined" && params.page !== currentApiParams?.page) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    
+  }, [searchParams, fetchModels, isInitialRender, currentApiParams]);
 
   return (
     <div className="min-h-screen bg-gray-50 container mx-auto max-w-7xl">
@@ -464,7 +477,7 @@ export default function ClientSideModelsPage({
                     fetchModels(apiParams);
                     
                     // Also update the URL (this won't cause a full page reload)
-                    router.push(`?${params.toString()}`);
+                    router.push(`?${params.toString()}`, { scroll: false });
                   }}
                 />
               </div>

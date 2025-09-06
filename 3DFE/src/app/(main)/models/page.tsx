@@ -138,7 +138,6 @@ export default async function ModelsPage({ searchParams }: ModelsPageProps) {
     getCategories(),
   ]);
 
- console.log('productsData', productsData)
   // Process categories data
   const categories = categoriesData || [];
 

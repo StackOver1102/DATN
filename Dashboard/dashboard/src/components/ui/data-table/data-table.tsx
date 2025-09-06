@@ -47,6 +47,15 @@ interface DataTableProps<TData, TValue> {
     onPageChange: (pageIndex: number) => void;
     onPageSizeChange: (pageSize: number) => void;
   };
+  enableRowSelection?: boolean;
+  onRowSelectionChange?: (selectedRows: number[]) => void;
+  bulkActions?: {
+    label: string;
+    icon?: React.ReactNode;
+    variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+    onClick: () => void;
+  }[];
+  initialColumnVisibility?: VisibilityState;
 }
 
 export function DataTable<TData, TValue>({
@@ -56,13 +65,17 @@ export function DataTable<TData, TValue>({
   searchPlaceholder = "Tìm kiếm...",
   filters,
   pagination,
+  enableRowSelection = false,
+  onRowSelectionChange,
+  bulkActions,
+  initialColumnVisibility,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
   const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
+    React.useState<VisibilityState>(initialColumnVisibility || {});
   const [rowSelection, setRowSelection] = React.useState({});
 
   const table = useReactTable({
@@ -112,6 +125,21 @@ export function DataTable<TData, TValue>({
     } : {}),
   });
 
+  // Effect to notify parent of row selection changes
+  React.useEffect(() => {
+    if (enableRowSelection && onRowSelectionChange) {
+      const selectedRowIndices = Object.keys(rowSelection).map(Number);
+      onRowSelectionChange(selectedRowIndices);
+    }
+  }, [rowSelection, enableRowSelection, onRowSelectionChange]);
+  
+  // Reset pagination to first page when filters change
+  React.useEffect(() => {
+    if (pagination && columnFilters.length > 0) {
+      pagination.onPageChange(0); // Reset to first page when filters change
+    }
+  }, [columnFilters, pagination]);
+
   return (
     <div className="space-y-4">
       <DataTableToolbar
@@ -119,6 +147,8 @@ export function DataTable<TData, TValue>({
         searchKey={searchKey}
         searchPlaceholder={searchPlaceholder}
         filters={filters}
+        bulkActions={bulkActions}
+        rowSelection={rowSelection}
       />
 
       <div className="rounded-md border">

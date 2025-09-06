@@ -486,6 +486,7 @@ export default function ModelFilter({
       : [categoryId];
 
     const newFilters = { ...filters, categories: newCategories };
+    console.log("newFilters", newFilters)
     setFilters(newFilters);
     const apiParams = convertFiltersToApiParams(newFilters);
 
@@ -588,7 +589,16 @@ export default function ModelFilter({
     lastFilterUpdate.current = "{}";
     onFilterChange(initialFilterState, {});
 
-    updateUrlWithFilters({});
+    // When clearing all filters, explicitly remove page parameter
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("page");
+    
+    if (typeof window !== "undefined") {
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      router.push(newUrl, { scroll: false });
+    } else {
+      updateUrlWithFilters({});
+    }
   };
 
   const styles = [
@@ -674,6 +684,9 @@ export default function ModelFilter({
     params.delete("form");
     params.delete("color");
     params.delete("search");
+    
+    // Always remove page parameter when filters change to reset to page 1
+    params.delete("page");
 
     // Add new filter params
     Object.entries(apiParams).forEach(([key, value]) => {

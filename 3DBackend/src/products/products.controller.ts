@@ -60,6 +60,7 @@ export class ProductsController {
         );
       }
 
+      
       // Create products without images
       const createdProducts = await this.productsService.createProductAndAddURL(
         body.products,
@@ -127,6 +128,13 @@ export class ProductsController {
     return this.productsService.update(id, updateProductDto);
   }
 
+  @Post('delete/batch')
+  @ApiOperation({ summary: 'Delete multiple products' })
+  removeProducts(@Body() body: { ids: string[] }) {
+    // console.log('body', body);
+    return this.productsService.removeProducts(body.ids);
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a product' })
   remove(@Param('id') id: string) {
@@ -170,5 +178,13 @@ export class ProductsController {
         HttpStatus.BAD_REQUEST,
       );
     }
+  }
+
+
+  // @Public()
+  @Get('getAll/admin')
+  @ApiOperation({ summary: 'Get all products group by category' })
+  getAllProductGroupByCategory() {
+    return this.productsService.getAllProductGroupByCategory();
   }
 }
