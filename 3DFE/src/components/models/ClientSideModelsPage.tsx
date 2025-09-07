@@ -24,6 +24,7 @@ interface Model {
   downloads: number;
   rating: number;
   name: string;
+  quantityCommand: number;
 }
 
 interface ClientSideModelsPageProps {
@@ -371,6 +372,7 @@ export default function ClientSideModelsPage({
                           price={model.price}
                           image={model.images || "/placeholder-image.jpg"}
                           isPro={model.isPro}
+                          quantityCommand = {model.quantityCommand}
                         />
                       ))}
                     </div>
