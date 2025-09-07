@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, Eye, CircleDollarSign } from "lucide-react";
+import { Heart, MessageCircle, CircleDollarSign } from "lucide-react";
 
 interface ProductCardProps {
   id: string;
@@ -16,6 +16,7 @@ interface ProductCardProps {
   downloads?: number;
   rating?: number;
   format?: string[];
+  quantityCommand?: number;
 }
 
 export default function ProductCard({
@@ -30,6 +31,7 @@ export default function ProductCard({
   downloads,
   rating,
   format = [],
+  quantityCommand,
 }: ProductCardProps) {
   return (
     <Link href={`/product/${id}`} className={`group block h-full ${className}`}>
@@ -74,8 +76,8 @@ export default function ProductCard({
                 <>
                   <Heart className="w-3 h-3" />
                   <span>{likes}</span>
-                  <Eye className="w-3 h-3 ml-2" />
-                  <span>{views}</span>
+                  <MessageCircle className="w-3 h-3 ml-2" />
+                  <span>{quantityCommand}</span>
                 </>
               )}
             </div>
