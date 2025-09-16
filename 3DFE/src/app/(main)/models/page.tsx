@@ -62,7 +62,7 @@ async function getProducts(
       queryParams.append("categoryName", item);
     }
 
-    console.log('queryParams', queryParams.toString())
+    console.log("queryParams", queryParams.toString());
 
     const res = await fetch(
       `${
@@ -94,7 +94,7 @@ async function getCategories() {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/categories/grouped`,
       {
-        next: { revalidate: 3600 }, // Revalidate every hour
+        next: { revalidate: 1 }, // Revalidate 1p hour
       }
     );
 
@@ -132,11 +132,11 @@ interface ModelsPageProps {
 export default async function ModelsPage({ searchParams }: ModelsPageProps) {
   // Get query parameters from URL
   const categoryParam = (await searchParams).categoryName;
- console.log("categoryParam", categoryParam)
+  console.log("categoryParam", categoryParam);
 
   const itemParam = (await searchParams).subSearch;
 
-  console.log("itemParam", itemParam)
+  console.log("itemParam", itemParam);
 
   const currentPage = Number((await searchParams).page) || 1;
 
