@@ -177,7 +177,7 @@ const RichTextEditor = ({
         <>
           <div className="min-h-[400px] border rounded-md">
             <Editor
-              apiKey="hy78s7z3lgu3o68ibqvv1avei7x8rfdscr7svq01onkk76a0"
+              apiKey={process.env.NEXT_PUBLIC_TINYMCE_API_KEY}
               value={content}
               onEditorChange={(newContent: string) => setContent(newContent)}
               init={{
