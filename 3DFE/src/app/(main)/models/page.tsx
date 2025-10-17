@@ -146,6 +146,7 @@ export default async function ModelsPage({ searchParams }: ModelsPageProps) {
     getCategories(),
   ]);
 
+  console.log("categoriesData", categoriesData);
   // Process categories data
   const categories = categoriesData || [];
 

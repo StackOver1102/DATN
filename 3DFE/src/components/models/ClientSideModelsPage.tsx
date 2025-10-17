@@ -75,9 +75,8 @@ export default function ClientSideModelsPage({
   const [loading, setLoading] = useState(false);
   const [currentApiParams, setCurrentApiParams] =
     useState<ApiFilterParams | null>(null);
-  const [activeTab, setActiveTab] = useState<'all' | 'pro' | 'free'>('all');
+  const [activeTab, setActiveTab] = useState<"all" | "pro" | "free">("all");
   const [currentTotalPages, setCurrentTotalPages] = useState(totalPages);
-
 
   // Function to fetch models based on filter parameters
   const fetchModels = useCallback(
@@ -89,7 +88,7 @@ export default function ClientSideModelsPage({
 
         // Build query string from API parameters
         const queryParams = new URLSearchParams();
-        console.log("apiParams", apiParams)
+        console.log("apiParams", apiParams);
         Object.entries(apiParams).forEach(([key, value]) => {
           if (value !== undefined && value !== null) {
             queryParams.append(key, value.toString());
@@ -113,7 +112,6 @@ export default function ClientSideModelsPage({
         );
         const data = await response.json();
 
-
         // Check for the correct response format
         if (data && data.data) {
           // Handle the NestJS standard response format
@@ -121,7 +119,7 @@ export default function ClientSideModelsPage({
           setModels(items);
           setCount(data.data.meta?.totalItems || 0);
           setCurrentTotalPages(data.data.meta?.totalPages || 1);
-        
+
           setCurrentApiParams(apiParams);
         } else if (data && data.results) {
           // Handle the old response format for backward compatibility
@@ -155,22 +153,22 @@ export default function ClientSideModelsPage({
     apiParams: ApiFilterParams
   ) => {
     if (apiParams) {
-      console.log(apiParams)
-      console.log("vao day chay")
+      console.log(apiParams);
+      console.log("vao day chay");
       fetchModels(apiParams);
     }
   };
 
   // Handle tab change for All/Pro/Free filtering
-  const handleTabChange = (tab: 'all' | 'pro' | 'free') => {
+  const handleTabChange = (tab: "all" | "pro" | "free") => {
     setActiveTab(tab);
-    
+
     // Create new API params based on current ones
-    const newParams: ApiFilterParams = { 
+    const newParams: ApiFilterParams = {
       ...currentApiParams,
-      page: 1 // Reset to first page when changing tabs
+      page: 1, // Reset to first page when changing tabs
     };
-    
+
     // Update URL to remove page parameter
     if (typeof window !== "undefined") {
       const searchParams = new URLSearchParams(window.location.search);
@@ -178,19 +176,19 @@ export default function ClientSideModelsPage({
       const newUrl = `${window.location.pathname}?${searchParams.toString()}`;
       window.history.pushState({ path: newUrl }, "", newUrl);
     }
-    
+
     // Apply filter based on selected tab
-    if (tab === 'pro') {
-      newParams.isPro = 'true';
+    if (tab === "pro") {
+      newParams.isPro = "true";
       newParams.price = undefined; // Clear any price filter
-    } else if (tab === 'free') {
-      newParams.isPro = 'false';
+    } else if (tab === "free") {
+      newParams.isPro = "false";
     } else {
       // For 'all' tab, remove both filters
       newParams.isPro = undefined;
       newParams.price = undefined;
     }
-    
+
     fetchModels(newParams);
   };
 
@@ -236,19 +234,21 @@ export default function ClientSideModelsPage({
       // Convert string to number if it's from searchParams
       params.page = parseInt(params.page.toString(), 10);
     }
-    
+
     params.limit = params.limit ? parseInt(params.limit.toString(), 10) : 60;
 
     console.log("Fetching data with params:", params);
-    
+
     // Always fetch models when URL parameters change
     fetchModels(params);
-    
+
     // Scroll to top when page changes (optional)
-    if (typeof window !== "undefined" && params.page !== currentApiParams?.page) {
+    if (
+      typeof window !== "undefined" &&
+      params.page !== currentApiParams?.page
+    ) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
-    
   }, [searchParams, fetchModels, isInitialRender, currentApiParams]);
 
   return (
@@ -283,40 +283,39 @@ export default function ClientSideModelsPage({
                   {showFilters ? "Hide Filters" : "Show Filters"}
                 </Button>
 
-
                 <span className="text-sm text-gray-600">
                   {count} models found
                 </span>
-                
+
                 {/* Filter tabs for All/Pro/Free */}
                 <div className="flex border border-gray-300 rounded-lg ml-4">
                   <button
                     className={`px-4 py-1 text-sm ${
-                      activeTab === 'all' 
-                        ? 'bg-black text-yellow-400 font-medium' 
-                        : 'bg-white text-gray-700'
+                      activeTab === "all"
+                        ? "bg-black text-yellow-400 font-medium"
+                        : "bg-white text-gray-700"
                     } rounded-l-lg transition-colors`}
-                    onClick={() => handleTabChange('all')}
+                    onClick={() => handleTabChange("all")}
                   >
                     All
                   </button>
                   <button
                     className={`px-4 py-1 text-sm ${
-                      activeTab === 'pro' 
-                        ? 'bg-black text-yellow-400 font-medium' 
-                        : 'bg-white text-gray-700'
+                      activeTab === "pro"
+                        ? "bg-black text-yellow-400 font-medium"
+                        : "bg-white text-gray-700"
                     } border-l border-r border-gray-300 transition-colors`}
-                    onClick={() => handleTabChange('pro')}
+                    onClick={() => handleTabChange("pro")}
                   >
                     Pro
                   </button>
                   <button
                     className={`px-4 py-1 text-sm ${
-                      activeTab === 'free' 
-                        ? 'bg-black text-yellow-400 font-medium' 
-                        : 'bg-white text-gray-700'
+                      activeTab === "free"
+                        ? "bg-black text-yellow-400 font-medium"
+                        : "bg-white text-gray-700"
                     } rounded-r-lg transition-colors`}
-                    onClick={() => handleTabChange('free')}
+                    onClick={() => handleTabChange("free")}
                   >
                     Free
                   </button>
@@ -372,7 +371,7 @@ export default function ClientSideModelsPage({
                           price={model.price}
                           image={model.images || "/placeholder-image.jpg"}
                           isPro={model.isPro}
-                          quantityCommand = {model.quantityCommand}
+                          quantityCommand={model.quantityCommand}
                         />
                       ))}
                     </div>
@@ -460,26 +459,34 @@ export default function ClientSideModelsPage({
               <div className="mt-8 flex justify-center">
                 <Pagination
                   currentPage={parseInt(searchParams.get("page") || "1", 10)}
-                  totalPages={currentTotalPages || 1} /* Ensure minimum of 1 page */
+                  totalPages={
+                    currentTotalPages || 1
+                  } /* Ensure minimum of 1 page */
                   onPageChange={(page) => {
                     // Create a new URLSearchParams object from the current search params
                     const params = new URLSearchParams(searchParams.toString());
                     // Update or add the page parameter
-                    params.set('page', page.toString());
-                    
+                    params.set("page", page.toString());
+
                     // Directly fetch data for the new page
                     const apiParams: ApiFilterParams = {};
                     params.forEach((value, key) => {
                       (apiParams as Record<string, string>)[key] = value;
                     });
-                    
+
                     // Convert page to number
-                    apiParams.page = parseInt(apiParams.page?.toString() || "1", 10);
-                    
+                    apiParams.page = parseInt(
+                      apiParams.page?.toString() || "1",
+                      10
+                    );
+
                     // Fetch data directly
                     console.log("Directly fetching data for page:", page);
                     fetchModels(apiParams);
-                    
+
+                    // Scroll to top of page
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+
                     // Also update the URL (this won't cause a full page reload)
                     router.push(`?${params.toString()}`, { scroll: false });
                   }}

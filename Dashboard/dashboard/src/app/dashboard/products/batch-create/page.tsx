@@ -171,7 +171,9 @@ export default function BatchCreateProductPage() {
     {}
   );
   // State để theo dõi các sản phẩm mới thêm vào để không bị ghi đè STT
-  const [newProductIndexes, setNewProductIndexes] = useState<Set<number>>(new Set());
+  const [newProductIndexes, setNewProductIndexes] = useState<Set<number>>(
+    new Set()
+  );
   const urlBE = process.env.NEXT_PUBLIC_IMAGE;
 
   // State để theo dõi sản phẩm nào đang tải ảnh
@@ -356,12 +358,12 @@ export default function BatchCreateProductPage() {
   useEffect(() => {
     if (lastSttData?.data && activeTab) {
       const index = parseInt(activeTab);
-      
+
       // Skip STT update for newly added products
       if (newProductIndexes.has(index)) {
         return;
       }
-      
+
       const lastStt = lastSttData.data;
       const nextStt = lastStt + 1;
 
@@ -456,21 +458,21 @@ export default function BatchCreateProductPage() {
     newProduct.stt = newProductStt;
 
     const newProducts = [...products, newProduct];
-    
+
     // Get the index of the new product
     const newIndex = newProducts.length - 1;
-    
+
     // Mark this product as newly added to prevent STT overriding
-    setNewProductIndexes(prev => {
+    setNewProductIndexes((prev) => {
       const updated = new Set(prev);
       updated.add(newIndex);
       return updated;
     });
-    
+
     // Update products state and switch to the new tab
     setProducts(newProducts);
     setActiveTab(newIndex.toString());
-    
+
     // Sau khi thêm sản phẩm mới, chờ state được cập nhật rồi tải ảnh preview chỉ cho tab mới
     if (sharedFolderId && newProduct.categoryName) {
       // Sử dụng thời gian chờ dài hơn để đảm bảo state đã được cập nhật
@@ -478,7 +480,7 @@ export default function BatchCreateProductPage() {
         // Chỉ tải ảnh cho tab mới
         loadPreviewImage(newIndex);
       }, 800);
-      
+
       // Thêm một lần tải ảnh nữa sau thời gian dài hơn để đảm bảo ảnh được tải
       setTimeout(() => {
         if (!previewImages[newIndex] && !loadingImages[newIndex]) {
@@ -497,13 +499,13 @@ export default function BatchCreateProductPage() {
 
     const newProducts = [...products];
     newProducts.splice(index, 1);
-    
+
     // Update the newProductIndexes set to reflect the removed product
-    setNewProductIndexes(prev => {
+    setNewProductIndexes((prev) => {
       const updated = new Set<number>();
-      
+
       // Rebuild the set with adjusted indexes
-      prev.forEach(prevIndex => {
+      prev.forEach((prevIndex) => {
         if (prevIndex < index) {
           // Indexes before the removed one stay the same
           updated.add(prevIndex);
@@ -513,10 +515,10 @@ export default function BatchCreateProductPage() {
         }
         // The index that was removed is not added to the new set
       });
-      
+
       return updated;
     });
-    
+
     setProducts(newProducts);
 
     // If we removed the active tab, switch to the previous tab
@@ -553,10 +555,10 @@ export default function BatchCreateProductPage() {
         setSelectedCategoryId(selectedCategory.rootId);
       }
     }
-    
+
     // If STT is manually changed, mark this product to prevent auto-update
     if (field === "stt") {
-      setNewProductIndexes(prev => {
+      setNewProductIndexes((prev) => {
         const updated = new Set(prev);
         updated.add(index);
         return updated;
@@ -787,14 +789,18 @@ export default function BatchCreateProductPage() {
                 if (sharedFolderId) {
                   const currentIndex = parseInt(activeTab);
                   const currentProduct = products[currentIndex];
-                  
-                  if (currentProduct && currentProduct.categoryName && currentProduct.stt) {
+
+                  if (
+                    currentProduct &&
+                    currentProduct.categoryName &&
+                    currentProduct.stt
+                  ) {
                     // Reset trạng thái lỗi
                     setFailedImages((prev) => ({
                       ...prev,
-                      [currentIndex]: false
+                      [currentIndex]: false,
                     }));
-                    
+
                     // Tải lại ảnh
                     loadPreviewImage(currentIndex);
                     toast.info("Đang tải lại ảnh cho tab hiện tại");
@@ -810,7 +816,18 @@ export default function BatchCreateProductPage() {
               type="button"
               className="bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 hover:text-blue-700 hover:border-blue-300"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 mr-1.5">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-4 w-4 mr-1.5"
+              >
                 <path d="M3 2v6h6"></path>
                 <path d="M21 12A9 9 0 0 0 6 5.3L3 8"></path>
                 <path d="M21 22v-6h-6"></path>
@@ -861,7 +878,7 @@ export default function BatchCreateProductPage() {
                       onChange={(e) => {
                         const newValue = e.target.value;
                         setSharedFolderId(newValue);
-                        
+
                         // Nếu người dùng đã nhập ID folder và đã chọn danh mục
                         if (newValue && selectedRootCategoryId) {
                           // Đợi một chút để state được cập nhật
@@ -869,14 +886,14 @@ export default function BatchCreateProductPage() {
                             // Chỉ tải ảnh cho tab hiện tại
                             const currentIndex = parseInt(activeTab);
                             const currentProduct = products[currentIndex];
-                            
+
                             if (currentProduct && currentProduct.categoryName) {
                               // Reset trạng thái lỗi để có thể tải lại ảnh
                               setFailedImages((prev) => ({
                                 ...prev,
-                                [currentIndex]: false
+                                [currentIndex]: false,
                               }));
-                              
+
                               // Tải ảnh cho tab hiện tại
                               loadPreviewImage(currentIndex);
                             }
@@ -974,13 +991,13 @@ export default function BatchCreateProductPage() {
                           setTimeout(() => {
                             // Chỉ tải ảnh cho tab hiện tại
                             const currentIndex = parseInt(activeTab);
-                            
+
                             // Reset trạng thái lỗi để có thể tải lại ảnh
                             setFailedImages((prev) => ({
                               ...prev,
                               [currentIndex]: false,
                             }));
-                            
+
                             // Tải ảnh cho tab hiện tại
                             loadPreviewImage(currentIndex);
                           }, 500);
@@ -1000,36 +1017,36 @@ export default function BatchCreateProductPage() {
                             >
                           )?.data || []
                         )
-                        // Sort parent categories alphabetically by title
-                        .sort((a, b) => a.title.localeCompare(b.title))
-                        .map((group: CategoryGroup) => (
-                          <div key={group._id} className="mb-2">
-                            {/* Danh mục cha */}
-                            <SelectItem
-                              key={`parent-${group._id}`}
-                              value={group._id}
-                              className="bg-muted font-semibold"
-                            >
-                              {group.title}
-                            </SelectItem>
+                          // Sort parent categories alphabetically by title
+                          .sort((a, b) => a.title.localeCompare(b.title))
+                          .map((group: CategoryGroup) => (
+                            <div key={group._id} className="mb-2">
+                              {/* Danh mục cha */}
+                              <SelectItem
+                                key={`parent-${group._id}`}
+                                value={group._id}
+                                className="bg-muted font-semibold"
+                              >
+                                {group.title}
+                              </SelectItem>
 
-                            {/* Danh mục con - hiển thị thụt vào và sắp xếp theo tên */}
-                            <div className="pl-4">
-                              {[...group.items]
-                                // Sort child categories alphabetically by name
-                                .sort((a, b) => a.name.localeCompare(b.name))
-                                .map((category: CategoryItem) => (
-                                <SelectItem
-                                  key={category._id}
-                                  value={category._id}
-                                  className="text-sm"
-                                >
-                                  {category.name}
-                                </SelectItem>
-                              ))}
+                              {/* Danh mục con - hiển thị thụt vào và sắp xếp theo tên */}
+                              <div className="pl-4">
+                                {[...group.items]
+                                  // Sort child categories alphabetically by name
+                                  .sort((a, b) => a.name.localeCompare(b.name))
+                                  .map((category: CategoryItem) => (
+                                    <SelectItem
+                                      key={category._id}
+                                      value={category._id}
+                                      className="text-sm"
+                                    >
+                                      {category.name}
+                                    </SelectItem>
+                                  ))}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
                     </SelectContent>
                   </Select>
                   {selectedRootCategoryId && (
@@ -1045,35 +1062,35 @@ export default function BatchCreateProductPage() {
             </CardContent>
           </Card>
 
-          <Tabs 
-            value={activeTab} 
+          <Tabs
+            value={activeTab}
             onValueChange={(newTabValue) => {
               setActiveTab(newTabValue);
-              
+
               // Khi chuyển tab, kiểm tra xem tab đó đã có ảnh chưa
               const tabIndex = parseInt(newTabValue);
               const product = products[tabIndex];
-              
+
               // Nếu đủ điều kiện và chưa có ảnh, tải ảnh cho tab đó
               if (
-                sharedFolderId && 
-                product && 
-                product.stt && 
-                product.categoryName && 
-                !previewImages[tabIndex] && 
+                sharedFolderId &&
+                product &&
+                product.stt &&
+                product.categoryName &&
+                !previewImages[tabIndex] &&
                 !loadingImages[tabIndex]
               ) {
                 // Reset trạng thái lỗi khi chuyển tab để có thể tải lại ảnh
                 setFailedImages((prev) => ({
                   ...prev,
-                  [tabIndex]: false
+                  [tabIndex]: false,
                 }));
-                
+
                 // Đợi một chút để state được cập nhật
                 setTimeout(() => {
                   loadPreviewImage(tabIndex);
                 }, 500);
-                
+
                 // Thêm một lần tải ảnh nữa sau thời gian dài hơn để đảm bảo ảnh được tải
                 setTimeout(() => {
                   if (!previewImages[tabIndex] && !loadingImages[tabIndex]) {
@@ -1083,590 +1100,602 @@ export default function BatchCreateProductPage() {
               }
             }}
           >
-          <div className="flex gap-4 min-h-[600px]">
-            <div className="w-3/4">
-            
-            {products.map((product, index) => (
-              <TabsContent key={index} value={index.toString()}>
-                <Card className="py-0 gap-0">
-                  <CardHeader className="bg-gradient-to-r from-blue-50 to-transparent">
-                    <CardTitle className="flex items-center gap-2">
-                      <div className="bg-blue-100 text-blue-700 w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm">
-                        2
-                      </div>
-                      Thông tin sản phẩm
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <div className="flex flex-col md:flex-row gap-6">
-                      {/* Left side - Form fields */}
-                      <div className="w-full md:w-1/2 space-y-2">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-2 bg-gray-50 p-4 rounded-lg border border-gray-100">
-                            <Label
-                              htmlFor={`name-${index}`}
-                              className="text-sm font-medium flex items-center"
-                            >
-                              <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                                2.1
-                              </span>
-                              Tên sản phẩm (tự động)
-                            </Label>
-                            <Input
-                              id={`name-${index}`}
-                              value={`${
-                                product.categoryName || "[Chọn danh mục]"
-                              }`}
-                              disabled
-                              className="border-gray-300 bg-gray-50 text-gray-500 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                            />
-                            <p className="text-xs text-gray-500 mt-1">
-                              Tên sản phẩm được tạo tự động dựa trên danh mục đã
-                              chọn
-                            </p>
+            <div className="flex gap-4 min-h-[600px]">
+              <div className="w-3/4">
+                {products.map((product, index) => (
+                  <TabsContent key={index} value={index.toString()}>
+                    <Card className="py-0 gap-0">
+                      <CardHeader className="bg-gradient-to-r from-blue-50 to-transparent">
+                        <CardTitle className="flex items-center gap-2">
+                          <div className="bg-blue-100 text-blue-700 w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm">
+                            2
                           </div>
-
-                          <div className="space-y-2 bg-gray-50 p-4 rounded-lg border border-gray-100">
-                            <Label
-                              htmlFor={`platform-${index}`}
-                              className="text-sm font-medium flex items-center"
-                            >
-                              <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                                2.2
-                              </span>
-                              Platform
-                            </Label>
-                            <Input
-                              id={`platform-${index}`}
-                              value={product.platform}
-                              onChange={(e) =>
-                                handleChange(index, "platform", e.target.value)
-                              }
-                              placeholder="Nhập platform (ví dụ: 3dsmax, Cinema 4D, Blender...)"
-                              className="border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                            />
-                            <p className="text-xs text-gray-500 mt-1">
-                              Platform mặc định là 3dsmax
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-2 bg-gray-50 p-4 rounded-lg border border-gray-100">
-                            <Label
-                              htmlFor={`stt-${index}`}
-                              className="text-sm font-medium flex items-center"
-                            >
-                              <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                                2.3
-                              </span>
-                              STT
-                            </Label>
-                            <Input
-                              id={`stt-${index}`}
-                              type="number"
-                              min="1"
-                              value={product.stt || 1}
-                              onChange={(e) =>
-                                handleChange(
-                                  index,
-                                  "stt",
-                                  Number(e.target.value)
-                                )
-                              }
-                              required
-                              className="border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                              placeholder="Nhập STT"
-                            />
-                          </div>
-
-                          <div className="space-y-2 bg-gray-50 p-4 rounded-lg border border-gray-100">
-                            <Label
-                              htmlFor={`description-${index}`}
-                              className="text-sm font-medium flex items-center"
-                            >
-                              <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                                2.4
-                              </span>
-                              Mô tả
-                            </Label>
-                            <textarea
-                              id={`description-${index}`}
-                              className="w-full min-h-[100px] p-3 border border-gray-300 rounded-md focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                              value={product.description || ""}
-                              onChange={(e) =>
-                                handleChange(
-                                  index,
-                                  "description",
-                                  e.target.value
-                                )
-                              }
-                              placeholder="Nhập mô tả chi tiết về sản phẩm..."
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
-                          <div className="space-y-2">
-                            <Label
-                              htmlFor={`price-${index}`}
-                              className="text-sm font-medium flex items-center"
-                            >
-                              <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                                2.5
-                              </span>
-                              Giá (coin)
-                            </Label>
-                            <div className="relative">
-                              <Input
-                                id={`price-${index}`}
-                                type="number"
-                                min="0"
-                                value={product.price || 0}
-                                onChange={(e) =>
-                                  handleChange(
-                                    index,
-                                    "price",
-                                    Number(e.target.value)
-                                  )
-                                }
-                                required
-                                className="pl-7 border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                              />
-                              <span className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-500">
-                                💰
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label
-                              htmlFor={`discount-${index}`}
-                              className="text-sm font-medium flex items-center"
-                            >
-                              <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                                2.6
-                              </span>
-                              Giảm giá (%)
-                            </Label>
-                            <div className="relative">
-                              <Input
-                                id={`discount-${index}`}
-                                type="number"
-                                min="0"
-                                max="100"
-                                value={product.discount || 0}
-                                onChange={(e) =>
-                                  handleChange(
-                                    index,
-                                    "discount",
-                                    Number(e.target.value)
-                                  )
-                                }
-                                className="pl-7 border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                              />
-                              <span className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-500">
-                                %
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Phong cách */}
-                        <div className="bg-green-50 p-2 rounded-lg border border-green-100">
-                          <div className="space-y-2">
-                            <Label className="text-sm font-medium flex items-center">
-                              <span className="bg-green-100 text-green-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                                2.7
-                              </span>
-                              Phong cách
-                            </Label>
-                            <div className="flex flex-wrap gap-2 p-2 border rounded-md border-gray-200 bg-white">
-                              {styles.map((style) => (
-                                <label
-                                  key={style.id}
-                                  className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded min-w-[100px] w-auto"
-                                >
-                                  <input
-                                    type="radio"
-                                    name={`style-${index}`}
-                                    checked={(product.style || []).includes(
-                                      style.id
-                                    )}
-                                    onChange={(e) =>
-                                      handleCheckboxChange(
-                                        index,
-                                        "style",
-                                        style.id,
-                                        e.target.checked
-                                      )
-                                    }
-                                    className="w-4 h-4 text-blue-600 border-gray-300 rounded-full focus:ring-blue-500"
-                                  />
-                                  <span className="text-sm text-gray-700">
-                                    {style.name}
+                          Thông tin sản phẩm
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="pt-6">
+                        <div className="flex flex-col md:flex-row gap-6">
+                          {/* Left side - Form fields */}
+                          <div className="w-full md:w-1/2 space-y-2">
+                            {/* Image preview */}
+                            <div className="space-y-2 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                              <div className="flex justify-between items-center">
+                                <Label className="text-sm font-medium flex items-center">
+                                  <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
+                                    2.1
                                   </span>
-                                </label>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Render */}
-                        <div className="bg-yellow-50 p-2 rounded-lg border border-yellow-100">
-                          <div className="space-y-2">
-                            <Label className="text-sm font-medium flex items-center">
-                              <span className="bg-yellow-100 text-yellow-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                                2.8
-                              </span>
-                              Render
-                            </Label>
-                            <div className="flex flex-wrap gap-2 p-2 border rounded-md border-gray-200 bg-white">
-                              {renderEngines.map((engine) => (
-                                <label
-                                  key={engine.id}
-                                  className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded min-w-[120px] w-auto"
-                                >
-                                  <input
-                                    type="radio"
-                                    name={`render-${index}`}
-                                    checked={(product.render || []).includes(
-                                      engine.id
-                                    )}
-                                    onChange={(e) =>
-                                      handleCheckboxChange(
-                                        index,
-                                        "render",
-                                        engine.id,
-                                        e.target.checked
-                                      )
+                                  Ảnh preview
+                                </Label>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    // Reset failed state khi người dùng click tải lại
+                                    if (failedImages[index]) {
+                                      setFailedImages((prev) => ({
+                                        ...prev,
+                                        [index]: false,
+                                      }));
                                     }
-                                    className="w-4 h-4 text-blue-600 border-gray-300 rounded-full focus:ring-blue-500"
-                                  />
-                                  <span className="text-sm text-gray-700">
-                                    {engine.name}
-                                  </span>
-                                </label>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
+                                    loadPreviewImage(index);
+                                  }}
+                                  disabled={
+                                    loadingImages[index] ||
+                                    !sharedFolderId ||
+                                    !product.stt ||
+                                    !product.categoryName
+                                  }
+                                  className="text-xs h-8"
+                                >
+                                  {loadingImages[index]
+                                    ? "Đang tải..."
+                                    : "Tải lại ảnh"}
+                                </Button>
+                              </div>
 
-                        <div className="space-y-2 bg-purple-50 p-2 rounded-lg border border-purple-100">
-                          <Label className="text-sm font-medium flex items-center">
-                            <span className="bg-purple-100 text-purple-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                              2.9
-                            </span>
-                            Màu sắc
-                          </Label>
-                          <div className="flex flex-wrap gap-1 p-2 border rounded-md border-gray-200 bg-white">
-                            {colors.map((color) => (
-                              <div key={color.hex} className="relative">
-                                <label className="cursor-pointer">
-                                  <div
-                                    className={`w-6 h-6 rounded-full border transition-all ${
-                                      (product.color || []).includes(color.hex)
-                                        ? "border-gray-800 scale-110"
-                                        : "border-gray-300 hover:border-gray-400"
-                                    } ${
-                                      color.hex === "#ffffff"
-                                        ? "border-gray-400"
-                                        : ""
-                                    }`}
-                                    style={{ backgroundColor: color.hex }}
-                                    title={color.name}
-                                  >
-                                    <input
-                                      type="radio"
-                                      name={`color-${index}`}
-                                      className="opacity-0 absolute"
-                                      checked={(product.color || []).includes(
-                                        color.hex
-                                      )}
-                                      onChange={(e) =>
-                                        handleCheckboxChange(
-                                          index,
-                                          "color",
-                                          color.hex,
-                                          e.target.checked
-                                        )
-                                      }
-                                    />
-                                    {(product.color || []).includes(
-                                      color.hex
-                                    ) && (
-                                      <span
-                                        className={`absolute inset-0 flex items-center justify-center text-[10px] ${
-                                          color.hex === "#ffffff" ||
-                                          color.hex === "#f3e8d0" ||
-                                          color.hex === "#fbb6ce"
-                                            ? "text-black"
-                                            : "text-white"
-                                        }`}
+                              <div className="mt-2 border border-blue-200 rounded-md overflow-hidden bg-white">
+                                {loadingImages[index] ? (
+                                  <div className="flex items-center justify-center h-[300px] bg-gray-50">
+                                    <div className="text-center">
+                                      <svg
+                                        className="animate-spin h-8 w-8 text-blue-500 mx-auto"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
                                       >
-                                        ✓
-                                      </span>
-                                    )}
+                                        <circle
+                                          className="opacity-25"
+                                          cx="12"
+                                          cy="12"
+                                          r="10"
+                                          stroke="currentColor"
+                                          strokeWidth="4"
+                                        ></circle>
+                                        <path
+                                          className="opacity-75"
+                                          fill="currentColor"
+                                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                        ></path>
+                                      </svg>
+                                      <p className="mt-2 text-sm text-gray-500">
+                                        Đang tải ảnh...
+                                      </p>
+                                    </div>
                                   </div>
-                                </label>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right side - Image preview and additional options */}
-                      <div className="w-full md:w-1/2 space-y-4">
-                        {/* Image preview */}
-                        <div className="space-y-2 bg-blue-50 p-4 rounded-lg border border-blue-100">
-                          <div className="flex justify-between items-center">
-                            <Label className="text-sm font-medium flex items-center">
-                              <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                                2.10
-                              </span>
-                              Ảnh preview
-                            </Label>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                // Reset failed state khi người dùng click tải lại
-                                if (failedImages[index]) {
-                                  setFailedImages((prev) => ({
-                                    ...prev,
-                                    [index]: false,
-                                  }));
-                                }
-                                loadPreviewImage(index);
-                              }}
-                              disabled={
-                                loadingImages[index] ||
-                                !sharedFolderId ||
-                                !product.stt ||
-                                !product.categoryName
-                              }
-                              className="text-xs h-8"
-                            >
-                              {loadingImages[index]
-                                ? "Đang tải..."
-                                : "Tải lại ảnh"}
-                            </Button>
-                          </div>
-
-                          <div className="mt-2 border border-blue-200 rounded-md overflow-hidden bg-white">
-                            {loadingImages[index] ? (
-                              <div className="flex items-center justify-center h-[300px] bg-gray-50">
-                                <div className="text-center">
-                                  <svg
-                                    className="animate-spin h-8 w-8 text-blue-500 mx-auto"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <circle
-                                      className="opacity-25"
-                                      cx="12"
-                                      cy="12"
-                                      r="10"
-                                      stroke="currentColor"
-                                      strokeWidth="4"
-                                    ></circle>
-                                    <path
-                                      className="opacity-75"
-                                      fill="currentColor"
-                                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                    ></path>
-                                  </svg>
-                                  <p className="mt-2 text-sm text-gray-500">
-                                    Đang tải ảnh...
-                                  </p>
-                                </div>
-                              </div>
-                            ) : previewImages[index] ? (
-                              <div className="relative">
-                                <Image
-                                  src={`${urlBE}/${previewImages[index]}`}
-                                  alt={`Preview ${product.name}`}
-                                  className="w-full h-[300px] object-contain"
-                                  width={400}
-                                  height={300}
-                                  unoptimized
-                                />
-                                <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 text-white text-xs p-1 text-center">
-                                  {product.stt < 10
-                                    ? `0${product.stt}`
-                                    : product.stt}
-                                  . {product.categoryName}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="flex items-center justify-center h-[300px] bg-gray-50">
-                                <div className="text-center">
-                                  <svg
-                                    className="h-12 w-12 text-gray-300 mx-auto"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={1}
-                                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                ) : previewImages[index] ? (
+                                  <div className="relative">
+                                    <Image
+                                      src={`${urlBE}/${previewImages[index]}`}
+                                      alt={`Preview ${product.name}`}
+                                      className="w-full h-[300px] object-contain"
+                                      width={400}
+                                      height={300}
+                                      unoptimized
                                     />
-                                  </svg>
-                                  <p className="mt-2 text-sm text-gray-500">
-                                    {!sharedFolderId
-                                      ? "Nhập ID Folder Google Drive trước"
-                                      : !product.categoryName
-                                      ? "Chọn danh mục trước"
-                                      : !product.stt
-                                      ? "Nhập STT trước"
-                                      : failedImages[index]
-                                      ? "Không tìm thấy ảnh. Nhấn 'Tải lại ảnh' để thử lại."
-                                      : "Chưa có ảnh preview"}
-                                  </p>
-                                </div>
+                                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 text-white text-xs p-1 text-center">
+                                      {product.stt < 10
+                                        ? `0${product.stt}`
+                                        : product.stt}
+                                      . {product.categoryName}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center justify-center h-[300px] bg-gray-50">
+                                    <div className="text-center">
+                                      <svg
+                                        className="h-12 w-12 text-gray-300 mx-auto"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={1}
+                                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                        />
+                                      </svg>
+                                      <p className="mt-2 text-sm text-gray-500">
+                                        {!sharedFolderId
+                                          ? "Nhập ID Folder Google Drive trước"
+                                          : !product.categoryName
+                                          ? "Chọn danh mục trước"
+                                          : !product.stt
+                                          ? "Nhập STT trước"
+                                          : failedImages[index]
+                                          ? "Không tìm thấy ảnh. Nhấn 'Tải lại ảnh' để thử lại."
+                                          : "Chưa có ảnh preview"}
+                                      </p>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
 
-                          {previewImages[index] && (
-                            <p className="text-xs text-blue-600">
-                              Đã tải ảnh preview thành công. URL ảnh sẽ được lưu
-                              cùng sản phẩm.
-                            </p>
-                          )}
-                        </div>
+                              {previewImages[index] && (
+                                <p className="text-xs text-blue-600">
+                                  Đã tải ảnh preview thành công. URL ảnh sẽ được
+                                  lưu cùng sản phẩm.
+                                </p>
+                              )}
+                            </div>
 
-                        {/* Chất liệu */}
-                        <div className="bg-green-50 p-2 rounded-lg border border-green-100">
-                          <div className="space-y-2">
-                            <Label className="text-sm font-medium flex items-center">
-                              <span className="bg-green-100 text-green-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                                2.11
-                              </span>
-                              Chất liệu
-                            </Label>
-                            <div className="flex flex-wrap gap-2 p-2 border rounded-md border-gray-200 bg-white">
-                              {materials.map((material) => (
-                                <label
-                                  key={material.id}
-                                  className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded min-w-[100px] w-auto"
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div className="space-y-2 bg-gray-50 p-4 rounded-lg border border-gray-100">
+                                <Label
+                                  htmlFor={`name-${index}`}
+                                  className="text-sm font-medium flex items-center"
                                 >
-                                  <input
-                                    type="radio"
-                                    name={`materials-${index}`}
-                                    checked={(product.materials || []).includes(
-                                      material.id
-                                    )}
+                                  <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
+                                    2.2
+                                  </span>
+                                  Tên sản phẩm (tự động)
+                                </Label>
+                                <Input
+                                  id={`name-${index}`}
+                                  value={`${
+                                    product.categoryName || "[Chọn danh mục]"
+                                  }`}
+                                  disabled
+                                  className="border-gray-300 bg-gray-50 text-gray-500 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Tên sản phẩm được tạo tự động dựa trên danh
+                                  mục đã chọn
+                                </p>
+                              </div>
+
+                              <div className="space-y-2 bg-gray-50 p-4 rounded-lg border border-gray-100">
+                                <Label
+                                  htmlFor={`platform-${index}`}
+                                  className="text-sm font-medium flex items-center"
+                                >
+                                  <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
+                                    2.3
+                                  </span>
+                                  Platform
+                                </Label>
+                                <Input
+                                  id={`platform-${index}`}
+                                  value={product.platform}
+                                  onChange={(e) =>
+                                    handleChange(
+                                      index,
+                                      "platform",
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Nhập platform (ví dụ: 3dsmax, Cinema 4D, Blender...)"
+                                  className="border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Platform mặc định là 3dsmax
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div className="space-y-2 bg-gray-50 p-4 rounded-lg border border-gray-100">
+                                <Label
+                                  htmlFor={`stt-${index}`}
+                                  className="text-sm font-medium flex items-center"
+                                >
+                                  <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
+                                    2.4
+                                  </span>
+                                  STT
+                                </Label>
+                                <Input
+                                  id={`stt-${index}`}
+                                  type="number"
+                                  min="1"
+                                  value={product.stt || 1}
+                                  onChange={(e) =>
+                                    handleChange(
+                                      index,
+                                      "stt",
+                                      Number(e.target.value)
+                                    )
+                                  }
+                                  required
+                                  className="border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                                  placeholder="Nhập STT"
+                                />
+                              </div>
+
+                              <div className="space-y-2 bg-gray-50 p-4 rounded-lg border border-gray-100">
+                                <Label
+                                  htmlFor={`description-${index}`}
+                                  className="text-sm font-medium flex items-center"
+                                >
+                                  <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
+                                    2.5
+                                  </span>
+                                  Mô tả
+                                </Label>
+                                <textarea
+                                  id={`description-${index}`}
+                                  className="w-full min-h-[100px] p-3 border border-gray-300 rounded-md focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                                  value={product.description || ""}
+                                  onChange={(e) =>
+                                    handleChange(
+                                      index,
+                                      "description",
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Nhập mô tả chi tiết về sản phẩm..."
+                                />
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                              <div className="space-y-2">
+                                <Label
+                                  htmlFor={`price-${index}`}
+                                  className="text-sm font-medium flex items-center"
+                                >
+                                  <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
+                                    2.6
+                                  </span>
+                                  Giá (coin)
+                                </Label>
+                                <div className="relative">
+                                  <Input
+                                    id={`price-${index}`}
+                                    type="number"
+                                    min="0"
+                                    value={product.price || 0}
                                     onChange={(e) =>
-                                      handleCheckboxChange(
+                                      handleChange(
                                         index,
-                                        "materials",
-                                        material.id,
-                                        e.target.checked
+                                        "price",
+                                        Number(e.target.value)
                                       )
                                     }
-                                    className="w-4 h-4 text-blue-600 border-gray-300 rounded-full focus:ring-blue-500"
+                                    required
+                                    className="pl-7 border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                                   />
-                                  <span className="text-sm text-gray-700">
-                                    {material.name}
+                                  <span className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-500">
+                                    💰
                                   </span>
-                                </label>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Hình dạng */}
-                        <div className="bg-yellow-50 p-2 rounded-lg border border-yellow-100">
-                          <div className="space-y-2">
-                            <Label className="text-sm font-medium flex items-center">
-                              <span className="bg-yellow-100 text-yellow-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                                2.12
-                              </span>
-                              Hình dạng
-                            </Label>
-                            <div className="flex flex-wrap gap-2 p-2 border rounded-md border-gray-200 bg-white">
-                              {forms.map((form) => (
-                                <div key={form.id} className="text-center">
-                                  <label className="flex flex-col items-center space-y-1 cursor-pointer hover:bg-gray-50 p-1 rounded min-w-[50px] w-auto">
-                                    <input
-                                      type="radio"
-                                      name={`form-${index}`}
-                                      checked={(product.form || []).includes(
-                                        form.id
-                                      )}
-                                      onChange={(e) =>
-                                        handleCheckboxChange(
-                                          index,
-                                          "form",
-                                          form.id,
-                                          e.target.checked
-                                        )
-                                      }
-                                      className="w-4 h-4 text-blue-600 border-gray-300 rounded-full focus:ring-blue-500"
-                                    />
-                                    <span className="text-lg">
-                                      {form.shape}
-                                    </span>
-                                    <span className="text-xs text-gray-700">
-                                      {form.name}
-                                    </span>
-                                  </label>
                                 </div>
-                              ))}
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label
+                                  htmlFor={`discount-${index}`}
+                                  className="text-sm font-medium flex items-center"
+                                >
+                                  <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
+                                    2.7
+                                  </span>
+                                  Giảm giá (%)
+                                </Label>
+                                <div className="relative">
+                                  <Input
+                                    id={`discount-${index}`}
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    value={product.discount || 0}
+                                    onChange={(e) =>
+                                      handleChange(
+                                        index,
+                                        "discount",
+                                        Number(e.target.value)
+                                      )
+                                    }
+                                    className="pl-7 border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                                  />
+                                  <span className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-500">
+                                    %
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right side - Image preview and additional options */}
+                          <div className="w-full md:w-1/2 space-y-4">
+                            {/* Render */}
+                            <div className="bg-yellow-50 p-2 rounded-lg border border-yellow-100">
+                              <div className="space-y-2">
+                                <Label className="text-sm font-medium flex items-center">
+                                  <span className="bg-yellow-100 text-yellow-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
+                                    2.9
+                                  </span>
+                                  Render
+                                </Label>
+                                <div className="flex flex-wrap gap-2 p-2 border rounded-md border-gray-200 bg-white">
+                                  {renderEngines.map((engine) => (
+                                    <label
+                                      key={engine.id}
+                                      className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded min-w-[120px] w-auto"
+                                    >
+                                      <input
+                                        type="radio"
+                                        name={`render-${index}`}
+                                        checked={(
+                                          product.render || []
+                                        ).includes(engine.id)}
+                                        onChange={(e) =>
+                                          handleCheckboxChange(
+                                            index,
+                                            "render",
+                                            engine.id,
+                                            e.target.checked
+                                          )
+                                        }
+                                        className="w-4 h-4 text-blue-600 border-gray-300 rounded-full focus:ring-blue-500"
+                                      />
+                                      <span className="text-sm text-gray-700">
+                                        {engine.name}
+                                      </span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Phong cách */}
+                            <div className="bg-green-50 p-2 rounded-lg border border-green-100">
+                              <div className="space-y-2">
+                                <Label className="text-sm font-medium flex items-center">
+                                  <span className="bg-green-100 text-green-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
+                                    2.10
+                                  </span>
+                                  Phong cách
+                                </Label>
+                                <div className="flex flex-wrap gap-2 p-2 border rounded-md border-gray-200 bg-white">
+                                  {styles.map((style) => (
+                                    <label
+                                      key={style.id}
+                                      className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded min-w-[100px] w-auto"
+                                    >
+                                      <input
+                                        type="radio"
+                                        name={`style-${index}`}
+                                        checked={(product.style || []).includes(
+                                          style.id
+                                        )}
+                                        onChange={(e) =>
+                                          handleCheckboxChange(
+                                            index,
+                                            "style",
+                                            style.id,
+                                            e.target.checked
+                                          )
+                                        }
+                                        className="w-4 h-4 text-blue-600 border-gray-300 rounded-full focus:ring-blue-500"
+                                      />
+                                      <span className="text-sm text-gray-700">
+                                        {style.name}
+                                      </span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="space-y-2 bg-purple-50 p-2 rounded-lg border border-purple-100">
+                              <Label className="text-sm font-medium flex items-center">
+                                <span className="bg-purple-100 text-purple-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
+                                  2.11
+                                </span>
+                                Màu sắc
+                              </Label>
+                              <div className="flex flex-wrap gap-1 p-2 border rounded-md border-gray-200 bg-white">
+                                {colors.map((color) => (
+                                  <div key={color.hex} className="relative">
+                                    <label className="cursor-pointer">
+                                      <div
+                                        className={`w-6 h-6 rounded-full border transition-all ${
+                                          (product.color || []).includes(
+                                            color.hex
+                                          )
+                                            ? "border-gray-800 scale-110"
+                                            : "border-gray-300 hover:border-gray-400"
+                                        } ${
+                                          color.hex === "#ffffff"
+                                            ? "border-gray-400"
+                                            : ""
+                                        }`}
+                                        style={{ backgroundColor: color.hex }}
+                                        title={color.name}
+                                      >
+                                        <input
+                                          type="radio"
+                                          name={`color-${index}`}
+                                          className="opacity-0 absolute"
+                                          checked={(
+                                            product.color || []
+                                          ).includes(color.hex)}
+                                          onChange={(e) =>
+                                            handleCheckboxChange(
+                                              index,
+                                              "color",
+                                              color.hex,
+                                              e.target.checked
+                                            )
+                                          }
+                                        />
+                                        {(product.color || []).includes(
+                                          color.hex
+                                        ) && (
+                                          <span
+                                            className={`absolute inset-0 flex items-center justify-center text-[10px] ${
+                                              color.hex === "#ffffff" ||
+                                              color.hex === "#f3e8d0" ||
+                                              color.hex === "#fbb6ce"
+                                                ? "text-black"
+                                                : "text-white"
+                                            }`}
+                                          >
+                                            ✓
+                                          </span>
+                                        )}
+                                      </div>
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Chất liệu */}
+                            <div className="bg-green-50 p-2 rounded-lg border border-green-100">
+                              <div className="space-y-2">
+                                <Label className="text-sm font-medium flex items-center">
+                                  <span className="bg-green-100 text-green-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
+                                    2.12
+                                  </span>
+                                  Chất liệu
+                                </Label>
+                                <div className="flex flex-wrap gap-2 p-2 border rounded-md border-gray-200 bg-white">
+                                  {materials.map((material) => (
+                                    <label
+                                      key={material.id}
+                                      className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded min-w-[100px] w-auto"
+                                    >
+                                      <input
+                                        type="radio"
+                                        name={`materials-${index}`}
+                                        checked={(
+                                          product.materials || []
+                                        ).includes(material.id)}
+                                        onChange={(e) =>
+                                          handleCheckboxChange(
+                                            index,
+                                            "materials",
+                                            material.id,
+                                            e.target.checked
+                                          )
+                                        }
+                                        className="w-4 h-4 text-blue-600 border-gray-300 rounded-full focus:ring-blue-500"
+                                      />
+                                      <span className="text-sm text-gray-700">
+                                        {material.name}
+                                      </span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Hình dạng */}
+                            <div className="bg-yellow-50 p-2 rounded-lg border border-yellow-100">
+                              <div className="space-y-2">
+                                <Label className="text-sm font-medium flex items-center">
+                                  <span className="bg-yellow-100 text-yellow-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
+                                    2.13
+                                  </span>
+                                  Hình dạng
+                                </Label>
+                                <div className="flex flex-wrap gap-2 p-2 border rounded-md border-gray-200 bg-white">
+                                  {forms.map((form) => (
+                                    <div key={form.id} className="text-center">
+                                      <label className="flex flex-col items-center space-y-1 cursor-pointer hover:bg-gray-50 p-1 rounded min-w-[50px] w-auto">
+                                        <input
+                                          type="radio"
+                                          name={`form-${index}`}
+                                          checked={(
+                                            product.form || []
+                                          ).includes(form.id)}
+                                          onChange={(e) =>
+                                            handleCheckboxChange(
+                                              index,
+                                              "form",
+                                              form.id,
+                                              e.target.checked
+                                            )
+                                          }
+                                          className="w-4 h-4 text-blue-600 border-gray-300 rounded-full focus:ring-blue-500"
+                                        />
+                                        <span className="text-lg">
+                                          {form.shape}
+                                        </span>
+                                        <span className="text-xs text-gray-700">
+                                          {form.name}
+                                        </span>
+                                      </label>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            ))}
-            </div>
-            <div className="w-1/4">
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full">
-                <h3 className="text-sm font-medium mb-3 text-gray-700">Danh sách sản phẩm</h3>
-                <TabsList className={`grid ${
-                  products.length > 36 ? 'grid-cols-3' : 
-                  products.length > 18 ? 'grid-cols-2' : 
-                  'grid-cols-1'
-                } auto-rows-max gap-2 bg-transparent p-0`}>
-                  {products.map((_, index) => (
-                    <TabsTrigger
-                      key={index}
-                      value={index.toString()}
-                      className="relative rounded-md data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm w-full py-2 justify-start"
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="bg-primary/10 text-primary w-5 h-5 rounded-full flex items-center justify-center font-medium text-xs">
-                          {index + 1}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                ))}
+              </div>
+              <div className="w-1/4">
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full">
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-sm font-medium text-gray-700">
+                      Danh sách sản phẩm
+                    </h3>
+                    {products.length > 1 && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="h-8 px-2 bg-red-500 hover:bg-red-600"
+                        onClick={() => handleRemoveProduct(parseInt(activeTab))}
+                      >
+                        <IconTrash className="h-3.5 w-3.5 mr-1" />
+                        Xóa SP {parseInt(activeTab) + 1}
+                      </Button>
+                    )}
+                  </div>
+                  <TabsList
+                    className={`grid ${
+                      products.length > 36
+                        ? "grid-cols-3"
+                        : products.length > 18
+                        ? "grid-cols-2"
+                        : "grid-cols-1"
+                    } auto-rows-max gap-2 bg-transparent p-0`}
+                  >
+                    {products.map((_, index) => (
+                      <TabsTrigger
+                        key={index}
+                        value={index.toString()}
+                        className="relative rounded-md data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm w-full py-2 justify-start"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="bg-primary/10 text-primary w-5 h-5 rounded-full flex items-center justify-center font-medium text-xs">
+                            {index + 1}
+                          </div>
+                          <span>SP {index + 1}</span>
                         </div>
-                        <span>SP {index + 1}</span>
-                      </div>
-                      {products.length > 1 && (
-                        <span
-                          role="button"
-                          className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center cursor-pointer shadow-sm transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveProduct(index);
-                          }}
-                        >
-                          <IconTrash className="h-3 w-3" />
-                        </span>
-                      )}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </div>
               </div>
             </div>
-          </div>
           </Tabs>
 
           <div className="flex justify-end gap-3 mt-6">
