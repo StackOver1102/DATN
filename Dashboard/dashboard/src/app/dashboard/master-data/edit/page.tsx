@@ -49,7 +49,6 @@ const RichTextEditor = ({
     ? `/master-data/${contentId}`
     : `/master-data/type/${contentType}`;
 
-
   const { data, isLoading: isLoadingContent } = useApiQuery<{
     data: {
       _id: string;
@@ -65,7 +64,6 @@ const RichTextEditor = ({
 
   // Use useEffect to handle the data changes
   useEffect(() => {
-
     if (!data) return;
 
     try {
@@ -179,7 +177,7 @@ const RichTextEditor = ({
         <>
           <div className="min-h-[400px] border rounded-md">
             <Editor
-              apiKey="qagffr3pkuv17a8on1afax661irst1hbr4e6tbv888sz91jc"
+              apiKey="hy78s7z3lgu3o68ibqvv1avei7x8rfdscr7svq01onkk76a0"
               value={content}
               onEditorChange={(newContent: string) => setContent(newContent)}
               init={{
