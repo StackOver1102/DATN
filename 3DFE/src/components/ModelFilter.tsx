@@ -71,8 +71,6 @@ export default function ModelFilter({
   initialCategoryParam,
   initialItemParam,
 }: ModelFilterProps) {
-  console.log("initialCategoryParam", initialCategoryParam)
-  console.log("initialItemParam", initialItemParam)
   const [filters, setFilters] = useState<FilterState>(initialFilterState);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -255,14 +253,14 @@ export default function ModelFilter({
   const transformedCategories =
     categories.length > 0
       ? sortedCategories.map((category) => ({
-        id: category.title.toLowerCase().replace(/\s+/g, "-"),
-        name: category.title,
-        count: category.items?.length || 0,
-        subcategories: category.items?.map((item) => item.name) || [],
-      }))
+          id: category.title.toLowerCase().replace(/\s+/g, "-"),
+          name: category.title,
+          count: category.items?.length || 0,
+          subcategories: category.items?.map((item) => item.name) || [],
+        }))
       : defaultCategories;
 
-
+  console.log("transformedCategories", transformedCategories);
   // const sortedCategories = transformedCategories.map((category) => {
   //   try {
   //     // Check if items exists and is an array before spreading
@@ -317,7 +315,9 @@ export default function ModelFilter({
 
         if (initialItemParam) {
           // Tìm item trong category
-          const itemToFind = decodeURIComponent(initialItemParam).replace(/%20/g, '+').trim();
+          const itemToFind = decodeURIComponent(initialItemParam)
+            .replace(/%20/g, "+")
+            .trim();
 
           const foundItemIndex = foundCategory.subcategories.findIndex(
             (subcat) => subcat.toLowerCase() === itemToFind.toLowerCase()
@@ -399,7 +399,7 @@ export default function ModelFilter({
       const updateKey = JSON.stringify(apiParams);
       lastFilterUpdate.current = updateKey;
 
-      console.log("updatedFilters", updatedFilters)
+      console.log("updatedFilters", updatedFilters);
       onFilterChange(updatedFilters, apiParams);
     }
 
@@ -489,13 +489,13 @@ export default function ModelFilter({
       : [categoryId];
 
     const newFilters = { ...filters, categories: newCategories };
-    console.log("newFilters", newFilters)
+    console.log("newFilters", newFilters);
     setFilters(newFilters);
     const apiParams = convertFiltersToApiParams(newFilters);
 
     // Prevent duplicate API calls
     const updateKey = JSON.stringify(apiParams);
-    console.log("updateKey", updateKey)
+    console.log("updateKey", updateKey);
     if (lastFilterUpdate.current !== updateKey) {
       lastFilterUpdate.current = updateKey;
       onFilterChange(newFilters, apiParams);
@@ -547,9 +547,7 @@ export default function ModelFilter({
   const handleColorChange = (colorHex: string) => {
     // If the color is already selected, deselect it
     // Otherwise, replace any existing color with the new one
-    const newColors = filters.colors.includes(colorHex)
-      ? []
-      : [colorHex];
+    const newColors = filters.colors.includes(colorHex) ? [] : [colorHex];
 
     const newFilters = { ...filters, colors: newColors };
     setFilters(newFilters);
@@ -568,9 +566,7 @@ export default function ModelFilter({
   const handleFormChange = (formId: string) => {
     // If the form is already selected, deselect it
     // Otherwise, replace any existing form with the new one
-    const newForms = filters.forms.includes(formId)
-      ? []
-      : [formId];
+    const newForms = filters.forms.includes(formId) ? [] : [formId];
 
     const newFilters = { ...filters, forms: newForms };
     setFilters(newFilters);
@@ -596,7 +592,7 @@ export default function ModelFilter({
     // When clearing all filters, explicitly remove page parameter
     const params = new URLSearchParams(searchParams.toString());
     params.delete("page");
-    
+
     if (typeof window !== "undefined") {
       const newUrl = `${window.location.pathname}?${params.toString()}`;
       router.push(newUrl, { scroll: false });
@@ -635,9 +631,7 @@ export default function ModelFilter({
   const handleStyleChange = (styleId: string) => {
     // If the style is already selected, deselect it
     // Otherwise, replace any existing style with the new one
-    const newStyles = filters.styles.includes(styleId)
-      ? []
-      : [styleId];
+    const newStyles = filters.styles.includes(styleId) ? [] : [styleId];
 
     const newFilters = { ...filters, styles: newStyles };
     setFilters(newFilters);
@@ -655,7 +649,8 @@ export default function ModelFilter({
 
   const handleMaterialChange = (materialId: string) => {
     // If the material is already selected, deselect it
-    // Otherwise, replace any existing material with the new one
+    // Otherwis
+    // ++++++++e any existing material with the new one
     const newMaterials = filters.materials.includes(materialId)
       ? []
       : [materialId];
@@ -688,7 +683,7 @@ export default function ModelFilter({
     params.delete("form");
     params.delete("color");
     params.delete("search");
-    
+
     // Always remove page parameter when filters change to reset to page 1
     params.delete("page");
 
@@ -714,7 +709,7 @@ export default function ModelFilter({
     if (filters.categories.length > 0) {
       // Check if it's a category-subcategory pair
       const categoryItem = filters.categories[0];
-      console.log("categoryItem 1", categoryItem)
+      console.log("categoryItem 1", categoryItem);
       if (categoryItem.includes("-")) {
         const parts = categoryItem.split("-");
         const category = parts[0];
@@ -795,26 +790,30 @@ export default function ModelFilter({
   const isSubcategoryChecked = (categoryId: string, subcategory: string) => {
     // Direct match with category-subcategory format
     const itemId = `${categoryId}-${subcategory}`;
-    
+
     // Check if it's selected in filters.categories
     if (filters.categories.includes(itemId)) {
       return true;
     }
-    
+
     // Check if it matches the URL parameters (categoryName and subSearch)
-    const urlCategoryName = searchParams.get('categoryName');
-    const urlSubSearch = searchParams.get('subSearch');
-    
+    const urlCategoryName = searchParams.get("categoryName");
+    const urlSubSearch = searchParams.get("subSearch");
+
     if (urlCategoryName && urlSubSearch) {
       const normalizedCategoryId = categoryId.toLowerCase();
       const normalizedUrlCategory = urlCategoryName.toLowerCase();
       const normalizedSubcategory = subcategory.toLowerCase();
-      const normalizedUrlSubSearch = urlSubSearch.toLowerCase().replace(/\+/g, ' ');
-      
-      return (normalizedCategoryId === normalizedUrlCategory && 
-              normalizedSubcategory === normalizedUrlSubSearch);
+      const normalizedUrlSubSearch = urlSubSearch
+        .toLowerCase()
+        .replace(/\+/g, " ");
+
+      return (
+        normalizedCategoryId === normalizedUrlCategory &&
+        normalizedSubcategory === normalizedUrlSubSearch
+      );
     }
-    
+
     return false;
   };
 
@@ -924,7 +923,6 @@ export default function ModelFilter({
         )}
       </div>
 
-
       {/* Render */}
       <div className="border-b border-gray-200">
         <div className="px-3 lg:px-4 py-2.5 lg:py-3">
@@ -955,15 +953,12 @@ export default function ModelFilter({
                     {engine.icon}
                   </span>
                 )}
-                <span className="text-xs lg:text-sm">
-                  {engine.name}
-                </span>
+                <span className="text-xs lg:text-sm">{engine.name}</span>
               </Button>
             ))}
           </div>
         </div>
       </div>
-
 
       {/* Form */}
       <div className="border-b border-gray-200">
@@ -978,10 +973,11 @@ export default function ModelFilter({
               <button
                 key={form.id}
                 onClick={() => handleFormChange(form.id)}
-                className={`w-8 h-8 lg:w-10 lg:h-10 border-2 rounded flex items-center justify-center text-sm lg:text-lg transition-colors ${filters.forms.includes(form.id)
+                className={`w-8 h-8 lg:w-10 lg:h-10 border-2 rounded flex items-center justify-center text-sm lg:text-lg transition-colors ${
+                  filters.forms.includes(form.id)
                     ? "border-blue-500 bg-blue-50 text-blue-600"
                     : "border-gray-300 hover:border-gray-400"
-                  }`}
+                }`}
                 title={form.name}
               >
                 {form.shape}
@@ -1004,21 +1000,23 @@ export default function ModelFilter({
               <div key={index} className="relative group">
                 <button
                   onClick={() => handleColorChange(color.hex)}
-                  className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full border-2 transition-all ${filters.colors.includes(color.hex)
+                  className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full border-2 transition-all ${
+                    filters.colors.includes(color.hex)
                       ? "border-gray-800 scale-110"
                       : "border-gray-300 hover:border-gray-400"
-                    } ${color.hex === "#ffffff" ? "border-gray-400" : ""}`}
+                  } ${color.hex === "#ffffff" ? "border-gray-400" : ""}`}
                   style={{ backgroundColor: color.hex }}
                   aria-label={color.name}
                 >
                   {filters.colors.includes(color.hex) && (
                     <span
-                      className={`text-xs ${color.hex === "#ffffff" ||
-                          color.hex === "#f3e8d0" ||
-                          color.hex === "#fbb6ce"
+                      className={`text-xs ${
+                        color.hex === "#ffffff" ||
+                        color.hex === "#f3e8d0" ||
+                        color.hex === "#fbb6ce"
                           ? "text-black"
                           : "text-white"
-                        }`}
+                      }`}
                     >
                       ✓
                     </span>
