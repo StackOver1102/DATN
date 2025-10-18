@@ -429,14 +429,27 @@ export default function ProductDetailPage() {
               <div className="h-45 w-full bg-gray-50 flex items-center justify-center">
                 {bannersData.length > 0 && bannersData[0]?.isActive ? (
                   <div className="w-full h-full">
-                    <Image
-                      src={bannersData[0].imageUrl}
-                      alt={bannersData[0].title || "Advertisement"}
-                      width={0}
-                      height={0}
-                      sizes="100vw"
-                      className="w-full h-full object-cover"
-                    />
+                    {bannersData[0].url ? (
+                      <Link href={bannersData[0].url} target="_blank" rel="noopener noreferrer" className="block h-full">
+                        <Image
+                          src={bannersData[0].imageUrl}
+                          alt={bannersData[0].title || "Advertisement"}
+                          width={0}
+                          height={0}
+                          sizes="100vw"
+                          className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                        />
+                      </Link>
+                    ) : (
+                      <Image
+                        src={bannersData[0].imageUrl}
+                        alt={bannersData[0].title || "Advertisement"}
+                        width={0}
+                        height={0}
+                        sizes="100vw"
+                        className="w-full h-full object-cover"
+                      />
+                    )}
                   </div>
                 ) : (
                   <span className="text-gray-500 font-bold text-xl">ADS</span>

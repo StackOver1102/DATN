@@ -29,6 +29,7 @@ interface Banner {
   imageUrl: string;
   position: "home" | "product_detail" | "about";
   isActive: boolean;
+  url?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -39,6 +40,7 @@ interface BannerFormData {
   imageUrl: string;
   position: "home" | "product_detail" | "about";
   isActive: boolean;
+  url: string;
 }
 
 interface BannerResponse {
@@ -69,6 +71,7 @@ export default function EditBannerPage() {
     imageUrl: "",
     position: "home",
     isActive: true,
+    url: "",
   });
 
   // Fetch banner data
@@ -104,6 +107,7 @@ export default function EditBannerPage() {
         imageUrl: banner.imageUrl,
         position: banner.position,
         isActive: banner.isActive,
+        url: banner.url || "",
       });
     }
   }, [bannerData]);
@@ -167,6 +171,7 @@ export default function EditBannerPage() {
         formDataToSend.append("description", formData.description);
         formDataToSend.append("position", formData.position);
         formDataToSend.append("isActive", String(formData.isActive));
+        formDataToSend.append("url", formData.url);
 
         updateBannerWithImage(formDataToSend, {
           onSuccess: () => {
@@ -184,6 +189,7 @@ export default function EditBannerPage() {
           description: formData.description,
           position: formData.position,
           isActive: formData.isActive,
+          url: formData.url,
         }, {
           onSuccess: () => {
             showSuccessToast("Banner đã được cập nhật thành công");
@@ -298,6 +304,21 @@ export default function EditBannerPage() {
                 rows={3}
               />
             </div>
+            
+            {/* URL */}
+            <div className="space-y-2">
+              <Label htmlFor="url">Liên kết URL</Label>
+              <Input
+                id="url"
+                type="url"
+                value={formData.url}
+                onChange={(e) => handleChange("url", e.target.value)}
+                placeholder="Nhập URL liên kết khi nhấp vào banner (tùy chọn)"
+              />
+              <p className="text-sm text-gray-500">
+                Ví dụ: https://example.com/promotion
+              </p>
+            </div>
 
             {/* Image Upload or URL */}
             <div className="space-y-4">
@@ -312,6 +333,8 @@ export default function EditBannerPage() {
                       src={currentImageUrl}
                       alt="Current banner"
                       className="max-h-48 rounded-lg"
+                      width={192}
+                      height={192}
                       onError={(e) => {
                         e.currentTarget.src = "/placeholder-image.png";
                       }}

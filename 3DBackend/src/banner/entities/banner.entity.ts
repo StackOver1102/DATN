@@ -27,6 +27,15 @@ export class Banner extends Document {
     default: BannerPosition.HOME,
   })
   position: BannerPosition;  
+
+  @Prop(
+    {
+      type: String,
+      required: false,
+      default: '',
+    },
+  )
+  url?: string;
 }
 
 export type BannerDocument = HydratedDocument<Banner>;

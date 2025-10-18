@@ -181,6 +181,8 @@ export default function BannerPage() {
               src={imageUrl}
               alt={row.original.title}
               className="w-full h-full object-cover"
+              width={100}
+              height={100}
               onError={(e) => {
                 e.currentTarget.src = "/placeholder-image.png";
               }}

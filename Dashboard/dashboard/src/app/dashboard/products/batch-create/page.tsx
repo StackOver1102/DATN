@@ -1351,13 +1351,45 @@ export default function BatchCreateProductPage() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                            <div className="space-y-2">
+                                <Label
+                                  htmlFor={`discount-${index}`}
+                                  className="text-sm font-medium flex items-center"
+                                >
+                                  <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
+                                    2.6
+                                  </span>
+                                  Giảm giá (%)
+                                </Label>
+                                <div className="relative">
+                                  <Input
+                                    id={`discount-${index}`}
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    value={product.discount || 0}
+                                    onChange={(e) =>
+                                      handleChange(
+                                        index,
+                                        "discount",
+                                        Number(e.target.value)
+                                      )
+                                    }
+                                    className="pl-7 border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                                  />
+                                  <span className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-500">
+                                    %
+                                  </span>
+                                </div>
+                              </div>
+
                               <div className="space-y-2">
                                 <Label
                                   htmlFor={`price-${index}`}
                                   className="text-sm font-medium flex items-center"
                                 >
                                   <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                                    2.6
+                                    2.7
                                   </span>
                                   Giá (coin)
                                 </Label>
@@ -1383,37 +1415,7 @@ export default function BatchCreateProductPage() {
                                 </div>
                               </div>
 
-                              <div className="space-y-2">
-                                <Label
-                                  htmlFor={`discount-${index}`}
-                                  className="text-sm font-medium flex items-center"
-                                >
-                                  <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                                    2.7
-                                  </span>
-                                  Giảm giá (%)
-                                </Label>
-                                <div className="relative">
-                                  <Input
-                                    id={`discount-${index}`}
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    value={product.discount || 0}
-                                    onChange={(e) =>
-                                      handleChange(
-                                        index,
-                                        "discount",
-                                        Number(e.target.value)
-                                      )
-                                    }
-                                    className="pl-7 border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                                  />
-                                  <span className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-500">
-                                    %
-                                  </span>
-                                </div>
-                              </div>
+                            
                             </div>
                           </div>
 
