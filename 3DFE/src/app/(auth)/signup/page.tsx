@@ -69,7 +69,7 @@ function SignUpForm() {
   }
 
   if (isSuccess) {
-    toast.success("Tạo tài khoản thành công, vui lòng đăng nhập");
+    toast.success("Account created successfully, please log in");
   }
 
   return (
