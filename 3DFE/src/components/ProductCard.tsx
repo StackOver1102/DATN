@@ -25,7 +25,7 @@ export default function ProductCard({
   price,
   image,
   likes = 0,
-  views = 250,
+  // views = 250,
   className = "",
   isPro = false,
   downloads,

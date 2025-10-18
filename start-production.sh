@@ -25,7 +25,7 @@ if [ ! -f "3DFE/.env" ]; then
     echo -e "${YELLOW}Creating frontend .env file...${NC}"
     cat > 3DFE/.env << EOF
 NODE_ENV=production
-NEXT_PUBLIC_API_URL=https://api.model3dvn.org/api/v1
+NEXT_PUBLIC_API_URL=https://api.3dvn.org/api/v1
 EOF
     echo -e "${GREEN}Frontend .env file created.${NC}"
 fi
@@ -33,9 +33,9 @@ fi
 if [ ! -f "Dashboard/dashboard/.env" ]; then
     echo -e "${YELLOW}Creating dashboard .env file...${NC}"
     cat > Dashboard/dashboard/.env << EOF
-NEXTAUTH_URL=https://dashboard.model3dvn.org
+NEXTAUTH_URL=https://dashboard.3dvn.org
 NEXTAUTH_SECRET=e3c7d09a9e6als4b51b8a5f34b0b497fc33a6bb13cde7ecf0a9058b37f28acbb2c
-NEXT_PUBLIC_API_URL=https://api.model3dvn.org/api/v1
+NEXT_PUBLIC_API_URL=https://api.3dvn.org/api/v1
 NODE_ENV=production
 PORT=4000
 NEXTAUTH_URL_INTERNAL=http://dashboard:4000
@@ -53,6 +53,6 @@ sleep 5
 docker compose -f docker-compose.prd.yml ps
 
 echo -e "${GREEN}Production environment is now running!${NC}"
-echo -e "${GREEN}Access your application at https://model3dvn.org${NC}"
-echo -e "${GREEN}API is available at https://api.model3dvn.org/api/v1${NC}"
+echo -e "${GREEN}Access your application at https://3dvn.org${NC}"
+echo -e "${GREEN}API is available at https://api.3dvn.org/api/v1${NC}"
 echo -e "${YELLOW}Note: SSL is handled by Cloudflare${NC}"

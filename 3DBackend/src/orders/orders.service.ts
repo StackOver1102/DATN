@@ -212,14 +212,22 @@ export class OrdersService {
 
   // get ra các bán ghi có isRemoveGoogleDrive = fasle + có thời gian tạo lớn hơn 3 tiếng
   async getOrdersToRemoveGoogleDrive(): Promise<OrderToRemoveGoogleDrive[]> {
-    const orders = await this.orderModel.find({ isRemoveGoogleDrive: false, createdAt: { $lte: new Date(Date.now() - 3 * 60 * 60 * 1000) } }).populate({
+    const now = new Date();
+
+    // Lấy thời gian UTC+7 hiện tại
+    const utcPlus7Now = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+
+    // Trừ thêm 3 giờ
+    const cutoff = new Date(utcPlus7Now.getTime() - 3 * 60 * 60 * 1000);
+
+    const orders = await this.orderModel.find({ isRemoveGoogleDrive: false, createdAt: { $lte: cutoff } }).populate({
       path: 'productId',
       select: 'urlDownload'
     })
-    .populate({
-      path: 'userId',
-      select: '-password'
-    }).exec();
+      .populate({
+        path: 'userId',
+        select: '-password'
+      }).exec();
     return orders as unknown as OrderToRemoveGoogleDrive[];
   }
 

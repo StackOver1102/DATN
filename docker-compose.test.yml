@@ -30,6 +30,7 @@ services:
       - NEXT_PUBLIC_API_URL=https://api.model3dvn.org/api/v1
       - NEXTAUTH_URL=https://dashboard.model3dvn.org
       - NEXTAUTH_SECRET=e3c7d09a9e6als4b51b8a5f34b0b497fc33a6bb13cde7ecf0a9058b37f28acbb2c
+      - NEXT_PUBLIC_TINYMCE_API_KEY = hy78s7z3lgu3o68ibqvv1avei7x8rfdscr7svq01onkk76a0
       - PORT=4000
     depends_on:
       - backend

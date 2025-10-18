@@ -18,6 +18,11 @@ import * as path from 'path';
             user: config.get<string>('MAIL_USER'),
             pass: config.get<string>('MAIL_PASSWORD'),
           },
+          pool: true,
+          maxConnections: 2,   
+          maxMessages: 50,     
+          rateDelta: 60_000,   
+          rateLimit: 5,       
         },
         defaults: {
           from: `"${config.get<string>('MAIL_FROM_NAME')}" <${config.get<string>('MAIL_FROM')}>`,
@@ -31,9 +36,10 @@ import * as path from 'path';
         },
       }),
       inject: [ConfigService],
+
     }),
   ],
   providers: [MailService],
   exports: [MailService],
 })
-export class MailModule {}
+export class MailModule { }

@@ -21,8 +21,8 @@ async function bootstrap() {
       'http://localhost:4000',
       'http://frontend:3000',
       'http://dashboard:4000',
-      'https://model3dvn.org',
-      'https://dashboard.model3dvn.org'
+      'https://3dvn.org',
+      'https://dashboard.3dvn.org'
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
