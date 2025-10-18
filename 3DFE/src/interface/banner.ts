@@ -8,4 +8,5 @@ export interface Banner {
     createdAt: string;
     updatedAt: string;
     id: string;
+    url?: string;
 }

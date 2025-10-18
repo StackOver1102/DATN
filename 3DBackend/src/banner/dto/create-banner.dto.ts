@@ -31,4 +31,9 @@ export class CreateBannerDto {
   @IsEnum(BannerPosition)
   @IsOptional()
   position?: BannerPosition;
+
+  @ApiPropertyOptional({ description: 'Banner URL' })
+  @IsString()
+  @IsOptional()
+  url?: string;
 }

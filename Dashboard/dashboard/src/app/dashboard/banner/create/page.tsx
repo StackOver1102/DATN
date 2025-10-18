@@ -27,6 +27,7 @@ interface BannerFormData {
   description: string;
   position: "home" | "product_detail" | "about";
   isActive: boolean;
+  url: string;
 }
 
 interface CreateBannerResponse {
@@ -58,6 +59,7 @@ export default function CreateBannerPage() {
     description: "",
     position: "home",
     isActive: true,
+    url: "",
   });
 
   // Create banner with image upload mutation
@@ -131,6 +133,7 @@ export default function CreateBannerPage() {
       formDataToSend.append("description", formData.description);
       formDataToSend.append("position", formData.position);
       formDataToSend.append("isActive", String(formData.isActive));
+      formDataToSend.append("url", formData.url);
 
       createBannerWithImage(formDataToSend, {
         onSuccess: () => {
@@ -219,6 +222,21 @@ export default function CreateBannerPage() {
                 rows={3}
               />
             </div>
+            
+            {/* URL */}
+            <div className="space-y-2">
+              <Label htmlFor="url">Liên kết URL</Label>
+              <Input
+                id="url"
+                type="url"
+                value={formData.url}
+                onChange={(e) => handleChange("url", e.target.value)}
+                placeholder="Nhập URL liên kết khi nhấp vào banner (tùy chọn)"
+              />
+              <p className="text-sm text-gray-500">
+                Ví dụ: https://example.com/promotion
+              </p>
+            </div>
 
             {/* Image Upload or URL */}
             <div className="space-y-4">
@@ -234,6 +252,8 @@ export default function CreateBannerPage() {
                       <Image
                         src={previewUrl}
                         alt="Preview"
+                        width={100}
+                        height={100}
                         className="max-h-48 mx-auto rounded-lg"
                       />
                       <Button

@@ -5,6 +5,7 @@ import { Loading } from "@/components/ui/loading";
 import { CategorySection } from "@/lib/types";
 import Image from "next/image";
 import { Banner } from "@/interface/banner";
+import Link from "next/link";
 
 async function getProducts(page = 1, limit = 12) {
   const res = await fetch(
@@ -129,14 +130,27 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               <div className="w-full h-20 bg-gray-200 border-2 border-solid border-gray-400 rounded-lg flex items-center justify-center overflow-hidden">
                 {bannersData.data.map((banner: Banner) => (
                   <div key={banner._id} className="h-full">
-                    <Image
-                      src={banner.imageUrl}
-                      alt={banner.title}
-                      width={0}
-                      height={0}
-                      sizes="100vw"
-                      className="w-full h-full object-cover"
-                    />
+                    {banner.url ? (
+                      <Link href={banner.url} target="_blank" rel="noopener noreferrer" className="block h-full">
+                        <Image
+                          src={banner.imageUrl}
+                          alt={banner.title}
+                          width={0}
+                          height={0}
+                          sizes="100vw"
+                          className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                        />
+                      </Link>
+                    ) : (
+                      <Image
+                        src={banner.imageUrl}
+                        alt={banner.title}
+                        width={0}
+                        height={0}
+                        sizes="100vw"
+                        className="w-full h-full object-cover"
+                      />
+                    )}
                   </div>
                 ))}
               </div>
