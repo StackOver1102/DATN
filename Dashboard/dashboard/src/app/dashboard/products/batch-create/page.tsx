@@ -1221,12 +1221,12 @@ export default function BatchCreateProductPage() {
                                         {!sharedFolderId
                                           ? "Nhập ID Folder Google Drive trước"
                                           : !product.categoryName
-                                          ? "Chọn danh mục trước"
-                                          : !product.stt
-                                          ? "Nhập STT trước"
-                                          : failedImages[index]
-                                          ? "Không tìm thấy ảnh. Nhấn 'Tải lại ảnh' để thử lại."
-                                          : "Chưa có ảnh preview"}
+                                            ? "Chọn danh mục trước"
+                                            : !product.stt
+                                              ? "Nhập STT trước"
+                                              : failedImages[index]
+                                                ? "Không tìm thấy ảnh. Nhấn 'Tải lại ảnh' để thử lại."
+                                                : "Chưa có ảnh preview"}
                                       </p>
                                     </div>
                                   </div>
@@ -1254,9 +1254,8 @@ export default function BatchCreateProductPage() {
                                 </Label>
                                 <Input
                                   id={`name-${index}`}
-                                  value={`${
-                                    product.categoryName || "[Chọn danh mục]"
-                                  }`}
+                                  value={`${product.categoryName || "[Chọn danh mục]"
+                                    }`}
                                   disabled
                                   className="border-gray-300 bg-gray-50 text-gray-500 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                                 />
@@ -1350,8 +1349,8 @@ export default function BatchCreateProductPage() {
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
-                            <div className="space-y-2">
+                            {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                              <div className="space-y-2">
                                 <Label
                                   htmlFor={`discount-${index}`}
                                   className="text-sm font-medium flex items-center"
@@ -1414,19 +1413,14 @@ export default function BatchCreateProductPage() {
                                   </span>
                                 </div>
                               </div>
+                            </div> */}
 
-                            
-                            </div>
-                          </div>
-
-                          {/* Right side - Image preview and additional options */}
-                          <div className="w-full md:w-1/2 space-y-4">
                             {/* Render */}
                             <div className="bg-yellow-50 p-2 rounded-lg border border-yellow-100">
                               <div className="space-y-2">
                                 <Label className="text-sm font-medium flex items-center">
                                   <span className="bg-yellow-100 text-yellow-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
-                                    2.9
+                                    2.6
                                   </span>
                                   Render
                                 </Label>
@@ -1457,6 +1451,76 @@ export default function BatchCreateProductPage() {
                                       </span>
                                     </label>
                                   ))}
+                                </div>
+                              </div>
+                            </div>
+
+                          </div>
+
+                          {/* Right side - Image preview and additional options */}
+                          <div className="w-full md:w-1/2 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                              <div className="space-y-2">
+                                <Label
+                                  htmlFor={`discount-${index}`}
+                                  className="text-sm font-medium flex items-center"
+                                >
+                                  <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
+                                    2.7
+                                  </span>
+                                  Giảm giá (%)
+                                </Label>
+                                <div className="relative">
+                                  <Input
+                                    id={`discount-${index}`}
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    value={product.discount || 0}
+                                    onChange={(e) =>
+                                      handleChange(
+                                        index,
+                                        "discount",
+                                        Number(e.target.value)
+                                      )
+                                    }
+                                    className="pl-7 border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                                  />
+                                  <span className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-500">
+                                    %
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label
+                                  htmlFor={`price-${index}`}
+                                  className="text-sm font-medium flex items-center"
+                                >
+                                  <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs mr-2">
+                                    2.8
+                                  </span>
+                                  Giá (coin)
+                                </Label>
+                                <div className="relative">
+                                  <Input
+                                    id={`price-${index}`}
+                                    type="number"
+                                    min="0"
+                                    value={product.price || 0}
+                                    onChange={(e) =>
+                                      handleChange(
+                                        index,
+                                        "price",
+                                        Number(e.target.value)
+                                      )
+                                    }
+                                    required
+                                    className="pl-7 border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                                  />
+                                  <span className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-500">
+                                    💰
+                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -1513,17 +1577,15 @@ export default function BatchCreateProductPage() {
                                   <div key={color.hex} className="relative">
                                     <label className="cursor-pointer">
                                       <div
-                                        className={`w-6 h-6 rounded-full border transition-all ${
-                                          (product.color || []).includes(
-                                            color.hex
-                                          )
-                                            ? "border-gray-800 scale-110"
-                                            : "border-gray-300 hover:border-gray-400"
-                                        } ${
-                                          color.hex === "#ffffff"
+                                        className={`w-6 h-6 rounded-full border transition-all ${(product.color || []).includes(
+                                          color.hex
+                                        )
+                                          ? "border-gray-800 scale-110"
+                                          : "border-gray-300 hover:border-gray-400"
+                                          } ${color.hex === "#ffffff"
                                             ? "border-gray-400"
                                             : ""
-                                        }`}
+                                          }`}
                                         style={{ backgroundColor: color.hex }}
                                         title={color.name}
                                       >
@@ -1546,18 +1608,17 @@ export default function BatchCreateProductPage() {
                                         {(product.color || []).includes(
                                           color.hex
                                         ) && (
-                                          <span
-                                            className={`absolute inset-0 flex items-center justify-center text-[10px] ${
-                                              color.hex === "#ffffff" ||
-                                              color.hex === "#f3e8d0" ||
-                                              color.hex === "#fbb6ce"
+                                            <span
+                                              className={`absolute inset-0 flex items-center justify-center text-[10px] ${color.hex === "#ffffff" ||
+                                                color.hex === "#f3e8d0" ||
+                                                color.hex === "#fbb6ce"
                                                 ? "text-black"
                                                 : "text-white"
-                                            }`}
-                                          >
-                                            ✓
-                                          </span>
-                                        )}
+                                                }`}
+                                            >
+                                              ✓
+                                            </span>
+                                          )}
                                       </div>
                                     </label>
                                   </div>
@@ -1672,13 +1733,12 @@ export default function BatchCreateProductPage() {
                     )}
                   </div>
                   <TabsList
-                    className={`grid ${
-                      products.length > 36
-                        ? "grid-cols-3"
-                        : products.length > 18
+                    className={`grid ${products.length > 36
+                      ? "grid-cols-3"
+                      : products.length > 18
                         ? "grid-cols-2"
                         : "grid-cols-1"
-                    } auto-rows-max gap-2 bg-transparent p-0`}
+                      } auto-rows-max gap-2 bg-transparent p-0`}
                   >
                     {products.map((_, index) => (
                       <TabsTrigger
