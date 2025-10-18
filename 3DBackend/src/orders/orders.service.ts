@@ -65,12 +65,12 @@ export class OrdersService {
       const totalAmount = discount ? price - (price * discount) / 100 : price;
 
       if (balance < totalAmount) {
-        throw new BadRequestException('Bạn không đủ tiền để thanh toán');
+        throw new BadRequestException('Insufficient balance to complete payment');
       }
 
       const fileId = this.driveService.getIdByUrl(urlDownload!);
       if (!fileId) {
-        throw new BadRequestException('Không thể tìm thấy file');
+        throw new BadRequestException('File not found');
       }
 
       // Create transaction only after validating everything else
