@@ -243,8 +243,7 @@ export default function ClientSideModelFilter({
     }
 
     const searchParams = new URLSearchParams(window.location.search);
-    console.log("searchParams", searchParams)
-    
+
     // Remove page parameter completely when filters change instead of setting it to 1
     searchParams.delete("page");
 

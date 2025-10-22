@@ -59,6 +59,7 @@ export class FilterService {
     // Add search conditions if provided
     if (searchTerm && searchFields.length > 0) {
       const searchRegex = new RegExp(searchTerm, 'i');
+      // Only apply regex search to string fields
       const searchQuery = searchFields.map((field) => ({
         [field]: searchRegex,
       }));
@@ -91,7 +92,7 @@ export class FilterService {
 
     // Process additional filter fields
     // Hỗ trợ cả tìm kiếm chính xác và tìm kiếm gần đúng
-    
+
     // Xử lý style
     if (style) {
       // Kiểm tra nếu có nhiều giá trị (ngăn cách bởi dấu phẩy)
@@ -166,8 +167,10 @@ export class FilterService {
       andConditions.push({ discount });
     }
 
-    if (isPro) {
-      andConditions.push({ isPro: isPro === 'true' });
+    if (isPro !== undefined) {
+      // Convert string value to boolean
+      const isProBool = isPro === 'true';
+      andConditions.push({ isPro: isProBool });
     }
 
     // Kết hợp các điều kiện AND và OR

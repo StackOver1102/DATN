@@ -69,6 +69,7 @@ async function bootstrap() {
     .addBearerAuth() // Add bearer auth support to Swagger
     .build();
 
+
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 

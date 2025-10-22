@@ -45,7 +45,8 @@ async function getProducts(
   page = 1,
   limit = 60,
   category?: string,
-  item?: string
+  item?: string,
+  q?: string
 ) {
   try {
     // Build query parameters
@@ -62,7 +63,9 @@ async function getProducts(
       queryParams.append("categoryName", item);
     }
 
-    console.log("queryParams", queryParams.toString());
+    if (q) {
+      queryParams.append("q", q);
+    }
 
     const res = await fetch(
       `${
@@ -126,17 +129,16 @@ interface ModelsPageProps {
     item?: string;
     categoryName?: string;
     subSearch?: string;
+    q?: string;
   }>;
 }
 
 export default async function ModelsPage({ searchParams }: ModelsPageProps) {
+  console.log("searchParams", await searchParams);
   // Get query parameters from URL
   const categoryParam = (await searchParams).categoryName;
-  console.log("categoryParam", categoryParam);
 
   const itemParam = (await searchParams).subSearch;
-
-  console.log("itemParam", itemParam);
 
   const currentPage = Number((await searchParams).page) || 1;
 
@@ -146,7 +148,6 @@ export default async function ModelsPage({ searchParams }: ModelsPageProps) {
     getCategories(),
   ]);
 
-  console.log("categoriesData", categoriesData);
   // Process categories data
   const categories = categoriesData || [];
 

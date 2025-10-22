@@ -22,7 +22,7 @@ export class ProductsService {
     private readonly filterService: FilterService,
     @InjectModel(Product.name)
     private readonly productModel: Model<ProductDocument>,
-  ) {}
+  ) { }
 
   async create(createProductDto: CreateProductDto[]): Promise<Product[]> {
     // Add createdAt and updatedAt explicitly for each product
@@ -31,7 +31,7 @@ export class ProductsService {
       createdAt: new Date(),
       updatedAt: new Date()
     }));
-    
+
     return this.productModel.insertMany(productsWithTimestamps) as unknown as Promise<
       Product[]
     >;
@@ -92,7 +92,7 @@ export class ProductsService {
       size: folderInfo?.rar?.size_mb || 0,
       createdAt: new Date(),
       updatedAt: new Date(),
-    
+
     };
 
     const createdProduct = new this.productModel(productData);
@@ -303,6 +303,7 @@ export class ProductsService {
     filterDto: FilterDto,
   ): Promise<PaginatedResult<ProductDocument>> {
 
+    console.log("filterDto", filterDto);
     return this.filterService.applyFilters(this.productModel, filterDto, {}, [
       'name',
       'description',
@@ -313,7 +314,7 @@ export class ProductsService {
       'render',
       'form',
       'color',
-      'isPro',
+      // Remove isPro from searchable fields as it's a boolean
     ]);
   }
 
@@ -489,7 +490,7 @@ export class ProductsService {
   async removeProducts(ids: string[]): Promise<void> {
     // console.log(ids)
     for (const id of ids) {
-       await this.remove(id);
+      await this.remove(id);
     }
     return;
   }
@@ -504,8 +505,8 @@ export class ProductsService {
 
   async incrementQuantityCommand(id: string): Promise<Product | null> {
     return this.productModel.findByIdAndUpdate(
-      id, 
-      { $inc: { quantityCommand: 1 } }, 
+      id,
+      { $inc: { quantityCommand: 1 } },
       { new: true }
     ).exec();
   }

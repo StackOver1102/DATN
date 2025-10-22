@@ -61,20 +61,23 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
 
   const handleCategoryClick = (categoryTitle: string, itemName?: string) => {
     if (itemName) {
-      console.log("categoryTitle", categoryTitle)
-      console.log("itemName", itemName)
       setSelectedCategory(itemName);
       // Điều hướng đến trang models với query parameters
       // Using replace to convert %20 to + for URL compatibility
-      const encodedCategory = encodeURIComponent(categoryTitle.toLocaleLowerCase()).replace(/%20/g, '+');
-      const encodedItem = encodeURIComponent(itemName).replace(/%20/g, '+');
+      const encodedCategory = encodeURIComponent(
+        categoryTitle.toLocaleLowerCase()
+      ).replace(/%20/g, "+");
+      const encodedItem = encodeURIComponent(itemName).replace(/%20/g, "+");
       router.push(
         `/models?categoryName=${encodedCategory}&subSearch=${encodedItem}`
       );
     } else {
       setSelectedCategory(categoryTitle);
       // Điều hướng chỉ với category
-      const encodedCategory = encodeURIComponent(categoryTitle).replace(/%20/g, '+');
+      const encodedCategory = encodeURIComponent(categoryTitle).replace(
+        /%20/g,
+        "+"
+      );
       router.push(`/models?category=${encodedCategory}`);
     }
   };

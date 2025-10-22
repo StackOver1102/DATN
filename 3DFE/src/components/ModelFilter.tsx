@@ -260,7 +260,6 @@ export default function ModelFilter({
         }))
       : defaultCategories;
 
-  console.log("transformedCategories", transformedCategories);
   // const sortedCategories = transformedCategories.map((category) => {
   //   try {
   //     // Check if items exists and is an array before spreading
@@ -399,7 +398,6 @@ export default function ModelFilter({
       const updateKey = JSON.stringify(apiParams);
       lastFilterUpdate.current = updateKey;
 
-      console.log("updatedFilters", updatedFilters);
       onFilterChange(updatedFilters, apiParams);
     }
 
@@ -489,13 +487,12 @@ export default function ModelFilter({
       : [categoryId];
 
     const newFilters = { ...filters, categories: newCategories };
-    console.log("newFilters", newFilters);
     setFilters(newFilters);
     const apiParams = convertFiltersToApiParams(newFilters);
 
     // Prevent duplicate API calls
     const updateKey = JSON.stringify(apiParams);
-    console.log("updateKey", updateKey);
+
     if (lastFilterUpdate.current !== updateKey) {
       lastFilterUpdate.current = updateKey;
       onFilterChange(newFilters, apiParams);
@@ -709,7 +706,6 @@ export default function ModelFilter({
     if (filters.categories.length > 0) {
       // Check if it's a category-subcategory pair
       const categoryItem = filters.categories[0];
-      console.log("categoryItem 1", categoryItem);
       if (categoryItem.includes("-")) {
         const parts = categoryItem.split("-");
         const category = parts[0];

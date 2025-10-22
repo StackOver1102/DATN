@@ -88,7 +88,8 @@ export default function ClientSideModelsPage({
 
         // Build query string from API parameters
         const queryParams = new URLSearchParams();
-        console.log("apiParams", apiParams);
+        console.log("queryParams", queryParams);
+
         Object.entries(apiParams).forEach(([key, value]) => {
           if (value !== undefined && value !== null) {
             queryParams.append(key, value.toString());
@@ -153,8 +154,6 @@ export default function ClientSideModelsPage({
     apiParams: ApiFilterParams
   ) => {
     if (apiParams) {
-      console.log(apiParams);
-      console.log("vao day chay");
       fetchModels(apiParams);
     }
   };
@@ -236,8 +235,6 @@ export default function ClientSideModelsPage({
     }
 
     params.limit = params.limit ? parseInt(params.limit.toString(), 10) : 60;
-
-    console.log("Fetching data with params:", params);
 
     // Always fetch models when URL parameters change
     fetchModels(params);
@@ -481,7 +478,6 @@ export default function ClientSideModelsPage({
                     );
 
                     // Fetch data directly
-                    console.log("Directly fetching data for page:", page);
                     fetchModels(apiParams);
 
                     // Scroll to top of page
