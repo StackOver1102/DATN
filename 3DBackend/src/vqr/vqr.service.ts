@@ -100,7 +100,7 @@ export class VqrService {
         body: JSON.stringify({
           amount: amount,
           orderId: transaction._id,
-          content: '3dmodels',
+          // content: '3dmodels',
           bankAccount: '09838383856789',
           bankCode: 'MB',
           userBankName: 'TRUONG NGOC TOAN',
