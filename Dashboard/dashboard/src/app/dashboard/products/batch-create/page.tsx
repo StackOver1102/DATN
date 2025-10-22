@@ -1221,12 +1221,12 @@ export default function BatchCreateProductPage() {
                                         {!sharedFolderId
                                           ? "Nhập ID Folder Google Drive trước"
                                           : !product.categoryName
-                                            ? "Chọn danh mục trước"
-                                            : !product.stt
-                                              ? "Nhập STT trước"
-                                              : failedImages[index]
-                                                ? "Không tìm thấy ảnh. Nhấn 'Tải lại ảnh' để thử lại."
-                                                : "Chưa có ảnh preview"}
+                                          ? "Chọn danh mục trước"
+                                          : !product.stt
+                                          ? "Nhập STT trước"
+                                          : failedImages[index]
+                                          ? "Không tìm thấy ảnh. Nhấn 'Tải lại ảnh' để thử lại."
+                                          : "Chưa có ảnh preview"}
                                       </p>
                                     </div>
                                   </div>
@@ -1254,8 +1254,9 @@ export default function BatchCreateProductPage() {
                                 </Label>
                                 <Input
                                   id={`name-${index}`}
-                                  value={`${product.categoryName || "[Chọn danh mục]"
-                                    }`}
+                                  value={`${
+                                    product.categoryName || "[Chọn danh mục]"
+                                  }`}
                                   disabled
                                   className="border-gray-300 bg-gray-50 text-gray-500 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                                 />
@@ -1454,7 +1455,6 @@ export default function BatchCreateProductPage() {
                                 </div>
                               </div>
                             </div>
-
                           </div>
 
                           {/* Right side - Image preview and additional options */}
@@ -1491,7 +1491,6 @@ export default function BatchCreateProductPage() {
                                   </span>
                                 </div>
                               </div>
-
 
                               <div className="space-y-2">
                                 <Label
@@ -1578,15 +1577,17 @@ export default function BatchCreateProductPage() {
                                   <div key={color.hex} className="relative">
                                     <label className="cursor-pointer">
                                       <div
-                                        className={`w-6 h-6 rounded-full border transition-all ${(product.color || []).includes(
-                                          color.hex
-                                        )
-                                          ? "border-gray-800 scale-110"
-                                          : "border-gray-300 hover:border-gray-400"
-                                          } ${color.hex === "#ffffff"
+                                        className={`w-6 h-6 rounded-full border transition-all ${
+                                          (product.color || []).includes(
+                                            color.hex
+                                          )
+                                            ? "border-gray-800 scale-110"
+                                            : "border-gray-300 hover:border-gray-400"
+                                        } ${
+                                          color.hex === "#ffffff"
                                             ? "border-gray-400"
                                             : ""
-                                          }`}
+                                        }`}
                                         style={{ backgroundColor: color.hex }}
                                         title={color.name}
                                       >
@@ -1609,17 +1610,18 @@ export default function BatchCreateProductPage() {
                                         {(product.color || []).includes(
                                           color.hex
                                         ) && (
-                                            <span
-                                              className={`absolute inset-0 flex items-center justify-center text-[10px] ${color.hex === "#ffffff" ||
-                                                color.hex === "#f3e8d0" ||
-                                                color.hex === "#fbb6ce"
+                                          <span
+                                            className={`absolute inset-0 flex items-center justify-center text-[10px] ${
+                                              color.hex === "#ffffff" ||
+                                              color.hex === "#f3e8d0" ||
+                                              color.hex === "#fbb6ce"
                                                 ? "text-black"
                                                 : "text-white"
-                                                }`}
-                                            >
-                                              ✓
-                                            </span>
-                                          )}
+                                            }`}
+                                          >
+                                            ✓
+                                          </span>
+                                        )}
                                       </div>
                                     </label>
                                   </div>
@@ -1727,6 +1729,7 @@ export default function BatchCreateProductPage() {
                         size="sm"
                         className="h-8 px-2 bg-red-500 hover:bg-red-600"
                         onClick={() => handleRemoveProduct(parseInt(activeTab))}
+                        type="button"
                       >
                         <IconTrash className="h-3.5 w-3.5 mr-1" />
                         Xóa SP {parseInt(activeTab) + 1}
@@ -1734,12 +1737,13 @@ export default function BatchCreateProductPage() {
                     )}
                   </div>
                   <TabsList
-                    className={`grid ${products.length > 36
-                      ? "grid-cols-3"
-                      : products.length > 18
+                    className={`grid ${
+                      products.length > 36
+                        ? "grid-cols-3"
+                        : products.length > 18
                         ? "grid-cols-2"
                         : "grid-cols-1"
-                      } auto-rows-max gap-2 bg-transparent p-0`}
+                    } auto-rows-max gap-2 bg-transparent p-0`}
                   >
                     {products.map((_, index) => (
                       <TabsTrigger
