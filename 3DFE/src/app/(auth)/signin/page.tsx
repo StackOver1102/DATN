@@ -25,7 +25,6 @@ function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [isUnverified, setIsUnverified] = useState(false);
-  const [unverifiedEmail, setUnverifiedEmail] = useState("");
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
   const message = searchParams.get("message");
@@ -64,7 +63,7 @@ function SignInForm() {
         // Check if it's a verification error
         if (result.error.includes("not verified")) {
           setIsUnverified(true);
-          setUnverifiedEmail(data.email);
+          // setUnverifiedEmail(data.email);
         } else if (result.error === "CredentialsSignin") {
           // Handle generic CredentialsSignin error
           setAuthError("Invalid email or password. Please try again.");
@@ -124,17 +123,17 @@ function SignInForm() {
                   email for a verification link.
                 </p>
                 {/* <div className="flex justify-between items-center mt-2">
-                  <button
-                    onClick={() => {
-                      window.location.href = `/check-email?email=${encodeURIComponent(
-                        unverifiedEmail
-                      )}`;
-                    }}
-                    className="text-sm text-blue-600 hover:underline"
-                  >
-                    Resend verification email
-                  </button>
-                </div> */}
+                    <button
+                      onClick={() => {
+                        window.location.href = `/check-email?email=${encodeURIComponent(
+                          unverifiedEmail
+                        )}`;
+                      }}
+                      className="text-sm text-blue-600 hover:underline"
+                    >
+                      Resend verification email
+                    </button>
+                  </div> */}
               </div>
             </div>
           )}
