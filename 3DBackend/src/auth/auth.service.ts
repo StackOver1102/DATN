@@ -32,6 +32,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    if (!user.isVerified) {
+      throw new UnauthorizedException('User not verified');
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
@@ -115,6 +119,34 @@ export class AuthService {
       } else if (error.name === 'JsonWebTokenError') {
         throw new UnauthorizedException('Invalid verification token');
       }
+      throw error;
+    }
+  }
+
+  async resendVerificationEmail(email: string) {
+    try {
+      // Find the user by email
+      const user = await this.usersService.findByEmail(email);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      // Check if the user is already verified
+      if (user.isVerified) {
+        return { message: 'User is already verified' };
+      }
+
+      // Generate a new verification token
+      const token = this.jwtService.sign(
+        { email: user.email, purpose: 'email_verification' },
+        { expiresIn: '24h' }
+      );
+
+      // Send the verification email
+      await this.mailService.sendAccountVerificationEmail(user, token);
+
+      return { message: 'Verification email has been sent successfully' };
+    } catch (error) {
       throw error;
     }
   }
@@ -227,5 +259,13 @@ export class AuthService {
         balance: user.balance,
       },
     };
+  }
+
+  async checkUserHasVerified(email: string) {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user.isVerified;
   }
 }

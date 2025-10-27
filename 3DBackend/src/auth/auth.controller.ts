@@ -15,6 +15,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { Public } from './decorators/public.decorator';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ResendVerificationDto } from './dto/resend-verification.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -92,6 +93,19 @@ export class AuthController {
   })
   async verifyAccount(@Body('token') token: string) {
     return this.authService.verifyAccount(token);
+  }
+
+  @Public()
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Resend account verification email' })
+  @ApiResponse({
+    status: 200,
+    description: 'Verification email resent successfully',
+  })
+  @ApiBody({ type: ResendVerificationDto })
+  async resendVerification(@Body() resendVerificationDto: ResendVerificationDto) {
+    return this.authService.resendVerificationEmail(resendVerificationDto.email);
   }
 
   @Public()

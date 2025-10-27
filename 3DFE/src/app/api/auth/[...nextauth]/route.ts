@@ -15,7 +15,7 @@ declare module "next-auth" {
       balance?: number | null;
     }
   }
-  
+
   interface User {
     id: string;
     email: string;
@@ -69,10 +69,11 @@ const authOptions: NextAuthOptions = {
 
           // Get the response data
           const nestResponse: ApiResponse<LoginResponse> = await response.json();
-          // If the response is not successful, return null (authentication failed)
+          // If the response is not successful, return error with the message from the backend
           if (!response.ok) {
             console.error("Authentication failed:", nestResponse.message || "Authentication failed");
-            return null;
+            // Instead of throwing an error, return null with custom error
+            return Promise.reject(new Error(nestResponse.message || "Authentication failed"));
           }
 
           // Return the user object with the token

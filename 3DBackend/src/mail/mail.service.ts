@@ -7,7 +7,7 @@ import { UserDocument } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class MailService {
-  constructor(private mailerService: MailerService) {}
+  constructor(private mailerService: MailerService) { }
 
   /**
    * Send welcome email to new user
@@ -15,7 +15,7 @@ export class MailService {
   async sendWelcomeEmail(user: UserDocument): Promise<void> {
     await this.mailerService.sendMail({
       to: user.email,
-      subject: 'Chào mừng bạn đến với 3DVN',
+      subject: 'Welcome to 3DVN',
       template: './welcome',
       context: {
         name: user.fullName || user.email,
@@ -34,7 +34,7 @@ export class MailService {
 
     await this.mailerService.sendMail({
       to: email,
-      subject: 'Đặt lại mật khẩu',
+      subject: 'Reset Your Password',
       template: './password-reset',
       context: {
         resetUrl,
@@ -53,7 +53,7 @@ export class MailService {
 
     await this.mailerService.sendMail({
       to: email,
-      subject: 'Xác nhận email',
+      subject: 'Email Confirmation',
       template: './email-confirmation',
       context: {
         confirmUrl,
@@ -72,7 +72,7 @@ export class MailService {
   ): Promise<void> {
     await this.mailerService.sendMail({
       to: supportRequest.email,
-      subject: 'Yêu cầu hỗ trợ đã được nhận',
+      subject: 'Support Request Received',
       template: './support-request',
       context: {
         name: supportRequest.name,
@@ -93,7 +93,7 @@ export class MailService {
   ): Promise<void> {
     await this.mailerService.sendMail({
       to: supportRequest.email,
-      subject: 'Phản hồi cho yêu cầu hỗ trợ của bạn',
+      subject: 'Response to Your Support Request',
       template: './support-response',
       context: {
         name: supportRequest.name,
@@ -116,7 +116,7 @@ export class MailService {
   ): Promise<void> {
     await this.mailerService.sendMail({
       to: user.email,
-      subject: 'Xác nhận đơn hàng',
+      subject: 'Order Confirmation',
       template: './order-confirmation',
       context: {
         name: user.fullName || user.email,
@@ -139,7 +139,7 @@ export class MailService {
   ): Promise<void> {
     await this.mailerService.sendMail({
       to: user.email,
-      subject: 'Cập nhật trạng thái đơn hàng',
+      subject: 'Order Status Update',
       template: './order-status-update',
       context: {
         name: user.fullName || user.email,
@@ -162,7 +162,7 @@ export class MailService {
   ): Promise<void> {
     await this.mailerService.sendMail({
       to: user.email,
-      subject: 'Xác nhận yêu cầu hoàn tiền',
+      subject: 'Refund Request Confirmation',
       template: './refund-request',
       context: {
         name: user.fullName || user.email,
@@ -186,7 +186,7 @@ export class MailService {
   ): Promise<void> {
     await this.mailerService.sendMail({
       to: user.email,
-      subject: 'Cập nhật trạng thái yêu cầu hoàn tiền',
+      subject: 'Refund Request Status Update',
       template: './refund-status-update',
       context: {
         name: user.fullName || user.email,
@@ -210,12 +210,12 @@ export class MailService {
   ): Promise<void> {
     await this.mailerService.sendMail({
       to: user.email,
-      subject: 'Thông tin tài khoản mới của bạn',
+      subject: 'Your New Account Information',
       template: './new-user-credentials',
       context: {
         name: user.fullName || user.email,
         email: user.email,
-        password: generatedPassword || 'Mật khẩu bạn đã đặt',
+        password: generatedPassword || 'Your chosen password',
         frontendUrl: process.env.FRONTEND_URL || 'https://3dvn.org',
         year: new Date().getFullYear(),
       },
@@ -225,10 +225,10 @@ export class MailService {
 
   async sendResetPasswordEmail(user: UserDocument, token: string): Promise<void> {
     const resetUrl = `${process.env.FRONTEND_URL || 'https://3dvn.org'}/reset-password?token=${token}`;
-    
+
     await this.mailerService.sendMail({
       to: user.email,
-      subject: 'Đặt lại mật khẩu của bạn',
+      subject: 'Reset Your Password',
       template: './reset-password',
       context: {
         name: user.fullName || user.email,
@@ -236,7 +236,7 @@ export class MailService {
         email: user.email,
         frontendUrl: process.env.FRONTEND_URL || 'https://3dvn.org',
         year: new Date().getFullYear(),
-        expiresIn: '24 giờ', // Thời gian token hết hạn
+        expiresIn: '24 hours', // Token expiration time
       },
     });
   }
@@ -246,10 +246,10 @@ export class MailService {
    */
   async sendAccountVerificationEmail(user: UserDocument, token: string): Promise<void> {
     const verificationLink = `${process.env.FRONTEND_URL || 'https://3dvn.org'}/verify-account?token=${token}`;
-    
+
     await this.mailerService.sendMail({
       to: user.email,
-      subject: 'Xác thực tài khoản của bạn',
+      subject: 'Verify Your Account',
       template: './account-verification',
       context: {
         name: user.fullName || user.email,

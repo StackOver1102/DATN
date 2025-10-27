@@ -68,8 +68,8 @@ export function useRegister() {
 
       return data;
     },
-    onSuccess: () => {
-      router.push('/signin?message=Registration successful. Please sign in.');
+    onSuccess: (data, variables) => {
+      router.push(`/check-email?email=${encodeURIComponent(variables.email)}`);
     },
   });
 }
@@ -99,26 +99,26 @@ export function useLogout() {
 export function useUserProfile() {
   const { data: session, status } = useSession();
   const api = useApi();
-  const { 
-    profile, 
-    isLoading, 
-    setProfile, 
-    setLoading, 
-    setError, 
+  const {
+    profile,
+    isLoading,
+    setProfile,
+    setLoading,
+    setError,
     setHasLoadedProfile,
-    hasLoadedProfile 
+    hasLoadedProfile
   } = useUserStore();
 
   // Function to fetch profile directly without causing re-renders
   const fetchProfile = useCallback(async () => {
     // If we already have the profile data, just return it without API call
     if (profile) return profile;
-    
+
     // If we've already marked it as loaded but don't have data, something's wrong
     if (hasLoadedProfile && !profile) {
       setHasLoadedProfile(false); // Reset the flag to try loading again
     }
-    
+
     try {
       setLoading(true);
       const response = await api.get<User>('users/profile');

@@ -24,6 +24,8 @@ function SignInForm() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [isUnverified, setIsUnverified] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState("");
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
   const message = searchParams.get("message");
@@ -55,8 +57,18 @@ function SignInForm() {
       });
 
       if (result?.error) {
+        console.error("Sign in error:", result.error);
         // Handle error from NextAuth
         setAuthError(result.error);
+
+        // Check if it's a verification error
+        if (result.error.includes("not verified")) {
+          setIsUnverified(true);
+          setUnverifiedEmail(data.email);
+        } else if (result.error === "CredentialsSignin") {
+          // Handle generic CredentialsSignin error
+          setAuthError("Invalid email or password. Please try again.");
+        }
       } else if (result?.ok) {
         // Manual redirect if login is successful
         window.location.href = "/";
@@ -71,12 +83,7 @@ function SignInForm() {
 
   if (loading) {
     return (
-      <Loading
-        variant="spinner"
-        size="lg"
-        text="Signing in..."
-        fullScreen
-      />
+      <Loading variant="spinner" size="lg" text="Signing in..." fullScreen />
     );
   }
 
@@ -98,11 +105,37 @@ function SignInForm() {
             </div>
           )}
 
-          {(error || authError) && (
+          {(error || authError) && !isUnverified && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
               <span className="block sm:inline">
-                {"Authentication failed. Please try again."}
+                {authError ||
+                  error ||
+                  "Authentication failed. Please try again."}
               </span>
+            </div>
+          )}
+
+          {isUnverified && (
+            <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded relative">
+              <div className="flex flex-col space-y-2">
+                <span className="font-medium">Account not verified</span>
+                <p className="text-sm">
+                  Your account has not been verified yet. Please check your
+                  email for a verification link.
+                </p>
+                {/* <div className="flex justify-between items-center mt-2">
+                  <button
+                    onClick={() => {
+                      window.location.href = `/check-email?email=${encodeURIComponent(
+                        unverifiedEmail
+                      )}`;
+                    }}
+                    className="text-sm text-blue-600 hover:underline"
+                  >
+                    Resend verification email
+                  </button>
+                </div> */}
+              </div>
             </div>
           )}
 
@@ -155,19 +188,37 @@ function SignInForm() {
                   placeholder="••••••••"
                   {...register("password")}
                 />
-                <div 
+                <div
                   className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer z-10"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 text-gray-500"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z"
+                        clipRule="evenodd"
+                      />
                       <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
                     </svg>
                   ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 text-gray-500"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
                       <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                      <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                      <path
+                        fillRule="evenodd"
+                        d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   )}
                 </div>
