@@ -71,11 +71,51 @@ export class AuthService {
         // password: hashedPassword,
       });
 
-      await this.mailService.sendWelcomeEmail(user);
+      // Generate verification token
+      const token = this.jwtService.sign(
+        { email: user.email, purpose: 'email_verification' },
+        { expiresIn: '24h' }
+      );
+
+      // Send verification email instead of welcome email
+      await this.mailService.sendAccountVerificationEmail(user, token);
 
       return user;
     } catch (error) {
       throw new BadRequestException(error);
+    }
+  }
+
+  async verifyAccount(token: string) {
+    try {
+      // Verify and decode the token
+      const decoded = this.jwtService.verify(token);
+
+      // Check if token was issued for email verification
+      if (decoded.purpose !== 'email_verification') {
+        throw new UnauthorizedException('Invalid token purpose');
+      }
+
+      // Find the user by email from token
+      const user = await this.usersService.findByEmail(decoded.email);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      // Update user's verification status
+      await this.usersService.verifyUser(user._id.toString());
+
+      // Send welcome email after verification
+      await this.mailService.sendWelcomeEmail(user);
+
+      return { message: 'Email has been verified successfully' };
+    } catch (error) {
+      if (error.name === 'TokenExpiredError') {
+        throw new UnauthorizedException('Verification token has expired');
+      } else if (error.name === 'JsonWebTokenError') {
+        throw new UnauthorizedException('Invalid verification token');
+      }
+      throw error;
     }
   }
 

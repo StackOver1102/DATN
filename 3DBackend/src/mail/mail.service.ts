@@ -240,4 +240,24 @@ export class MailService {
       },
     });
   }
+
+  /**
+   * Send account verification email
+   */
+  async sendAccountVerificationEmail(user: UserDocument, token: string): Promise<void> {
+    const verificationLink = `${process.env.FRONTEND_URL || 'https://3dvn.org'}/verify-account?token=${token}`;
+    
+    await this.mailerService.sendMail({
+      to: user.email,
+      subject: 'Xác thực tài khoản của bạn',
+      template: './account-verification',
+      context: {
+        name: user.fullName || user.email,
+        verificationLink,
+        email: user.email,
+        frontendUrl: process.env.FRONTEND_URL || 'https://3dvn.org',
+        year: new Date().getFullYear(),
+      },
+    });
+  }
 }

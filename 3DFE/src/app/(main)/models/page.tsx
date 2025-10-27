@@ -134,7 +134,6 @@ interface ModelsPageProps {
 }
 
 export default async function ModelsPage({ searchParams }: ModelsPageProps) {
-  console.log("searchParams", await searchParams);
   // Get query parameters from URL
   const categoryParam = (await searchParams).categoryName;
 

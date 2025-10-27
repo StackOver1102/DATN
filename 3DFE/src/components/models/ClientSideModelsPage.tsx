@@ -79,74 +79,71 @@ export default function ClientSideModelsPage({
   const [currentTotalPages, setCurrentTotalPages] = useState(totalPages);
 
   // Function to fetch models based on filter parameters
-  const fetchModels = useCallback(
-    async (apiParams: ApiFilterParams) => {
-      // Force fetch data regardless of parameter changes
+  const fetchModels = useCallback(async (apiParams: ApiFilterParams) => {
+    // Force fetch data regardless of parameter changes
 
-      try {
-        setLoading(true);
+    try {
+      setLoading(true);
 
-        // Build query string from API parameters
-        const queryParams = new URLSearchParams();
-        console.log("queryParams", queryParams);
+      // Build query string from API parameters
+      const queryParams = new URLSearchParams();
+      console.log("queryParams", queryParams);
 
-        Object.entries(apiParams).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            queryParams.append(key, value.toString());
-          }
-        });
-
-        // Add page and limit if not present
-        if (!apiParams.page) {
-          queryParams.append("page", "1");
+      Object.entries(apiParams).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          queryParams.append(key, value.toString());
         }
+      });
 
-        if (!apiParams.limit) {
-          queryParams.append("limit", "60");
-        }
-
-        // Make API request
-        const response = await fetch(
-          `${
-            process.env.NEXT_PUBLIC_API_URL
-          }/products?${queryParams.toString()}&sortBy=stt`
-        );
-        const data = await response.json();
-
-        // Check for the correct response format
-        if (data && data.data) {
-          // Handle the NestJS standard response format
-          const items = data.data.items || [];
-          setModels(items);
-          setCount(data.data.meta?.totalItems || 0);
-          setCurrentTotalPages(data.data.meta?.totalPages || 1);
-
-          setCurrentApiParams(apiParams);
-        } else if (data && data.results) {
-          // Handle the old response format for backward compatibility
-          setModels(data.results || []);
-          setCount(data.total || data.results?.length || 0);
-          // Calculate total pages for old response format
-          const itemsPerPage = apiParams.limit || 60;
-          const totalItems = data.total || data.results?.length || 0;
-          const calculatedTotalPages = Math.ceil(totalItems / itemsPerPage);
-          setCurrentTotalPages(calculatedTotalPages);
-          setCurrentApiParams(apiParams);
-        } else {
-          // If no valid data format is found, set empty models
-          setModels([]);
-          setCount(0);
-          setCurrentTotalPages(1);
-          setCurrentApiParams(apiParams);
-        }
-      } catch (error) {
-        console.error("Error fetching models:", error);
-      } finally {
-        setLoading(false);
+      // Add page and limit if not present
+      if (!apiParams.page) {
+        queryParams.append("page", "1");
       }
-    },
-    [currentApiParams]
-  );
+
+      if (!apiParams.limit) {
+        queryParams.append("limit", "60");
+      }
+
+      // Make API request
+      const response = await fetch(
+        `${
+          process.env.NEXT_PUBLIC_API_URL
+        }/products?${queryParams.toString()}&sortBy=stt`
+      );
+      const data = await response.json();
+
+      // Check for the correct response format
+      if (data && data.data) {
+        // Handle the NestJS standard response format
+        const items = data.data.items || [];
+        setModels(items);
+        setCount(data.data.meta?.totalItems || 0);
+        setCurrentTotalPages(data.data.meta?.totalPages || 1);
+
+        setCurrentApiParams(apiParams);
+      } else if (data && data.results) {
+        // Handle the old response format for backward compatibility
+        setModels(data.results || []);
+        setCount(data.total || data.results?.length || 0);
+        // Calculate total pages for old response format
+        const itemsPerPage = apiParams.limit || 60;
+        const totalItems = data.total || data.results?.length || 0;
+        const calculatedTotalPages = Math.ceil(totalItems / itemsPerPage);
+        setCurrentTotalPages(calculatedTotalPages);
+        setCurrentApiParams(apiParams);
+      } else {
+        // If no valid data format is found, set empty models
+        setModels([]);
+        setCount(0);
+        setCurrentTotalPages(1);
+        setCurrentApiParams(apiParams);
+      }
+    } catch (error) {
+      console.error("Error fetching models:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   // Handle filter changes
   const handleFilterChange = (
@@ -155,6 +152,9 @@ export default function ClientSideModelsPage({
   ) => {
     if (apiParams) {
       fetchModels(apiParams);
+
+      // Scroll to top of page when filters change
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -189,6 +189,9 @@ export default function ClientSideModelsPage({
     }
 
     fetchModels(newParams);
+
+    // Scroll to top of page when changing tabs
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // Initialize filters state

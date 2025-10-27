@@ -25,12 +25,15 @@ export class User {
 
   @Prop()
   phone: string;
-  
+
   @Prop()
   avatar: string;
 
   @Prop({ default: false })
   isDeleted: boolean;
+
+  @Prop({ default: false })
+  isVerified: boolean;
 
   @Prop({ default: 0 })
   balance: number;

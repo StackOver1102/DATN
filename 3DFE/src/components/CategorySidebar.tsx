@@ -78,7 +78,7 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
         /%20/g,
         "+"
       );
-      router.push(`/models?category=${encodedCategory}`);
+      router.push(`/models?categoryName=${encodedCategory}`);
     }
   };
 

@@ -266,6 +266,21 @@ export class UsersService implements OnModuleInit {
     await user.save();
     return { message: 'Password updated successfully' };
   }
+  
+  /**
+   * Update user verification status
+   * Used for email verification functionality
+   */
+  async verifyUser(userId: string) {
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+    
+    user.isVerified = true;
+    await user.save();
+    return { message: 'User verified successfully' };
+  }
 
   async findByEmailAndRole(email: string) {
     return this.userModel.findOne({ email, role: UserRole.ADMIN });

@@ -19,7 +19,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Public()
   @Post('login')
@@ -80,6 +80,18 @@ export class AuthController {
   @ApiBody({ type: ResetPasswordDto })
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return this.authService.resetPassword(resetPasswordDto);
+  }
+
+  @Public()
+  @Post('verify-account')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify user account with token' })
+  @ApiResponse({
+    status: 200,
+    description: 'Email has been verified successfully',
+  })
+  async verifyAccount(@Body('token') token: string) {
+    return this.authService.verifyAccount(token);
   }
 
   @Public()
