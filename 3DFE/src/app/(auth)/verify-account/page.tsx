@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import {
 import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 
-export default function VerifyAccountPage() {
+function VerifyAccountContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -120,5 +120,30 @@ export default function VerifyAccountPage() {
         </CardFooter>
       </Card>
     </div>
+  );
+}
+
+export default function VerifyAccountPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen bg-gray-50">
+          <Card className="w-full max-w-md shadow-lg">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl font-bold">
+                Account Verification
+              </CardTitle>
+              <CardDescription>Loading verification page...</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center justify-center p-6">
+              <Loader2 className="h-16 w-16 text-primary animate-spin" />
+              <p className="text-center text-gray-600 mt-4">Please wait...</p>
+            </CardContent>
+          </Card>
+        </div>
+      }
+    >
+      <VerifyAccountContent />
+    </Suspense>
   );
 }
