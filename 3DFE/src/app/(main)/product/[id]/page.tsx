@@ -70,7 +70,7 @@ export default function ProductDetailPage() {
   const [commentContent, setCommentContent] = useState("");
   const [rating, setRating] = useState(5);
   const [hoveredRating, setHoveredRating] = useState(0);
-
+  const [isBuying, setIsBuying] = useState(false);
   // Use Redux hooks
   const dispatch = useAppDispatch();
   const { profile } = useAppSelector((state) => state.user);
@@ -116,6 +116,7 @@ export default function ProductDetailPage() {
         const downloadUrl = data?.fileUrl || data?.urlDownload;
         if (downloadUrl) {
           window.open(downloadUrl, "_blank");
+          setIsBuying(false);
         }
         // Refresh profile after order
         fetchProfile();
@@ -193,6 +194,7 @@ export default function ProductDetailPage() {
     : [];
 
   const handleBuyModal = async () => {
+    setIsBuying(true);
     if (!session?.user) {
       toast.error("Please login to buy this product");
       router.push("/signin?redirect=" + encodeURIComponent(`/product/${id}`));
@@ -413,7 +415,8 @@ export default function ProductDetailPage() {
             {/* Buy Button and Favorite */}
             <div className="flex gap-3">
               <button
-                onClick={handleBuyModal}
+                onClick={handleBuyModal} 
+                disabled={isBuying}
                 className="flex-1 bg-black text-yellow-400 font-bold py-3 px-6 rounded flex items-center justify-center gap-2 transition-all hover:bg-gray-800 hover:scale-105 hover:shadow-md"
               >
                 <Download className="w-5 h-5" />
