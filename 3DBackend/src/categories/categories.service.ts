@@ -110,12 +110,14 @@ export class CategoriesService {
       .find({ parentId: null })
       .exec();
 
+    console.log(rootCategories);
+
     // For each root category, find its children and format the result
     const result = await Promise.all(
       rootCategories.map(async (rootCategory) => {
         // Find all children of this root category
         const children = await this.categoryModel
-          .find({ parentId: rootCategory._id.toString() })
+          .find({ parentId: Types.ObjectId.createFromHexString(rootCategory._id.toString()) })
           .exec();
 
         // Format the children to have only the required fields
