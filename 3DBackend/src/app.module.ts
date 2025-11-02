@@ -20,6 +20,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { BannerModule } from './banner/banner.module';
 import { VqrModule } from './vqr/vqr.module';
 import { ScheduleModule } from './schedule/schedule.module';
+import { InitmodalModule } from './initmodal/initmodal.module';
 import * as Joi from 'joi';
 
 // Định nghĩa schema xác thực cho biến môi trường
@@ -63,6 +64,7 @@ const validationSchema = Joi.object({
     BannerModule,
     VqrModule,
     ScheduleModule,
+    InitmodalModule,
   ],
   controllers: [],
   providers: [],

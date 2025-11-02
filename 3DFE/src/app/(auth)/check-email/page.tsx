@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import {  useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -76,7 +76,7 @@ function CheckEmailContent() {
           </div>
           <CardTitle className="text-2xl font-bold">Check Your Email</CardTitle>
           <CardDescription>
-            We've sent a verification link to{" "}
+            We&apos;ve sent a verification link to{" "}
             <span className="font-medium text-black">{email}</span>
           </CardDescription>
         </CardHeader>
@@ -87,7 +87,7 @@ function CheckEmailContent() {
             activate your account.
           </p>
           <p className="text-gray-600">
-            If you don't see the email in your inbox, please check your spam
+            If you don&apos;t see the email in your inbox, please check your spam folder.
             folder.
           </p>
 

@@ -15,6 +15,7 @@ import {
   IconCoin,
   IconPhoto,
   IconMessageCircle,
+  IconWindow,
 } from "@tabler/icons-react";
 import { useNotifications } from "@/lib/hooks/useNotifications";
 
@@ -109,7 +110,12 @@ const data = {
             url: "/dashboard/categories/sub-categories",
           }
         ],
-    }
+    },
+    {
+      title: "Modal",
+      url: "/dashboard/modal",
+      icon: IconWindow,
+    },
   ],
   navClouds: [
     {

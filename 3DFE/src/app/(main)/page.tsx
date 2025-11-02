@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import ModelGrid from "@/components/ModelGrid";
 import CategorySidebar from "@/components/CategorySidebar";
+import InitModalPopup from "@/components/InitModalPopup";
 import { Loading } from "@/components/ui/loading";
 import { CategorySection } from "@/lib/types";
 import Image from "next/image";
@@ -19,6 +20,8 @@ async function getProducts(page = 1, limit = 12) {
 
   return res.json();
 }
+
+// Removed getInitmodal function - now handled client-side  
 
 async function getCategories() {
   const res = await fetch(
@@ -102,6 +105,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   return (
     <div className="bg-gray-50">
+      {/* Init Modal Popup - Client Side */}
+      <InitModalPopup 
+        showOnce={true}
+        position="center"
+      />
+
       {/* Main Content */}
       <main className="flex-1">
         <Suspense
