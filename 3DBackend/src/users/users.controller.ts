@@ -158,7 +158,7 @@ export class UsersController {
   }
 
   @ApiBearerAuth()
-  @Patch('/:id')
+  @Patch()
   updateProfile(
     @Body() updateUserDto: UpdateUserDto,
     @CurrentUser() user: UserPayload,
