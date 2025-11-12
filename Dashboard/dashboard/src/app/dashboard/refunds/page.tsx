@@ -145,7 +145,7 @@ export default function RefundsPage() {
               href={`/dashboard/orders/${order?._id}/view`}
               className="text-blue-500 hover:underline"
             >
-              {order.productId?.name || order._id}
+              {order?.productId?.name || order?.productId?._id}
             </Link>
           </div>
         );
