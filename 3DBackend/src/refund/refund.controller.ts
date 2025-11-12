@@ -30,10 +30,13 @@ interface FileWithBuffer extends Express.Multer.File {
 }
 @Controller('refunds')
 export class RefundController {
-  constructor(private readonly refundService: RefundService, private readonly uploadService: UploadService) {}
+  constructor(
+    private readonly refundService: RefundService,
+    private readonly uploadService: UploadService,
+  ) {}
 
   @Post()
-  @UseInterceptors(FilesInterceptor('attachments', 5))    
+  @UseInterceptors(FilesInterceptor('attachments', 5))
   create(
     @Body() createRefundDto: CreateRefundDto,
     @CurrentUser() user: UserPayload,
@@ -46,10 +49,13 @@ export class RefundController {
         return url;
       });
     }
-    return this.refundService.create({
-      ...createRefundDto,
-      attachments,
-    }, user.userId);
+    return this.refundService.create(
+      {
+        ...createRefundDto,
+        attachments,
+      },
+      user.userId,
+    );
   }
 
   @Get()
@@ -61,7 +67,10 @@ export class RefundController {
 
   @Get('my-refunds')
   @UseGuards(JwtAuthGuard)
-  findMyRefunds(@CurrentUser() user: UserPayload, @Query() filterDto: FilterDto) {
+  findMyRefunds(
+    @CurrentUser() user: UserPayload,
+    @Query() filterDto: FilterDto,
+  ) {
     return this.refundService.findByUserId(user.userId, filterDto);
   }
 
@@ -81,24 +90,24 @@ export class RefundController {
     @CurrentUser() user: UserPayload,
     @UploadedFiles() files?: FileWithBuffer[],
   ) {
-    console.log('updateRefundDto', updateRefundDto)
+    console.log('updateRefundDto', updateRefundDto);
     // Add admin user ID as the processor
     if (updateRefundDto.status) {
       updateRefundDto.processedBy = user.userId.toString();
     }
 
     // Process uploaded files if any
-    
+
     if (files && files.length > 0) {
       const attachments = files.map((file: FileWithBuffer) => {
         const url = this.uploadService.getFileUrl(file.key);
         return url;
       });
-      
+
       // Add new attachments to the DTO
       updateRefundDto.imagesByAdmin = attachments;
     }
-    
+
     return this.refundService.update(id, updateRefundDto);
   }
 

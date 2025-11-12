@@ -26,7 +26,7 @@ export class RefundService {
     private transactionsService: TransactionsService,
     private notificationsService: NotificationsService,
     private filterService: FilterService,
-  ) { }
+  ) {}
 
   async create(
     createRefundDto: CreateRefundDto,
@@ -56,7 +56,10 @@ export class RefundService {
       throw new BadRequestException('Đơn hàng đã hủy không thể hoàn tiền');
     }
 
-    const existingRefund = await this.refundModel.findOne({ orderId: new Types.ObjectId(createRefundDto.orderId), status: RefundStatus.PENDING })
+    const existingRefund = await this.refundModel.findOne({
+      orderId: new Types.ObjectId(createRefundDto.orderId),
+      status: RefundStatus.PENDING,
+    });
     if (existingRefund) {
       throw new BadRequestException('Đơn hàng này đã có yêu cầu hoàn tiền');
     }
@@ -86,28 +89,74 @@ export class RefundService {
   async findAll(): Promise<Refund[]> {
     return this.refundModel
       .find()
-      .populate('userId orderId', '-password')
+      .populate('userId', '-password')
+      .populate({
+        path: 'orderId',
+        model: 'Order',
+        populate: {
+          path: 'productId',
+          model: 'Product',
+          select: 'name images price',
+        },
+      })
       .sort({ createdAt: -1 })
       .exec();
   }
 
-  async findByUserId(userId: string, filterDto: FilterDto): Promise<PaginatedResult<RefundDocument>> {
-    return this.filterService.applyFilters<RefundDocument>(this.refundModel, filterDto, { userId: new Types.ObjectId(userId) }, [
-      'name',
-      'description',
-      'categoryName',
-      'categoryPath',
-      'style',
-      'materials',
-      'render',
-      'form',
-      'color',
-      'isPro',
-    ]);
+  async findByUserId(
+    userId: string,
+    filterDto: FilterDto,
+  ): Promise<PaginatedResult<RefundDocument>> {
+    const result = await this.filterService.applyFilters<RefundDocument>(
+      this.refundModel,
+      filterDto,
+      { userId: new Types.ObjectId(userId) },
+      [
+        'name',
+        'description',
+        'categoryName',
+        'categoryPath',
+        'style',
+        'materials',
+        'render',
+        'form',
+        'color',
+        'isPro',
+      ],
+    );
+
+    // Populate product information for each refund
+    await Promise.all(
+      result.items.map(async (refund) => {
+        await refund.populate({
+          path: 'orderId',
+          model: 'Order',
+          populate: {
+            path: 'productId',
+            model: 'Product',
+            select: 'name images price',
+          },
+        });
+      }),
+    );
+
+    return result;
   }
 
   async findOne(id: string): Promise<RefundDocument> {
-    const refund = await this.refundModel.findById({ _id: new Types.ObjectId(id) }).populate('userId orderId', '-password').exec();
+    const refund = await this.refundModel
+      .findById(id)
+      .populate('userId', '-password')
+      .populate({
+        path: 'orderId',
+        model: 'Order',
+        populate: {
+          path: 'productId',
+          model: 'Product',
+          select: 'name images price',
+        },
+      })
+      .exec();
 
     if (!refund) {
       throw new NotFoundException(
@@ -120,9 +169,11 @@ export class RefundService {
 
   async update(id: string, updateRefundDto: UpdateRefundDto): Promise<Refund> {
     // console.log(id)
-    const refund: RefundDocument | null = await this.refundModel.findById({ _id: new Types.ObjectId(id) }).exec();
+    const refund: RefundDocument | null = await this.refundModel
+      .findById({ _id: new Types.ObjectId(id) })
+      .exec();
 
-    console.log(refund)
+    console.log(refund);
     // If status is being updated to APPROVED, process the refund
     if (
       refund &&
@@ -131,7 +182,6 @@ export class RefundService {
     ) {
       await this.processRefund(refund);
     }
-
 
     // If status is being updated to COMPLETED, mark the order as refunded
     if (
