@@ -1,0 +1,263 @@
+import { Injectable } from '@nestjs/common';
+import { MailerService } from '@nestjs-modules/mailer';
+import { SupportRequestDocument } from 'src/support/entities/support.entity';
+import { OrderDocument } from 'src/orders/entities/order.entity';
+import { RefundDocument } from 'src/refund/entities/refund.entity';
+import { UserDocument } from 'src/users/entities/user.entity';
+
+@Injectable()
+export class MailService {
+  constructor(private mailerService: MailerService) { }
+
+  /**
+   * Send welcome email to new user
+   */
+  async sendWelcomeEmail(user: UserDocument): Promise<void> {
+    await this.mailerService.sendMail({
+      to: user.email,
+      subject: 'Welcome to 3DVN',
+      template: './welcome',
+      context: {
+        name: user.fullName || user.email,
+        email: user.email,
+        frontendUrl: process.env.FRONTEND_URL || 'https://3dvn.org',
+        year: new Date().getFullYear(),
+      },
+    });
+  }
+
+  /**
+   * Send password reset email
+   */
+  async sendPasswordResetEmail(email: string, token: string): Promise<void> {
+    const resetUrl = `${process.env.FRONTEND_URL || 'https://3dvn.org'}/reset-password?token=${token}`;
+
+    await this.mailerService.sendMail({
+      to: email,
+      subject: 'Reset Your Password',
+      template: './password-reset',
+      context: {
+        resetUrl,
+        email,
+        frontendUrl: process.env.FRONTEND_URL || 'https://3dvn.org',
+        year: new Date().getFullYear(),
+      },
+    });
+  }
+
+  /**
+   * Send email confirmation
+   */
+  async sendEmailConfirmation(email: string, token: string): Promise<void> {
+    const confirmUrl = `${process.env.FRONTEND_URL || 'https://3dvn.org'}/confirm-email?token=${token}`;
+
+    await this.mailerService.sendMail({
+      to: email,
+      subject: 'Email Confirmation',
+      template: './email-confirmation',
+      context: {
+        confirmUrl,
+        email,
+        frontendUrl: process.env.FRONTEND_URL || 'https://3dvn.org',
+        year: new Date().getFullYear(),
+      },
+    });
+  }
+
+  /**
+   * Send support request confirmation to user
+   */
+  async sendSupportRequestConfirmation(
+    supportRequest: SupportRequestDocument,
+  ): Promise<void> {
+    await this.mailerService.sendMail({
+      to: supportRequest.email,
+      subject: 'Support Request Received',
+      template: './support-request',
+      context: {
+        name: supportRequest.name,
+        message: supportRequest.message,
+        requestId: supportRequest._id?.toString() || '',
+        email: supportRequest.email,
+        frontendUrl: process.env.FRONTEND_URL || 'https://3dvn.org',
+        year: new Date().getFullYear(),
+      },
+    });
+  }
+
+  /**
+   * Send support response to user
+   */
+  async sendSupportResponse(
+    supportRequest: SupportRequestDocument,
+  ): Promise<void> {
+    await this.mailerService.sendMail({
+      to: supportRequest.email,
+      subject: 'Response to Your Support Request',
+      template: './support-response',
+      context: {
+        name: supportRequest.name,
+        message: supportRequest.message,
+        response: supportRequest.response,
+        requestId: supportRequest._id?.toString() || '',
+        email: supportRequest.email,
+        frontendUrl: process.env.FRONTEND_URL || 'https://3dvn.org',
+        year: new Date().getFullYear(),
+      },
+    });
+  }
+
+  /**
+   * Send order confirmation
+   */
+  async sendOrderConfirmation(
+    order: OrderDocument,
+    user: UserDocument,
+  ): Promise<void> {
+    await this.mailerService.sendMail({
+      to: user.email,
+      subject: 'Order Confirmation',
+      template: './order-confirmation',
+      context: {
+        name: user.fullName || user.email,
+        orderId: order._id?.toString() || '',
+        amount: order.totalAmount,
+        date: order.createdAt,
+        email: user.email,
+        frontendUrl: process.env.FRONTEND_URL || 'https://3dvn.org',
+        year: new Date().getFullYear(),
+      },
+    });
+  }
+
+  /**
+   * Send order status update
+   */
+  async sendOrderStatusUpdate(
+    order: OrderDocument,
+    user: UserDocument,
+  ): Promise<void> {
+    await this.mailerService.sendMail({
+      to: user.email,
+      subject: 'Order Status Update',
+      template: './order-status-update',
+      context: {
+        name: user.fullName || user.email,
+        orderId: order._id?.toString() || '',
+        status: order.status,
+        date: new Date(),
+        email: user.email,
+        frontendUrl: process.env.FRONTEND_URL || 'https://3dvn.org',
+        year: new Date().getFullYear(),
+      },
+    });
+  }
+
+  /**
+   * Send refund request confirmation
+   */
+  async sendRefundRequestConfirmation(
+    refund: RefundDocument,
+    user: UserDocument,
+  ): Promise<void> {
+    await this.mailerService.sendMail({
+      to: user.email,
+      subject: 'Refund Request Confirmation',
+      template: './refund-request',
+      context: {
+        name: user.fullName || user.email,
+        refundId: refund._id?.toString() || '',
+        orderId: refund.orderId.toString(),
+        amount: refund.amount,
+        date: refund.createdAt,
+        email: user.email,
+        frontendUrl: process.env.FRONTEND_URL || 'https://3dvn.org',
+        year: new Date().getFullYear(),
+      },
+    });
+  }
+
+  /**
+   * Send refund status update
+   */
+  async sendRefundStatusUpdate(
+    refund: RefundDocument,
+    user: UserDocument,
+  ): Promise<void> {
+    await this.mailerService.sendMail({
+      to: user.email,
+      subject: 'Refund Request Status Update',
+      template: './refund-status-update',
+      context: {
+        name: user.fullName || user.email,
+        refundId: refund._id?.toString() || '',
+        orderId: refund.orderId.toString(),
+        status: refund.status,
+        date: new Date(),
+        email: user.email,
+        frontendUrl: process.env.FRONTEND_URL || 'https://3dvn.org',
+        year: new Date().getFullYear(),
+      },
+    });
+  }
+
+  /**
+   * Send new user credentials to user created from dashboard
+   */
+  async sendNewUserCredentials(
+    user: UserDocument,
+    generatedPassword?: string,
+  ): Promise<void> {
+    await this.mailerService.sendMail({
+      to: user.email,
+      subject: 'Your New Account Information',
+      template: './new-user-credentials',
+      context: {
+        name: user.fullName || user.email,
+        email: user.email,
+        password: generatedPassword || 'Your chosen password',
+        frontendUrl: process.env.FRONTEND_URL || 'https://3dvn.org',
+        year: new Date().getFullYear(),
+      },
+    });
+  }
+
+
+  async sendResetPasswordEmail(user: UserDocument, token: string): Promise<void> {
+    const resetUrl = `${process.env.FRONTEND_URL || 'https://3dvn.org'}/reset-password?token=${token}`;
+
+    await this.mailerService.sendMail({
+      to: user.email,
+      subject: 'Reset Your Password',
+      template: './reset-password',
+      context: {
+        name: user.fullName || user.email,
+        resetUrl,
+        email: user.email,
+        frontendUrl: process.env.FRONTEND_URL || 'https://3dvn.org',
+        year: new Date().getFullYear(),
+        expiresIn: '24 hours', // Token expiration time
+      },
+    });
+  }
+
+  /**
+   * Send account verification email
+   */
+  async sendAccountVerificationEmail(user: UserDocument, token: string): Promise<void> {
+    const verificationLink = `${process.env.FRONTEND_URL || 'https://3dvn.org'}/verify-account?token=${token}`;
+
+    await this.mailerService.sendMail({
+      to: user.email,
+      subject: 'Verify Your Account',
+      template: './account-verification',
+      context: {
+        name: user.fullName || user.email,
+        verificationLink,
+        email: user.email,
+        frontendUrl: process.env.FRONTEND_URL || 'https://3dvn.org',
+        year: new Date().getFullYear(),
+      },
+    });
+  }
+}

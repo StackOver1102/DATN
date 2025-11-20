@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Order Confirmation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .header {
+      background-color: #4A90E2;
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+    }
+    .content {
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 12px;
+      color: #777;
+    }
+    .order-details {
+      background-color: #fff;
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+    }
+    .order-summary {
+      background-color: #f5f5f5;
+      padding: 15px;
+      margin-top: 20px;
+      border-top: 1px solid #ddd;
+    }
+    .button {
+      display: inline-block;
+      background-color: #4A90E2;
+      color: white;
+      text-decoration: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      margin-top: 20px;
+    }
+    .total {
+      font-size: 18px;
+      font-weight: bold;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Order Confirmation</h1>
+    </div>
+    <div class="content">
+      <p>Hello {{name}},</p>
+      <p>Thank you for your order at 3DVN. Your order has been confirmed and is being processed.</p>
+      
+      <div class="order-details">
+        <h3>Order Details</h3>
+        <p><strong>Order ID:</strong> {{orderId}}</p>
+        <p><strong>Order Date:</strong> {{date}}</p>
+        
+        <div class="order-summary">
+          <p class="total">Total Payment: {{amount}} VND</p>
+        </div>
+      </div>
+
+      <p>You can track your order status by clicking the button below.</p>
+      
+      <a href="{{frontendUrl}}/orders/{{orderId}}" class="button">View Order</a>
+      
+      <p>If you have any questions about your order, please contact us.</p>
+      
+      <p>Best regards,<br>The 3DVN Team</p>
+    </div>
+    <div class="footer">
+      <p>© {{year}} 3DVN. All rights reserved.</p>
+      <p>This email was sent to {{email}}</p>
+    </div>
+  </div>
+</body>
+</html>
