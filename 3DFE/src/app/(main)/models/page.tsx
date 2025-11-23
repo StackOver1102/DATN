@@ -68,8 +68,7 @@ async function getProducts(
     }
 
     const res = await fetch(
-      `${
-        process.env.NEXT_PUBLIC_API_URL_SSR
+      `${process.env.NEXT_PUBLIC_API_URL_SSR
       }/products?${queryParams.toString()}&sortBy=stt`,
       {
         next: { revalidate: 60 }, // Revalidate every 60 seconds
@@ -139,11 +138,13 @@ export default async function ModelsPage({ searchParams }: ModelsPageProps) {
 
   const itemParam = (await searchParams).subSearch;
 
+  const searchQuery = (await searchParams).q;
+
   const currentPage = Number((await searchParams).page) || 1;
 
   // Fetch data in parallel
   const [productsData, categoriesData] = await Promise.all([
-    getProducts(currentPage, 30, categoryParam, itemParam),
+    getProducts(currentPage, 30, categoryParam, itemParam, searchQuery),
     getCategories(),
   ]);
 

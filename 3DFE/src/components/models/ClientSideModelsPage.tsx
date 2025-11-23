@@ -106,8 +106,7 @@ export default function ClientSideModelsPage({
 
       // Make API request
       const response = await fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_URL
+        `${process.env.NEXT_PUBLIC_API_URL
         }/products?${queryParams.toString()}&sortBy=stt`
       );
       const data = await response.json();
@@ -162,33 +161,35 @@ export default function ClientSideModelsPage({
   const handleTabChange = (tab: "all" | "pro" | "free") => {
     setActiveTab(tab);
 
-    // Create new API params based on current ones
-    const newParams: ApiFilterParams = {
-      ...currentApiParams,
-      page: 1, // Reset to first page when changing tabs
-    };
+    // Create new URLSearchParams from current URL
+    const params = new URLSearchParams(window.location.search);
 
-    // Update URL to remove page parameter
-    if (typeof window !== "undefined") {
-      const searchParams = new URLSearchParams(window.location.search);
-      searchParams.delete("page");
-      const newUrl = `${window.location.pathname}?${searchParams.toString()}`;
-      window.history.pushState({ path: newUrl }, "", newUrl);
-    }
+    // Reset to first page when changing tabs
+    params.delete("page");
 
     // Apply filter based on selected tab
     if (tab === "pro") {
-      newParams.isPro = "true";
-      newParams.price = undefined; // Clear any price filter
+      params.set("isPro", "true");
     } else if (tab === "free") {
-      newParams.isPro = "false";
+      params.set("isPro", "false");
     } else {
-      // For 'all' tab, remove both filters
-      newParams.isPro = undefined;
-      newParams.price = undefined;
+      // For 'all' tab, remove isPro filter
+      params.delete("isPro");
     }
 
-    fetchModels(newParams);
+    // Update URL
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    router.push(newUrl, { scroll: false });
+
+    // Create API params from the new URL params
+    const apiParams: ApiFilterParams = {};
+    params.forEach((value, key) => {
+      (apiParams as Record<string, string>)[key] = value;
+    });
+    apiParams.page = 1;
+    apiParams.limit = 60;
+
+    fetchModels(apiParams);
 
     // Scroll to top of page when changing tabs
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -201,25 +202,21 @@ export default function ClientSideModelsPage({
     setShowFilters(!showFilters);
   };
 
-  // Track initial render
-  const isInitialRender = useCallback(() => {
-    const ref = { current: true };
-    return () => {
-      if (ref.current) {
-        ref.current = false;
-        return true;
-      }
-      return false;
-    };
-  }, [])();
-
-  // Effect to fetch models when URL parameters change
+  // Effect to sync activeTab with URL parameters
   useEffect(() => {
-    // Skip on initial render since we already have initialModels
-    if (isInitialRender()) {
-      return;
-    }
+    const isPro = searchParams.get("isPro");
 
+    if (isPro === "true") {
+      setActiveTab("pro");
+    } else if (isPro === "false") {
+      setActiveTab("free");
+    } else {
+      setActiveTab("all");
+    }
+  }, [searchParams]);
+
+  // Effect to initialize and sync with URL parameters
+  useEffect(() => {
     // Extract filter parameters from URL
     const params: ApiFilterParams = {};
 
@@ -239,17 +236,29 @@ export default function ClientSideModelsPage({
 
     params.limit = params.limit ? parseInt(params.limit.toString(), 10) : 60;
 
-    // Always fetch models when URL parameters change
-    fetchModels(params);
-
-    // Scroll to top when page changes (optional)
-    if (
-      typeof window !== "undefined" &&
-      params.page !== currentApiParams?.page
-    ) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
+    // On initial mount, just set currentApiParams without fetching
+    // since we already have initialModels from server
+    if (currentApiParams === null) {
+      setCurrentApiParams(params);
+      return;
     }
-  }, [searchParams, fetchModels, isInitialRender, currentApiParams]);
+
+    // Check if params have actually changed
+    const paramsChanged = JSON.stringify(params) !== JSON.stringify(currentApiParams);
+
+    if (paramsChanged) {
+      // Fetch models when URL parameters change
+      fetchModels(params);
+
+      // Scroll to top when page changes
+      if (
+        typeof window !== "undefined" &&
+        params.page !== currentApiParams?.page
+      ) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+  }, [searchParams, fetchModels, currentApiParams]);
 
   return (
     <div className="min-h-screen bg-gray-50 container mx-auto max-w-7xl">
@@ -287,34 +296,65 @@ export default function ClientSideModelsPage({
                   {count} models found
                 </span>
 
+                {/* Show current search query with clear button */}
+                {searchParams.get("q") && (
+                  <div className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-full">
+                    <span className="text-sm text-gray-700">
+                      Search: <span className="font-medium">{searchParams.get("q")}</span>
+                    </span>
+                    <button
+                      onClick={() => {
+                        // Remove search query from URL
+                        const params = new URLSearchParams(searchParams.toString());
+                        params.delete("q");
+                        params.delete("page"); // Reset to first page
+                        router.push(`?${params.toString()}`, { scroll: false });
+                      }}
+                      className="text-gray-500 hover:text-gray-700 transition-colors"
+                      title="Clear search"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+
                 {/* Filter tabs for All/Pro/Free */}
                 <div className="flex border border-gray-300 rounded-lg ml-4">
                   <button
-                    className={`px-4 py-1 text-sm ${
-                      activeTab === "all"
-                        ? "bg-black text-yellow-400 font-medium"
-                        : "bg-white text-gray-700"
-                    } rounded-l-lg transition-colors`}
+                    className={`px-4 py-1 text-sm ${activeTab === "all"
+                      ? "bg-black text-yellow-400 font-medium"
+                      : "bg-white text-gray-700"
+                      } rounded-l-lg transition-colors`}
                     onClick={() => handleTabChange("all")}
                   >
                     All
                   </button>
                   <button
-                    className={`px-4 py-1 text-sm ${
-                      activeTab === "pro"
-                        ? "bg-black text-yellow-400 font-medium"
-                        : "bg-white text-gray-700"
-                    } border-l border-r border-gray-300 transition-colors`}
+                    className={`px-4 py-1 text-sm ${activeTab === "pro"
+                      ? "bg-black text-yellow-400 font-medium"
+                      : "bg-white text-gray-700"
+                      } border-l border-r border-gray-300 transition-colors`}
                     onClick={() => handleTabChange("pro")}
                   >
                     Pro
                   </button>
                   <button
-                    className={`px-4 py-1 text-sm ${
-                      activeTab === "free"
-                        ? "bg-black text-yellow-400 font-medium"
-                        : "bg-white text-gray-700"
-                    } rounded-r-lg transition-colors`}
+                    className={`px-4 py-1 text-sm ${activeTab === "free"
+                      ? "bg-black text-yellow-400 font-medium"
+                      : "bg-white text-gray-700"
+                      } rounded-r-lg transition-colors`}
                     onClick={() => handleTabChange("free")}
                   >
                     Free
