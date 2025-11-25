@@ -24,8 +24,8 @@ export default function DepositPage() {
   const [cancelUrl, setCancelUrl] = useState<string>("");
 
   // Payment methods and region
-  const [paymentMethod, setPaymentMethod] = useState<string>("paypal");
-  const [paymentRegion, setPaymentRegion] = useState<string>("international"); // "international" or "vietnam"
+  const [paymentMethod, setPaymentMethod] = useState<string>("banking");
+  const [paymentRegion, setPaymentRegion] = useState<string>("vietnam"); // "international" or "vietnam"
 
   // Use Redux store
   const dispatch = useAppDispatch();
@@ -215,11 +215,10 @@ export default function DepositPage() {
                     setPaymentMethod("paypal");
                     setCoinAmount(50);
                   }}
-                  className={`p-4 rounded-lg border-2 transition-all ${
-                    paymentRegion === "international"
+                  className={`p-4 rounded-lg border-2 transition-all ${paymentRegion === "international"
                       ? "border-blue-500 bg-blue-50"
                       : "border-gray-200 hover:border-blue-300"
-                  }`}
+                    }`}
                 >
                   <div className="text-center">
                     <h4 className="font-semibold text-gray-800 mb-2">
@@ -248,11 +247,10 @@ export default function DepositPage() {
                     setPaymentMethod("banking");
                     setCoinAmount(50);
                   }}
-                  className={`p-4 rounded-lg border-2 transition-all ${
-                    paymentRegion === "vietnam"
+                  className={`p-4 rounded-lg border-2 transition-all ${paymentRegion === "vietnam"
                       ? "border-green-500 bg-green-50"
                       : "border-gray-200 hover:border-green-300"
-                  }`}
+                    }`}
                 >
                   <div className="text-center">
                     <h4 className="font-semibold text-gray-800 mb-2">
@@ -297,11 +295,10 @@ export default function DepositPage() {
                   <div className="text-base text-gray-500">
                     Equivalent to{" "}
                     <span
-                      className={`font-semibold ${
-                        paymentRegion === "international"
+                      className={`font-semibold ${paymentRegion === "international"
                           ? "text-blue-600"
                           : "text-green-600"
-                      }`}
+                        }`}
                     >
                       {getPaymentAmount().toLocaleString()}{" "}
                       {getPaymentCurrency()}
@@ -369,11 +366,10 @@ export default function DepositPage() {
                     Minimum amount: {getMinimumAmount()} coins
                   </p>
                   <p
-                    className={`text-base font-bold ${
-                      paymentRegion === "international"
+                    className={`text-base font-bold ${paymentRegion === "international"
                         ? "text-blue-600"
                         : "text-green-600"
-                    }`}
+                      }`}
                   >
                     = {getPaymentAmount().toLocaleString()}{" "}
                     {getPaymentCurrency()}
@@ -438,11 +434,10 @@ export default function DepositPage() {
               </h3>
 
               <div
-                className={`text-5xl font-bold text-center ${
-                  paymentRegion === "international"
+                className={`text-5xl font-bold text-center ${paymentRegion === "international"
                     ? "text-blue-600"
                     : "text-green-600"
-                }`}
+                  }`}
               >
                 {getPaymentAmount().toLocaleString()} {getPaymentCurrency()}
               </div>
