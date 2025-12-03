@@ -46,6 +46,7 @@ const authOptions: NextAuthOptions = {
           placeholder: "jsmith@example.com",
         },
         password: { label: "Password", type: "password" },
+        captchaToken: { label: "Captcha Token", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
@@ -64,6 +65,7 @@ const authOptions: NextAuthOptions = {
             body: JSON.stringify({
               email: credentials.email,
               password: credentials.password,
+              captchaToken: credentials.captchaToken,
             }),
           });
 
