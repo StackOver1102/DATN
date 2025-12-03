@@ -22,6 +22,7 @@ import { NotificationType } from 'src/types/notification';
 import { FilterDto } from 'src/common/dto/filter.dto';
 import { FilterService } from 'src/common/services/filter.service';
 import { PaginatedResult } from 'src/common/interfaces/pagination.interface';
+import { CaptchaService } from 'src/common/services/captcha.service';
 
 @Injectable()
 export class SupportService {
@@ -32,14 +33,29 @@ export class SupportService {
     private mailService: MailService,
     private notificationsService: NotificationsService,
     private filterService: FilterService,
-  ) { }
+    private captchaService: CaptchaService,
+  ) {}
 
   async create(
     createSupportDto: CreateSupportDto,
     userId?: string,
   ): Promise<SupportRequestDocument> {
+    // Verify CAPTCHA before processing
+    const isCaptchaValid = await this.captchaService.verifyCaptcha(
+      createSupportDto.captchaToken,
+    );
+
+    if (!isCaptchaValid) {
+      throw new BadRequestException('Invalid CAPTCHA verification');
+    }
+
+    // Remove captchaToken from data before saving
+    const { captchaToken, ...supportData } = createSupportDto;
+
+    console.log(captchaToken);
+
     const supportRequest = new this.supportRequestModel({
-      ...createSupportDto,
+      ...supportData,
       status: SupportStatus.PENDING,
       ...(userId && { userId: new Types.ObjectId(userId) }),
     });
@@ -49,11 +65,11 @@ export class SupportService {
     // Create notification for admin
     try {
       await this.notificationsService.create({
-        message: `New support request: ${createSupportDto.name}`,
+        message: `New support request: ${supportData.name}`,
         originalId: savedRequest._id.toString(),
         originType: NotificationType.SUPPORT,
         userId: userId ? new Types.ObjectId(userId) : undefined,
-        // originType: NotificationType.SUPPORT 
+        // originType: NotificationType.SUPPORT
       });
     } catch (error) {
       console.error('Failed to create notification:', error);
@@ -83,13 +99,16 @@ export class SupportService {
       .exec();
   }
 
-  async findByUserId(userId: string, filterDto: FilterDto): Promise<PaginatedResult<SupportRequestDocument>> {
+  async findByUserId(
+    userId: string,
+    filterDto: FilterDto,
+  ): Promise<PaginatedResult<SupportRequestDocument>> {
     // const baseQuery = { userId };
 
     // return this.filterService.applyFilters<SupportRequestDocument>(
-    //   this.supportRequestModel, 
-    //   filterDto, 
-    //   baseQuery, 
+    //   this.supportRequestModel,
+    //   filterDto,
+    //   baseQuery,
     //   [
     //     'name',
     //     'message',
@@ -101,8 +120,15 @@ export class SupportService {
       throw new BadRequestException('Page and limit are required');
     }
     const skip = (page - 1) * limit;
-    const total = await this.supportRequestModel.countDocuments({ userId: new Types.ObjectId(userId) });
-    const supportRequests = await this.supportRequestModel.find({ userId: new Types.ObjectId(userId) }).sort({ createdAt: -1 }).skip(skip).limit(limit).exec();
+    const total = await this.supportRequestModel.countDocuments({
+      userId: new Types.ObjectId(userId),
+    });
+    const supportRequests = await this.supportRequestModel
+      .find({ userId: new Types.ObjectId(userId) })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .exec();
     return {
       items: supportRequests,
       meta: {

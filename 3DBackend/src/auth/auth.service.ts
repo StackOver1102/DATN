@@ -13,6 +13,7 @@ import * as bcrypt from 'bcrypt';
 import { MailService } from 'src/mail/mail.service';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ConfigService } from '@nestjs/config';
+import { CaptchaService } from 'src/common/services/captcha.service';
 
 @Injectable()
 export class AuthService {
@@ -21,9 +22,20 @@ export class AuthService {
     private jwtService: JwtService,
     private mailService: MailService,
     private configService: ConfigService,
-  ) { }
+    private captchaService: CaptchaService,
+  ) {}
 
   async login(loginDto: LoginDto): Promise<JwtToken> {
+    // Verify CAPTCHA before processing
+    if (loginDto.captchaToken) {
+      const isCaptchaValid = await this.captchaService.verifyCaptcha(
+        loginDto.captchaToken,
+      );
+
+      if (!isCaptchaValid) {
+        throw new BadRequestException('Invalid CAPTCHA verification');
+      }
+    }
     const { email, password } = loginDto;
 
     const user = await this.usersService.findByEmail(email);
@@ -67,18 +79,31 @@ export class AuthService {
   }
 
   async registerUser(createUserDto: CreateUserDto) {
+    // Verify CAPTCHA before processing
+    if (createUserDto.captchaToken) {
+      const isCaptchaValid = await this.captchaService.verifyCaptcha(
+        createUserDto.captchaToken,
+      );
+
+      if (!isCaptchaValid) {
+        throw new BadRequestException('Invalid CAPTCHA verification');
+      }
+    }
+
     // Hash the password before creating the user
     try {
-      // const hashedPassword = await this.hashPassword(createUserDto.password);
+      // Remove captchaToken from data before saving
+      const { captchaToken: _captchaToken, ...userData } = createUserDto;
+
+      console.log(_captchaToken)
       const user = await this.usersService.create({
-        ...createUserDto,
-        // password: hashedPassword,
+        ...userData,
       });
 
       // Generate verification token
       const token = this.jwtService.sign(
         { email: user.email, purpose: 'email_verification' },
-        { expiresIn: '24h' }
+        { expiresIn: '24h' },
       );
 
       // Send verification email instead of welcome email
@@ -139,7 +164,7 @@ export class AuthService {
       // Generate a new verification token
       const token = this.jwtService.sign(
         { email: user.email, purpose: 'email_verification' },
-        { expiresIn: '24h' }
+        { expiresIn: '24h' },
       );
 
       // Send the verification email
@@ -151,14 +176,26 @@ export class AuthService {
     }
   }
 
-  async forgotPassword(email: string) {
-    const user = await this.usersService.findByEmail(email);
+  async forgotPassword(forgotPasswordDto: {
+    email: string;
+    captchaToken: string;
+  }) {
+    // Verify CAPTCHA before processing
+    const isCaptchaValid = await this.captchaService.verifyCaptcha(
+      forgotPasswordDto.captchaToken,
+    );
+
+    if (!isCaptchaValid) {
+      throw new BadRequestException('Invalid CAPTCHA verification');
+    }
+
+    const user = await this.usersService.findByEmail(forgotPasswordDto.email);
     if (!user) {
       throw new NotFoundException('User not found');
     }
     const token = this.jwtService.sign(
-      { email, purpose: 'password_reset' },
-      { expiresIn: '24h' }
+      { email: forgotPasswordDto.email, purpose: 'password_reset' },
+      { expiresIn: '24h' },
     );
     await this.mailService.sendResetPasswordEmail(user, token);
     return { message: 'Reset password email sent' };
@@ -166,6 +203,15 @@ export class AuthService {
 
   async resetPassword(resetPasswordDto: ResetPasswordDto) {
     try {
+      const { captchaToken } = resetPasswordDto;
+
+      const isCaptchaValid =
+        await this.captchaService.verifyCaptcha(captchaToken);
+
+      if (!isCaptchaValid) {
+        throw new UnauthorizedException('Invalid captcha');
+      }
+
       // Verify and decode the token
       const decoded = this.jwtService.verify(resetPasswordDto.token);
 
@@ -184,7 +230,10 @@ export class AuthService {
       const hashedPassword = await this.hashPassword(resetPasswordDto.password);
 
       // Update user's password
-      await this.usersService.updatePassword(user._id.toString(), hashedPassword);
+      await this.usersService.updatePassword(
+        user._id.toString(),
+        hashedPassword,
+      );
 
       return { message: 'Password has been reset successfully' };
     } catch (error) {
@@ -215,16 +264,17 @@ export class AuthService {
       username: email,
     };
 
-
     return {
       access_token: this.jwtService.sign(payload),
       token_type: 'Bearer',
-      expires_in: 86400
+      expires_in: 86400,
     };
   }
 
   async verifyToken(token: string) {
-    return this.jwtService.verify(token, { secret: this.configService.get('JWT_SECRET') });
+    return this.jwtService.verify(token, {
+      secret: this.configService.get('JWT_SECRET'),
+    });
   }
 
   async loginByAdmin(loginDto: LoginDto): Promise<JwtToken> {

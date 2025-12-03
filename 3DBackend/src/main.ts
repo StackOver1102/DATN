@@ -22,7 +22,7 @@ async function bootstrap() {
       'http://frontend:3000',
       'http://dashboard:4000',
       'https://3dvn.org',
-      'https://dashboard.3dvn.org'
+      'https://dashboard.3dvn.org',
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -68,7 +68,6 @@ async function bootstrap() {
     .addTag('3d-backend')
     .addBearerAuth() // Add bearer auth support to Swagger
     .build();
-
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);

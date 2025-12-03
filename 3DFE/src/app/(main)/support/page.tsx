@@ -7,6 +7,7 @@ import Link from "next/link";
 import { supportApi } from "@/lib/api";
 import { toast } from "sonner";
 import { useAppSelector } from "@/lib/store/hooks";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 export default function SupportPage() {
   const [formData, setFormData] = useState({
@@ -21,6 +22,7 @@ export default function SupportPage() {
   // const {}
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string>("");
 
   // Auto-fill user data when profile is loaded
   useEffect(() => {
@@ -62,6 +64,13 @@ export default function SupportPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate CAPTCHA
+    if (!captchaToken) {
+      toast.error("Please complete the CAPTCHA verification");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -72,6 +81,7 @@ export default function SupportPage() {
           phone: formData.phone,
           email: formData.email,
           message: formData.message || undefined,
+          captchaToken, // Include captcha token
           ...(profile ? { userId: profile._id } : {})
         },
         uploadedFiles
@@ -86,6 +96,7 @@ export default function SupportPage() {
           message: "",
         });
         setUploadedFiles([]);
+        setCaptchaToken(""); // Reset captcha
 
         toast.success(
           "Thank you for your message! We will contact you as soon as possible."
@@ -252,10 +263,29 @@ export default function SupportPage() {
               )}
             </div>
 
+            {/* Cloudflare Turnstile CAPTCHA */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium">
+                Security Verification
+              </label>
+              <Turnstile
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
+                onSuccess={(token: string) => setCaptchaToken(token)}
+                onError={() => {
+                  setCaptchaToken("");
+                  toast.error("CAPTCHA verification failed. Please try again.");
+                }}
+                onExpire={() => {
+                  setCaptchaToken("");
+                  toast.warning("CAPTCHA expired. Please verify again.");
+                }}
+              />
+            </div>
+
             {/* Submit Button */}
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !captchaToken}
               className="w-full py-2 px-4 border border-transparent text-sm font-bold rounded-lg text-yellow-400 bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3A5B22] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <div className="flex items-center justify-center gap-2">

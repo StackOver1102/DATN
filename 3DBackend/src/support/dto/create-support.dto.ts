@@ -35,4 +35,8 @@ export class CreateSupportDto {
   @IsString()
   @IsOptional()
   userId?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  captchaToken: string;
 }

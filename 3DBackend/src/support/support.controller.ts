@@ -33,12 +33,14 @@ import { NotificationsService } from 'src/notifications/notifications.service';
 import { NotificationType } from 'src/types/notification';
 import { FilterDto } from 'src/common/dto/filter.dto';
 import { UserPayload } from 'src/auth/types';
+import { Throttle } from '@nestjs/throttler';
 interface FileWithBuffer extends Express.Multer.File {
   buffer: Buffer;
   key: string;
 }
 
 @Controller('support')
+@Throttle({ default: { limit: 3, ttl: 300000 } })
 export class SupportController {
   constructor(
     private readonly supportService: SupportService,
