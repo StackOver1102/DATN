@@ -1,0 +1,56 @@
+{
+  "exportDate": "2025-11-02T04:59:41.099Z",
+  "database": "web3d",
+  "totalCollections": 12,
+  "totalDocuments": 13173,
+  "collections": [
+    {
+      "name": "products",
+      "documentsExported": 11738
+    },
+    {
+      "name": "banners",
+      "documentsExported": 2
+    },
+    {
+      "name": "categories",
+      "documentsExported": 120
+    },
+    {
+      "name": "orders",
+      "documentsExported": 332
+    },
+    {
+      "name": "refunds",
+      "documentsExported": 6
+    },
+    {
+      "name": "transactions",
+      "documentsExported": 433
+    },
+    {
+      "name": "users",
+      "documentsExported": 518
+    },
+    {
+      "name": "masterdatas",
+      "documentsExported": 3
+    },
+    {
+      "name": "schedules",
+      "documentsExported": 0
+    },
+    {
+      "name": "notifications",
+      "documentsExported": 14
+    },
+    {
+      "name": "supportrequests",
+      "documentsExported": 3
+    },
+    {
+      "name": "comments",
+      "documentsExported": 4
+    }
+  ]
+}

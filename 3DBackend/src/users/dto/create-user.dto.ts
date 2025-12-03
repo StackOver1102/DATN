@@ -52,4 +52,13 @@ export class CreateUserDto {
   @IsNumber()
   @IsOptional()
   balance?: number;
+
+  @ApiProperty({
+    description: 'Captcha token from Cloudflare Turnstile',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  captchaToken?: string;
 }

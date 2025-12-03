@@ -1,0 +1,124 @@
+# Maintenance mode configuration for 3DVN.org
+# This configuration serves a maintenance page for all requests
+
+# Common Cloudflare settings
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
+# Maintenance mode server block for main domain
+server {
+    listen 80;
+    server_name 3dvn.org www.3dvn.org;
+    
+    # Root directory for maintenance files
+    root /usr/share/nginx/html;
+    index maintenance.html;
+    
+    # Trust Cloudflare proxies
+    # real_ip_header CF-Connecting-IP;
+    # real_ip_recursive on;
+    
+    # Serve maintenance page for all requests
+    location / {
+        # Always serve maintenance page with 503 status
+        return 503;
+    }
+    
+    # Health check endpoint (optional - for monitoring)
+    location /health {
+        access_log off;
+        return 200 "Maintenance Mode Active\n";
+        add_header Content-Type text/plain;
+        add_header X-Maintenance-Mode "active" always;
+    }
+    
+    # Custom error page for 503
+    error_page 503 /maintenance.html;
+    
+    # Maintenance page handler
+    location = /maintenance.html {
+        root /usr/share/nginx/html;
+        
+        # Add maintenance headers
+        add_header Retry-After 3600 always;
+        add_header X-Maintenance-Mode "active" always;
+        add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+        add_header Pragma "no-cache" always;
+        add_header Expires "0" always;
+    }
+}
+
+# Maintenance mode server block for dashboard subdomain
+server {
+    listen 80;
+    server_name dashboard.3dvn.org;
+    
+    # Root directory for maintenance files
+    root /usr/share/nginx/html;
+    index maintenance.html;
+    
+    # Trust Cloudflare proxies
+    # real_ip_header CF-Connecting-IP;
+    # real_ip_recursive on;
+    
+    # Serve maintenance page for all requests
+    location / {
+        # Always serve maintenance page with 503 status
+        return 503;
+    }
+    
+    # Health check endpoint
+    location /health {
+        access_log off;
+        return 200 "Dashboard Maintenance Mode Active\n";
+        add_header Content-Type text/plain;
+        add_header X-Maintenance-Mode "active" always;
+    }
+    
+    # Custom error page for 503
+    error_page 503 /maintenance.html;
+    
+    # Maintenance page handler
+    location = /maintenance.html {
+        root /usr/share/nginx/html;
+        
+        # Add maintenance headers
+        add_header Retry-After 3600 always;
+        add_header X-Maintenance-Mode "active" always;
+        add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+        add_header Pragma "no-cache" always;
+        add_header Expires "0" always;
+    }
+}
+
+# Maintenance mode server block for API subdomain
+server {
+    listen 80;
+    server_name api.3dvn.org;
+    
+    # Trust Cloudflare proxies
+    # real_ip_header CF-Connecting-IP;
+    # real_ip_recursive on;
+    
+    # Return JSON response for API requests
+    location / {
+        add_header Content-Type application/json always;
+        add_header Retry-After 3600 always;
+        add_header X-Maintenance-Mode "active" always;
+        add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+        add_header Pragma "no-cache" always;
+        add_header Expires "0" always;
+        
+        return 503 '{"error": "Service Unavailable", "message": "API is currently under maintenance. Please try again later.", "status": 503, "maintenance": true, "estimated_time": "1-2 hours"}';
+    }
+    
+    # Health check endpoint for API
+    location /health {
+        access_log off;
+        add_header Content-Type application/json always;
+        add_header X-Maintenance-Mode "active" always;
+        return 200 '{"status": "maintenance", "message": "API is under maintenance"}';
+    }
+}

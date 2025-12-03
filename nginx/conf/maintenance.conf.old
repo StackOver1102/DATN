@@ -1,0 +1,169 @@
+# Maintenance mode configuration for 3DVN.org
+# This configuration serves a maintenance page for all requests
+
+# Common Cloudflare settings
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
+# Maintenance mode server block for main domain
+server {
+    listen 80;
+    server_name 3dvn.org www.3dvn.org;
+    
+    # Root directory for maintenance files
+    root /etc/nginx/html;
+    index maintenance.html;
+    
+    # Trust Cloudflare proxies
+    # real_ip_header CF-Connecting-IP;
+    # real_ip_recursive on;
+    
+    # Serve maintenance page for all requests
+    location / {
+        try_files /maintenance.html =503;
+        
+        # Add maintenance headers
+        add_header Retry-After 3600 always;
+        add_header X-Maintenance-Mode "active" always;
+        add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+        add_header Pragma "no-cache" always;
+        add_header Expires "0" always;
+    }
+    
+    # Allow access to static assets for maintenance page
+    location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        try_files $uri /maintenance.html;
+        expires 1h;
+        add_header Cache-Control "public, immutable";
+    }
+    
+    # Health check endpoint (optional - for monitoring)
+    location /health {
+        access_log off;
+        return 200 "Maintenance Mode Active\n";
+        add_header Content-Type text/plain;
+        add_header X-Maintenance-Mode "active" always;
+    }
+    
+    # Return 503 for all other requests
+    location ~* ^.+$ {
+        return 503;
+    }
+    
+    # Custom error page
+    error_page 503 /maintenance.html;
+}
+
+# Maintenance mode server block for dashboard subdomain
+server {
+    listen 80;
+    server_name dashboard.3dvn.org;
+    
+    # Root directory for maintenance files
+    root /etc/nginx/html;
+    index maintenance.html;
+    
+    # Trust Cloudflare proxies
+    # real_ip_header CF-Connecting-IP;
+    # real_ip_recursive on;
+    
+    # Serve maintenance page for all requests
+    location / {
+        try_files /maintenance.html =503;
+        
+        # Add maintenance headers
+        add_header Retry-After 3600 always;
+        add_header X-Maintenance-Mode "active" always;
+        add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+        add_header Pragma "no-cache" always;
+        add_header Expires "0" always;
+    }
+    
+    # Allow access to static assets for maintenance page
+    location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        try_files $uri /maintenance.html;
+        expires 1h;
+        add_header Cache-Control "public, immutable";
+    }
+    
+    # Health check endpoint
+    location /health {
+        access_log off;
+        return 200 "Dashboard Maintenance Mode Active\n";
+        add_header Content-Type text/plain;
+        add_header X-Maintenance-Mode "active" always;
+    }
+    
+    # Return 503 for all other requests
+    location ~* ^.+$ {
+        return 503;
+    }
+    
+    # Custom error page
+    error_page 503 /maintenance.html;
+}
+
+# Maintenance mode server block for API subdomain
+server {
+    listen 80;
+    server_name api.3dvn.org;
+    
+    # Trust Cloudflare proxies
+    # real_ip_header CF-Connecting-IP;
+    # real_ip_recursive on;
+    
+    # Return JSON response for API requests
+    location / {
+        add_header Content-Type application/json always;
+        add_header Retry-After 3600 always;
+        add_header X-Maintenance-Mode "active" always;
+        add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+        add_header Pragma "no-cache" always;
+        add_header Expires "0" always;
+        
+        return 503 '{"error": "Service Unavailable", "message": "API is currently under maintenance. Please try again later.", "status": 503, "maintenance": true, "estimated_time": "1-2 hours"}';
+    }
+    
+    # Health check endpoint for API
+    location /health {
+        access_log off;
+        add_header Content-Type application/json always;
+        add_header X-Maintenance-Mode "active" always;
+        return 200 '{"status": "maintenance", "message": "API is under maintenance"}';
+    }
+}
+
+# Optional: Whitelist specific IPs (admin access)
+# Uncomment and modify the following block to allow admin access during maintenance
+#
+# geo $maintenance_allowed {
+#     default 0;
+#     # Add your admin IP addresses here
+#     # 192.168.1.100 1;  # Example admin IP
+#     # 10.0.0.50 1;      # Another admin IP
+# }
+#
+# # Admin access server block (only if IP is whitelisted)
+# server {
+#     listen 80;
+#     server_name admin.3dvn.org;
+#     
+#     # Check if IP is allowed
+#     if ($maintenance_allowed = 0) {
+#         return 503;
+#     }
+#     
+#     # Proxy to normal services for whitelisted IPs
+#     location / {
+#         proxy_pass http://dashboard:4000;
+#         proxy_http_version 1.1;
+#         proxy_set_header Upgrade $http_upgrade;
+#         proxy_set_header Connection $connection_upgrade;
+#         proxy_set_header Host $host;
+#         proxy_set_header X-Real-IP $remote_addr;
+#         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#         proxy_set_header X-Forwarded-Proto "https";
+#     }
+# }

@@ -1,0 +1,28 @@
+{
+  "collectionName": "notifications",
+  "totalDocuments": 14,
+  "sampleDocument": {
+    "_id": "68b1d75275c7b39a00cf6f37",
+    "message": "New refund request from refund",
+    "createdAt": "2025-08-29T16:37:38.333Z",
+    "isRead": true,
+    "isWatching": true,
+    "originalId": "68b1d75275c7b39a00cf6f35",
+    "originType": "refund",
+    "userId": "68aed2232979fafa52b9ad28",
+    "updatedAt": "2025-09-04T04:37:10.154Z",
+    "__v": 0
+  },
+  "documentStructure": [
+    "_id",
+    "message",
+    "createdAt",
+    "isRead",
+    "isWatching",
+    "originalId",
+    "originType",
+    "userId",
+    "updatedAt",
+    "__v"
+  ]
+}

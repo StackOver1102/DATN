@@ -297,38 +297,40 @@ export default function ClientSideModelsPage({
                 </span>
 
                 {/* Show current search query with clear button */}
-                {searchParams.get("q") && (
-                  <div className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-full">
-                    <span className="text-sm text-gray-700">
-                      Search: <span className="font-medium">{searchParams.get("q")}</span>
-                    </span>
-                    <button
-                      onClick={() => {
-                        // Remove search query from URL
-                        const params = new URLSearchParams(searchParams.toString());
-                        params.delete("q");
-                        params.delete("page"); // Reset to first page
-                        router.push(`?${params.toString()}`, { scroll: false });
-                      }}
-                      className="text-gray-500 hover:text-gray-700 transition-colors"
-                      title="Clear search"
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                {
+                  searchParams.get("q") && (
+                    <div className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-full">
+                      <span className="text-sm text-gray-700">
+                        Search: <span className="font-medium">{searchParams.get("q")}</span>
+                      </span>
+                      <button
+                        onClick={() => {
+                          // Remove search query from URL
+                          const params = new URLSearchParams(searchParams.toString());
+                          params.delete("q");
+                          params.delete("page"); // Reset to first page
+                          router.push(`?${params.toString()}`, { scroll: false });
+                        }}
+                        className="text-gray-500 hover:text-gray-700 transition-colors"
+                        title="Clear search"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                )}
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  )
+                }
 
                 {/* Filter tabs for All/Pro/Free */}
                 <div className="flex border border-gray-300 rounded-lg ml-4">
@@ -360,34 +362,36 @@ export default function ClientSideModelsPage({
                     Free
                   </button>
                 </div>
-              </div>
+              </div >
 
-              {models.length > 0 && (
-                <div className="flex items-center gap-4">
-                  {/* View Mode Toggle */}
-                  <div className="flex border border-gray-300 rounded-lg">
-                    <Button
-                      variant={viewMode === "grid" ? "default" : "ghost"}
-                      size="icon"
-                      onClick={() => setViewMode("grid")}
-                    >
-                      <Grid className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant={viewMode === "list" ? "default" : "ghost"}
-                      size="icon"
-                      onClick={() => setViewMode("list")}
-                    >
-                      <List className="w-4 h-4" />
-                    </Button>
+              {
+                models.length > 0 && (
+                  <div className="flex items-center gap-4">
+                    {/* View Mode Toggle */}
+                    <div className="flex border border-gray-300 rounded-lg">
+                      <Button
+                        variant={viewMode === "grid" ? "default" : "ghost"}
+                        size="icon"
+                        onClick={() => setViewMode("grid")}
+                      >
+                        <Grid className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant={viewMode === "list" ? "default" : "ghost"}
+                        size="icon"
+                        onClick={() => setViewMode("list")}
+                      >
+                        <List className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          </div>
+                )
+              }
+            </div >
+          </div >
 
           {/* Models Grid/List */}
-          <div className="p-6">
+          < div className="p-6" >
             <Suspense
               fallback={
                 <div className="flex items-center justify-center py-20">
@@ -495,46 +499,48 @@ export default function ClientSideModelsPage({
             </Suspense>
 
             {/* Pagination - only show if we have pages to display */}
-            {currentTotalPages > 0 && models.length > 0 && (
-              <div className="mt-8 flex justify-center">
-                <Pagination
-                  currentPage={parseInt(searchParams.get("page") || "1", 10)}
-                  totalPages={
-                    currentTotalPages || 1
-                  } /* Ensure minimum of 1 page */
-                  onPageChange={(page) => {
-                    // Create a new URLSearchParams object from the current search params
-                    const params = new URLSearchParams(searchParams.toString());
-                    // Update or add the page parameter
-                    params.set("page", page.toString());
+            {
+              currentTotalPages > 0 && models.length > 0 && (
+                <div className="mt-8 flex justify-center">
+                  <Pagination
+                    currentPage={parseInt(searchParams.get("page") || "1", 10)}
+                    totalPages={
+                      currentTotalPages || 1
+                    } /* Ensure minimum of 1 page */
+                    onPageChange={(page) => {
+                      // Create a new URLSearchParams object from the current search params
+                      const params = new URLSearchParams(searchParams.toString());
+                      // Update or add the page parameter
+                      params.set("page", page.toString());
 
-                    // Directly fetch data for the new page
-                    const apiParams: ApiFilterParams = {};
-                    params.forEach((value, key) => {
-                      (apiParams as Record<string, string>)[key] = value;
-                    });
+                      // Directly fetch data for the new page
+                      const apiParams: ApiFilterParams = {};
+                      params.forEach((value, key) => {
+                        (apiParams as Record<string, string>)[key] = value;
+                      });
 
-                    // Convert page to number
-                    apiParams.page = parseInt(
-                      apiParams.page?.toString() || "1",
-                      10
-                    );
+                      // Convert page to number
+                      apiParams.page = parseInt(
+                        apiParams.page?.toString() || "1",
+                        10
+                      );
 
-                    // Fetch data directly
-                    fetchModels(apiParams);
+                      // Fetch data directly
+                      fetchModels(apiParams);
 
-                    // Scroll to top of page
-                    window.scrollTo({ top: 0, behavior: "smooth" });
+                      // Scroll to top of page
+                      window.scrollTo({ top: 0, behavior: "smooth" });
 
-                    // Also update the URL (this won't cause a full page reload)
-                    router.push(`?${params.toString()}`, { scroll: false });
-                  }}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+                      // Also update the URL (this won't cause a full page reload)
+                      router.push(`?${params.toString()}`, { scroll: false });
+                    }}
+                  />
+                </div>
+              )
+            }
+          </div >
+        </div >
+      </div >
+    </div >
   );
 }

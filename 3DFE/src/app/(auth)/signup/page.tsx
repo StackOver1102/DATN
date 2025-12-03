@@ -10,6 +10,7 @@ import { z } from "zod";
 import { useRegister } from "@/lib/hooks/useAuth";
 import { Loading } from "@/components/ui/loading";
 import { toast } from "sonner";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 // Define validation schema with Zod
 const signupSchema = z.object({
@@ -27,6 +28,7 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 function SignUpForm() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string>("");
 
   // Initialize React Hook Form with Zod resolver
   const {
@@ -46,9 +48,15 @@ function SignUpForm() {
   const { mutate: registerAccount, isSuccess, isPending } = useRegister();
   // Handle registration
   const onSubmit = async (data: SignupFormValues) => {
+    // Validate CAPTCHA
+    if (!captchaToken) {
+      toast.error("Please complete the CAPTCHA verification");
+      return;
+    }
+
     setLoading(true);
 
-    registerAccount(data, {
+    registerAccount({ ...data, captchaToken }, {
       onSuccess: () => {
         // Redirect is handled in useRegister hook
       },
@@ -90,9 +98,8 @@ function SignUpForm() {
                   type="text"
                   autoComplete="fullName"
                   placeholder="Enter your name"
-                  className={`h-12 w-full rounded-lg border px-4 ${
-                    errors.fullName ? "border-red-500" : ""
-                  }`}
+                  className={`h-12 w-full rounded-lg border px-4 ${errors.fullName ? "border-red-500" : ""
+                    }`}
                   {...register("fullName")}
                 />
                 {errors.fullName && (
@@ -114,9 +121,8 @@ function SignUpForm() {
                   type="email"
                   autoComplete="email"
                   placeholder="Enter your email"
-                  className={`h-12 w-full rounded-lg border px-4 ${
-                    errors.email ? "border-red-500" : ""
-                  }`}
+                  className={`h-12 w-full rounded-lg border px-4 ${errors.email ? "border-red-500" : ""
+                    }`}
                   {...register("email")}
                 />
                 {errors.email && (
@@ -138,9 +144,8 @@ function SignUpForm() {
                   type={showPassword ? "text" : "password"}
                   autoComplete="new-password"
                   placeholder="••••••••"
-                  className={`h-12 w-full rounded-lg border px-4 ${
-                    errors.password ? "border-red-500" : ""
-                  }`}
+                  className={`h-12 w-full rounded-lg border px-4 ${errors.password ? "border-red-500" : ""
+                    }`}
                   {...register("password")}
                 />
                 <div
@@ -191,9 +196,8 @@ function SignUpForm() {
                 <input
                   id="agreeToTerms"
                   type="checkbox"
-                  className={`w-4 h-4 border rounded ${
-                    errors.agreeToTerms ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className={`w-4 h-4 border rounded ${errors.agreeToTerms ? "border-red-500" : "border-gray-300"
+                    }`}
                   {...register("agreeToTerms")}
                 />
               </div>
@@ -209,25 +213,44 @@ function SignUpForm() {
               </div>
             </div>
 
+            {/* Cloudflare Turnstile CAPTCHA */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium">
+                Security Verification
+              </label>
+              <Turnstile
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
+                onSuccess={(token: string) => setCaptchaToken(token)}
+                onError={() => {
+                  setCaptchaToken("");
+                  toast.error("CAPTCHA verification failed. Please try again.");
+                }}
+                onExpire={() => {
+                  setCaptchaToken("");
+                  toast.warning("CAPTCHA expired. Please verify again.");
+                }}
+              />
+            </div>
+
             {/* Signup button */}
             <Button
               type="submit"
-              disabled={loading}
-              className="w-full h-12 bg-black hover:bg-gray-800 text-yellow-400 rounded-lg font-bold"
+              disabled={loading || !captchaToken}
+              className="w-full h-12 bg-black hover:bg-gray-800 text-yellow-400 rounded-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Creating account..." : "Signup"}
             </Button>
-          </form>
+          </form >
 
           {/* Divider */}
-          <div className="relative my-6">
+          < div className="relative my-6" >
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-200"></div>
             </div>
             <div className="relative flex justify-center text-xs">
               <span className="px-2 bg-white text-gray-500">Or</span>
             </div>
-          </div>
+          </div >
 
           <div className="text-center mt-6">
             <p className="text-sm">
@@ -257,9 +280,9 @@ function SignUpForm() {
               Back to Home
             </Link>
           </div>
-        </div>
-      </div>
-    </div>
+        </div >
+      </div >
+    </div >
   );
 }
 

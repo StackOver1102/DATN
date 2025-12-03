@@ -8,6 +8,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loading } from "@/components/ui/loading";
 import { LoadingButton } from "@/components/ui/loading-button";
+import { Turnstile } from "@marsidev/react-turnstile";
+import { toast } from "sonner";
 
 // Define validation schema with Zod
 const resetPasswordSchema = z
@@ -33,6 +35,7 @@ function ResetPasswordForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string>("");
 
   // Get token from URL query parameter
   useEffect(() => {
@@ -64,6 +67,12 @@ function ResetPasswordForm() {
       return;
     }
 
+    // Validate CAPTCHA
+    if (!captchaToken) {
+      toast.error("Please complete the CAPTCHA verification");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setSuccess(null);
@@ -72,7 +81,7 @@ function ResetPasswordForm() {
       // Call the API to reset password
       const { authApi } = await import('@/lib/api');
       const response = await authApi.resetPassword(token, data.password);
-      
+
       if (response.success) {
         setSuccess("Mật khẩu của bạn đã được đặt lại thành công. Bạn có thể đăng nhập bằng mật khẩu mới.");
         // Redirect to login page after 3 seconds
@@ -148,9 +157,8 @@ function ResetPasswordForm() {
                     id="password"
                     type="password"
                     autoComplete="new-password"
-                    className={`appearance-none relative block w-full px-3 py-2 border ${
-                      errors.password ? "border-red-500" : "border-gray-300"
-                    } placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-[#3A5B22] focus:border-[#3A5B22] focus:z-10 sm:text-sm`}
+                    className={`appearance-none relative block w-full px-3 py-2 border ${errors.password ? "border-red-500" : "border-gray-300"
+                      } placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-[#3A5B22] focus:border-[#3A5B22] focus:z-10 sm:text-sm`}
                     placeholder="Enter your new password"
                     {...register("password")}
                   />
@@ -172,9 +180,8 @@ function ResetPasswordForm() {
                     id="confirmPassword"
                     type="password"
                     autoComplete="new-password"
-                    className={`appearance-none relative block w-full px-3 py-2 border ${
-                      errors.confirmPassword ? "border-red-500" : "border-gray-300"
-                    } placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-[#3A5B22] focus:border-[#3A5B22] focus:z-10 sm:text-sm`}
+                    className={`appearance-none relative block w-full px-3 py-2 border ${errors.confirmPassword ? "border-red-500" : "border-gray-300"
+                      } placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-[#3A5B22] focus:border-[#3A5B22] focus:z-10 sm:text-sm`}
                     placeholder="Confirm your new password"
                     {...register("confirmPassword")}
                   />
@@ -186,18 +193,39 @@ function ResetPasswordForm() {
                 </div>
               </div>
 
+              {/* Cloudflare Turnstile CAPTCHA */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">
+                  Security Verification
+                </label>
+                <Turnstile
+                  siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
+                  onSuccess={(token: string) => setCaptchaToken(token)}
+                  onError={() => {
+                    setCaptchaToken("");
+                    toast.error("CAPTCHA verification failed. Please try again.");
+                  }}
+                  onExpire={() => {
+                    setCaptchaToken("");
+                    toast.warning("CAPTCHA expired. Please verify again.");
+                  }}
+                />
+              </div>
+
               {/* Reset Password button */}
               <div>
                 <LoadingButton
                   type="submit"
                   isLoading={loading}
-                  className="w-full py-2 px-4 border border-transparent text-sm font-bold rounded-lg text-yellow-400 bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3A5B22]"
+                  disabled={!captchaToken}
+                  className="w-full py-2 px-4 border border-transparent text-sm font-bold rounded-lg text-yellow-400 bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3A5B22] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Reset Password
                 </LoadingButton>
               </div>
-            </form>
-          )}
+            </form >
+          )
+          }
 
           <div className="text-center mt-6">
             <p className="text-sm">
@@ -227,9 +255,9 @@ function ResetPasswordForm() {
               Back to Home
             </Link>
           </div>
-        </div>
-      </div>
-    </div>
+        </div >
+      </div >
+    </div >
   );
 }
 

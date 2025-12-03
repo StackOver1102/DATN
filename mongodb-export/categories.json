@@ -1,0 +1,1082 @@
+[
+  {
+    "_id": "6879fadd5bc05b7344ca8055",
+    "name": "Architecture",
+    "parentId": null,
+    "isActive": true,
+    "createdAt": "2025-07-18T07:42:21.955Z",
+    "updatedAt": "2025-07-18T07:42:21.955Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879faf75bc05b7344ca8058",
+    "name": "Barbecue and grill",
+    "parentId": "6879fadd5bc05b7344ca8055",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:42:47.341Z",
+    "updatedAt": "2025-07-18T07:42:47.341Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fb085bc05b7344ca805d",
+    "name": "Building",
+    "parentId": "6879fadd5bc05b7344ca8055",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:43:04.118Z",
+    "updatedAt": "2025-07-18T07:43:04.118Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fb0d5bc05b7344ca8060",
+    "name": "Environment elements",
+    "parentId": "6879fadd5bc05b7344ca8055",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:43:09.191Z",
+    "updatedAt": "2025-07-18T07:43:09.191Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fb135bc05b7344ca8063",
+    "name": "Facade element",
+    "parentId": "6879fadd5bc05b7344ca8055",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:43:15.503Z",
+    "updatedAt": "2025-07-18T07:43:15.503Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fb185bc05b7344ca8066",
+    "name": "Fence",
+    "parentId": "6879fadd5bc05b7344ca8055",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:43:20.918Z",
+    "updatedAt": "2025-07-18T07:43:20.918Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fb1c5bc05b7344ca8069",
+    "name": "Other",
+    "parentId": "6879fadd5bc05b7344ca8055",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:43:24.823Z",
+    "updatedAt": "2025-07-18T07:43:24.823Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fb205bc05b7344ca806c",
+    "name": "Paving",
+    "parentId": "6879fadd5bc05b7344ca8055",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:43:28.486Z",
+    "updatedAt": "2025-07-18T07:43:28.486Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fb245bc05b7344ca806f",
+    "name": "Playground",
+    "parentId": "6879fadd5bc05b7344ca8055",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:43:32.756Z",
+    "updatedAt": "2025-07-18T07:43:32.756Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fb285bc05b7344ca8072",
+    "name": "Urban environment",
+    "parentId": "6879fadd5bc05b7344ca8055",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:43:36.634Z",
+    "updatedAt": "2025-07-18T07:43:36.634Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fb405bc05b7344ca8074",
+    "name": "Bathroom",
+    "parentId": null,
+    "isActive": true,
+    "createdAt": "2025-07-18T07:44:00.235Z",
+    "updatedAt": "2025-07-18T07:44:00.235Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fb505bc05b7344ca8077",
+    "name": "Bathroom accessories",
+    "parentId": "6879fb405bc05b7344ca8074",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:44:16.930Z",
+    "updatedAt": "2025-07-18T07:44:16.930Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fb575bc05b7344ca807a",
+    "name": "Bathroom furniture",
+    "parentId": "6879fb405bc05b7344ca8074",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:44:23.242Z",
+    "updatedAt": "2025-07-18T07:44:23.242Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fb5d5bc05b7344ca807d",
+    "name": "Bathtub",
+    "parentId": "6879fb405bc05b7344ca8074",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:44:29.053Z",
+    "updatedAt": "2025-07-18T07:44:29.053Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fb615bc05b7344ca8080",
+    "name": "Faucet",
+    "parentId": "6879fb405bc05b7344ca8074",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:44:33.245Z",
+    "updatedAt": "2025-07-18T07:44:33.245Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fb645bc05b7344ca8083",
+    "name": "Other rail",
+    "parentId": "6879fb405bc05b7344ca8074",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:44:36.862Z",
+    "updatedAt": "2025-07-18T07:44:36.862Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fb695bc05b7344ca8086",
+    "name": "Shower",
+    "parentId": "6879fb405bc05b7344ca8074",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:44:41.727Z",
+    "updatedAt": "2025-07-18T07:44:41.727Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fb6d5bc05b7344ca8089",
+    "name": "Toilet and Bidet",
+    "parentId": "6879fb405bc05b7344ca8074",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:44:45.030Z",
+    "updatedAt": "2025-07-18T07:44:45.030Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fb725bc05b7344ca808c",
+    "name": "Wash basin",
+    "parentId": "6879fb405bc05b7344ca8074",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:44:50.502Z",
+    "updatedAt": "2025-07-18T07:44:50.502Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fc7f5bc05b7344ca8096",
+    "name": "Childroom",
+    "parentId": null,
+    "isActive": true,
+    "createdAt": "2025-07-18T07:49:19.881Z",
+    "updatedAt": "2025-07-18T07:49:19.881Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fcaf5bc05b7344ca809b",
+    "name": "Bed",
+    "parentId": "6879fc7f5bc05b7344ca8096",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:50:07.283Z",
+    "updatedAt": "2025-07-18T07:50:07.283Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fcc15bc05b7344ca809e",
+    "name": "Funiture Child set",
+    "parentId": "6879fc7f5bc05b7344ca8096",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:50:25.362Z",
+    "updatedAt": "2025-08-26T11:49:26.044Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fcc85bc05b7344ca80a1",
+    "name": "Table + Chair",
+    "parentId": "6879fc7f5bc05b7344ca8096",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:50:32.481Z",
+    "updatedAt": "2025-07-18T07:50:32.481Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fcce5bc05b7344ca80a4",
+    "name": "Wardrobe",
+    "parentId": "6879fc7f5bc05b7344ca8096",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:50:38.196Z",
+    "updatedAt": "2025-07-18T07:50:38.196Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fcd25bc05b7344ca80a7",
+    "name": "Toy",
+    "parentId": "6879fc7f5bc05b7344ca8096",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:50:42.562Z",
+    "updatedAt": "2025-07-18T07:50:42.562Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fcd75bc05b7344ca80aa",
+    "name": "Miscellaneous",
+    "parentId": "6879fc7f5bc05b7344ca8096",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:50:47.143Z",
+    "updatedAt": "2025-07-18T07:50:47.143Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fce25bc05b7344ca80ac",
+    "name": "Decoration",
+    "parentId": null,
+    "isActive": true,
+    "createdAt": "2025-07-18T07:50:58.645Z",
+    "updatedAt": "2025-07-18T07:50:58.645Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fcec5bc05b7344ca80af",
+    "name": "Decorative plaster",
+    "parentId": "6879fce25bc05b7344ca80ac",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:51:08.419Z",
+    "updatedAt": "2025-07-18T07:51:08.419Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fcf45bc05b7344ca80b2",
+    "name": "3D panel",
+    "parentId": "6879fce25bc05b7344ca80ac",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:51:16.686Z",
+    "updatedAt": "2025-07-18T07:51:16.686Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fcfd5bc05b7344ca80b5",
+    "name": "Curtain",
+    "parentId": "6879fce25bc05b7344ca80ac",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:51:25.359Z",
+    "updatedAt": "2025-07-18T07:51:25.359Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fd025bc05b7344ca80b8",
+    "name": "Mirror",
+    "parentId": "6879fce25bc05b7344ca80ac",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:51:30.729Z",
+    "updatedAt": "2025-07-18T07:51:30.729Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fd065bc05b7344ca80bb",
+    "name": "Frame",
+    "parentId": "6879fce25bc05b7344ca80ac",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:51:34.800Z",
+    "updatedAt": "2025-07-18T07:51:34.800Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fd0a5bc05b7344ca80be",
+    "name": "Vase",
+    "parentId": "6879fce25bc05b7344ca80ac",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:51:38.862Z",
+    "updatedAt": "2025-07-18T07:51:38.862Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fd0e5bc05b7344ca80c1",
+    "name": "Books",
+    "parentId": "6879fce25bc05b7344ca80ac",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:51:42.110Z",
+    "updatedAt": "2025-07-18T07:51:42.110Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fd115bc05b7344ca80c4",
+    "name": "Pillows",
+    "parentId": "6879fce25bc05b7344ca80ac",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:51:45.902Z",
+    "updatedAt": "2025-07-18T07:51:45.902Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fd155bc05b7344ca80c7",
+    "name": "Carpets",
+    "parentId": "6879fce25bc05b7344ca80ac",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:51:49.284Z",
+    "updatedAt": "2025-07-18T07:51:49.284Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fd195bc05b7344ca80ca",
+    "name": "Decorative set",
+    "parentId": "6879fce25bc05b7344ca80ac",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:51:53.807Z",
+    "updatedAt": "2025-07-18T07:51:53.807Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fd1d5bc05b7344ca80cd",
+    "name": "Sculpture",
+    "parentId": "6879fce25bc05b7344ca80ac",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:51:57.014Z",
+    "updatedAt": "2025-07-18T07:51:57.014Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fd215bc05b7344ca80d0",
+    "name": "Other decorative",
+    "parentId": "6879fce25bc05b7344ca80ac",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:52:01.877Z",
+    "updatedAt": "2025-09-16T13:01:33.998Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fd255bc05b7344ca80d3",
+    "name": "Clothes",
+    "parentId": "6879fce25bc05b7344ca80ac",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:52:05.171Z",
+    "updatedAt": "2025-07-18T07:52:05.171Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fd2c5bc05b7344ca80d6",
+    "name": "Footwear",
+    "parentId": "6879fce25bc05b7344ca80ac",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:52:12.333Z",
+    "updatedAt": "2025-07-18T07:52:12.333Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fd2f5bc05b7344ca80d9",
+    "name": "Watches & Clocks",
+    "parentId": "6879fce25bc05b7344ca80ac",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:52:15.926Z",
+    "updatedAt": "2025-07-18T07:52:15.926Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fd385bc05b7344ca80db",
+    "name": "Furniture",
+    "parentId": null,
+    "isActive": true,
+    "createdAt": "2025-07-18T07:52:24.133Z",
+    "updatedAt": "2025-07-18T07:52:24.133Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fd435bc05b7344ca80de",
+    "name": "Dressing table",
+    "parentId": "6879fd385bc05b7344ca80db",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:52:35.250Z",
+    "updatedAt": "2025-07-18T07:52:35.250Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fd485bc05b7344ca80e1",
+    "name": "Hallway",
+    "parentId": "6879fd385bc05b7344ca80db",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:52:40.389Z",
+    "updatedAt": "2025-07-18T07:52:40.389Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fd4b5bc05b7344ca80e4",
+    "name": "Rack",
+    "parentId": "6879fd385bc05b7344ca80db",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:52:43.806Z",
+    "updatedAt": "2025-07-18T07:52:43.806Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fd515bc05b7344ca80e7",
+    "name": "TV Wall",
+    "parentId": "6879fd385bc05b7344ca80db",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:52:49.181Z",
+    "updatedAt": "2025-07-18T07:52:49.181Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fd545bc05b7344ca80ea",
+    "name": "Console",
+    "parentId": "6879fd385bc05b7344ca80db",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:52:52.810Z",
+    "updatedAt": "2025-07-18T07:52:52.810Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fd5a5bc05b7344ca80ed",
+    "name": "Wardrobe & Display cabinets",
+    "parentId": "6879fd385bc05b7344ca80db",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:52:58.955Z",
+    "updatedAt": "2025-07-18T07:52:58.955Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fd5e5bc05b7344ca80f0",
+    "name": "Sofa",
+    "parentId": "6879fd385bc05b7344ca80db",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:53:02.886Z",
+    "updatedAt": "2025-07-18T07:53:02.886Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fd625bc05b7344ca80f3",
+    "name": "Table",
+    "parentId": "6879fd385bc05b7344ca80db",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:53:06.806Z",
+    "updatedAt": "2025-07-18T07:53:06.806Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879fd675bc05b7344ca80f6",
+    "name": "Chair",
+    "parentId": "6879fd385bc05b7344ca80db",
+    "isActive": true,
+    "createdAt": "2025-07-18T07:53:11.593Z",
+    "updatedAt": "2025-07-18T07:53:11.593Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879ffa8c251aab0ce40cfd1",
+    "name": "Bed",
+    "parentId": "6879fd385bc05b7344ca80db",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:02:48.942Z",
+    "updatedAt": "2025-07-18T08:02:48.942Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879ffadc251aab0ce40cfd4",
+    "name": "Other",
+    "parentId": "6879fd385bc05b7344ca80db",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:02:53.079Z",
+    "updatedAt": "2025-07-18T08:02:53.079Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879ffb8c251aab0ce40cfd7",
+    "name": "Sideboard & Chest of drawer",
+    "parentId": "6879fd385bc05b7344ca80db",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:03:04.715Z",
+    "updatedAt": "2025-07-18T08:03:04.715Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879ffbdc251aab0ce40cfda",
+    "name": "Office furniture",
+    "parentId": "6879fd385bc05b7344ca80db",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:03:09.950Z",
+    "updatedAt": "2025-07-18T08:03:09.950Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879ffc3c251aab0ce40cfdd",
+    "name": "Arm chair",
+    "parentId": "6879fd385bc05b7344ca80db",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:03:15.169Z",
+    "updatedAt": "2025-07-18T08:03:15.169Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879ffc8c251aab0ce40cfe0",
+    "name": "Other soft seating",
+    "parentId": "6879fd385bc05b7344ca80db",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:03:20.698Z",
+    "updatedAt": "2025-07-18T08:03:20.698Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879ffcdc251aab0ce40cfe3",
+    "name": "Table and Chair",
+    "parentId": "6879fd385bc05b7344ca80db",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:03:25.629Z",
+    "updatedAt": "2025-09-25T13:34:37.206Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879ffd5c251aab0ce40cfe5",
+    "name": "Kitchen",
+    "parentId": null,
+    "isActive": true,
+    "createdAt": "2025-07-18T08:03:33.829Z",
+    "updatedAt": "2025-07-18T08:03:33.829Z",
+    "__v": 0
+  },
+  {
+    "_id": "6879ffe4c251aab0ce40cfe8",
+    "name": "Tableware",
+    "parentId": "6879ffd5c251aab0ce40cfe5",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:03:48.018Z",
+    "updatedAt": "2025-07-18T08:03:48.018Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a0007c251aab0ce40cfeb",
+    "name": "Kitchen",
+    "parentId": "6879ffd5c251aab0ce40cfe5",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:04:23.025Z",
+    "updatedAt": "2025-07-18T08:04:23.025Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a000cc251aab0ce40cfee",
+    "name": "Kitchen appliance",
+    "parentId": "6879ffd5c251aab0ce40cfe5",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:04:28.169Z",
+    "updatedAt": "2025-07-18T08:04:28.169Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a0014c251aab0ce40cff4",
+    "name": "Food & drinks",
+    "parentId": "6879ffd5c251aab0ce40cfe5",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:04:36.028Z",
+    "updatedAt": "2025-08-27T08:01:11.868Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a001ac251aab0ce40cffa",
+    "name": "Faucet & sink",
+    "parentId": "6879ffd5c251aab0ce40cfe5",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:04:42.773Z",
+    "updatedAt": "2025-08-27T08:00:06.687Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a0022c251aab0ce40cffc",
+    "name": "Lighting",
+    "parentId": null,
+    "isActive": true,
+    "createdAt": "2025-07-18T08:04:50.641Z",
+    "updatedAt": "2025-07-18T08:04:50.641Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a0032c251aab0ce40cfff",
+    "name": "Pendant light",
+    "parentId": "687a0022c251aab0ce40cffc",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:05:06.857Z",
+    "updatedAt": "2025-07-18T08:05:06.857Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a003dc251aab0ce40d002",
+    "name": "Ceiling lamp",
+    "parentId": "687a0022c251aab0ce40cffc",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:05:17.462Z",
+    "updatedAt": "2025-07-18T08:05:17.462Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a0041c251aab0ce40d005",
+    "name": "Neon",
+    "parentId": "687a0022c251aab0ce40cffc",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:05:21.326Z",
+    "updatedAt": "2025-07-18T08:05:21.326Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a0045c251aab0ce40d008",
+    "name": "Wall light",
+    "parentId": "687a0022c251aab0ce40cffc",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:05:25.999Z",
+    "updatedAt": "2025-07-18T08:05:25.999Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a004ac251aab0ce40d00b",
+    "name": "Floor lamp",
+    "parentId": "687a0022c251aab0ce40cffc",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:05:30.934Z",
+    "updatedAt": "2025-07-18T08:05:30.934Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a004fc251aab0ce40d00e",
+    "name": "Table lamp",
+    "parentId": "687a0022c251aab0ce40cffc",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:05:35.575Z",
+    "updatedAt": "2025-07-18T08:05:35.575Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a0054c251aab0ce40d011",
+    "name": "Spot light",
+    "parentId": "687a0022c251aab0ce40cffc",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:05:40.019Z",
+    "updatedAt": "2025-07-18T08:05:40.019Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a0059c251aab0ce40d014",
+    "name": "Outdoor light",
+    "parentId": "687a0022c251aab0ce40cffc",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:05:45.087Z",
+    "updatedAt": "2025-09-30T09:04:48.983Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a0066c251aab0ce40d019",
+    "name": "Materials",
+    "parentId": null,
+    "isActive": true,
+    "createdAt": "2025-07-18T08:05:58.016Z",
+    "updatedAt": "2025-07-18T08:05:58.016Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a006fc251aab0ce40d01c",
+    "name": "Wood",
+    "parentId": "687a0066c251aab0ce40d019",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:06:07.508Z",
+    "updatedAt": "2025-07-18T08:06:07.508Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a0073c251aab0ce40d01f",
+    "name": "Metal",
+    "parentId": "687a0066c251aab0ce40d019",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:06:11.554Z",
+    "updatedAt": "2025-07-18T08:06:11.554Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a0084c251aab0ce40d022",
+    "name": "Leather",
+    "parentId": "687a0066c251aab0ce40d019",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:06:28.381Z",
+    "updatedAt": "2025-07-18T08:06:28.381Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a0088c251aab0ce40d025",
+    "name": "Plastic",
+    "parentId": "687a0066c251aab0ce40d019",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:06:32.240Z",
+    "updatedAt": "2025-07-18T08:06:32.240Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a008bc251aab0ce40d028",
+    "name": "Stone",
+    "parentId": "687a0066c251aab0ce40d019",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:06:35.511Z",
+    "updatedAt": "2025-07-18T08:06:35.511Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a008ec251aab0ce40d02b",
+    "name": "Glass",
+    "parentId": "687a0066c251aab0ce40d019",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:06:38.622Z",
+    "updatedAt": "2025-07-18T08:06:38.622Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a0092c251aab0ce40d02e",
+    "name": "Liquid",
+    "parentId": "687a0066c251aab0ce40d019",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:06:42.446Z",
+    "updatedAt": "2025-07-18T08:06:42.446Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a0096c251aab0ce40d031",
+    "name": "Miscellaneous",
+    "parentId": "687a0066c251aab0ce40d019",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:06:46.063Z",
+    "updatedAt": "2025-07-18T08:06:46.063Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a0099c251aab0ce40d034",
+    "name": "Tile",
+    "parentId": "687a0066c251aab0ce40d019",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:06:49.582Z",
+    "updatedAt": "2025-07-18T08:06:49.582Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a00a1c251aab0ce40d036",
+    "name": "Other",
+    "parentId": null,
+    "isActive": true,
+    "createdAt": "2025-07-18T08:06:57.818Z",
+    "updatedAt": "2025-07-18T08:06:57.818Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a00aac251aab0ce40d039",
+    "name": "Window",
+    "parentId": "687a00a1c251aab0ce40d036",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:07:06.808Z",
+    "updatedAt": "2025-07-18T08:07:06.808Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a00aec251aab0ce40d03c",
+    "name": "Doors",
+    "parentId": "687a00a1c251aab0ce40d036",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:07:10.432Z",
+    "updatedAt": "2025-10-19T03:14:06.799Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a00b1c251aab0ce40d03f",
+    "name": "Fireplace",
+    "parentId": "687a00a1c251aab0ce40d036",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:07:13.628Z",
+    "updatedAt": "2025-07-18T08:07:13.628Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a00b7c251aab0ce40d045",
+    "name": "Shop",
+    "parentId": "687a00a1c251aab0ce40d036",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:07:19.919Z",
+    "updatedAt": "2025-07-18T08:07:19.919Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a00bbc251aab0ce40d048",
+    "name": "Transport",
+    "parentId": "687a00a1c251aab0ce40d036",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:07:23.030Z",
+    "updatedAt": "2025-07-18T08:07:23.030Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a00bec251aab0ce40d04b",
+    "name": "Sports",
+    "parentId": "687a00a1c251aab0ce40d036",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:07:26.415Z",
+    "updatedAt": "2025-07-18T08:07:26.415Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a00c1c251aab0ce40d04e",
+    "name": "Staircase",
+    "parentId": "687a00a1c251aab0ce40d036",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:07:29.513Z",
+    "updatedAt": "2025-07-18T08:07:29.513Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a00c5c251aab0ce40d051",
+    "name": "Musical instrument",
+    "parentId": "687a00a1c251aab0ce40d036",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:07:33.765Z",
+    "updatedAt": "2025-07-18T08:07:33.765Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a00cac251aab0ce40d054",
+    "name": "Beauty salon",
+    "parentId": "687a00a1c251aab0ce40d036",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:07:38.171Z",
+    "updatedAt": "2025-07-18T08:07:38.171Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a00cdc251aab0ce40d057",
+    "name": "Restaurant & Coffee",
+    "parentId": "687a00a1c251aab0ce40d036",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:07:41.176Z",
+    "updatedAt": "2025-10-19T07:32:57.848Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a00d0c251aab0ce40d05a",
+    "name": "Creature",
+    "parentId": "687a00a1c251aab0ce40d036",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:07:44.160Z",
+    "updatedAt": "2025-07-18T08:07:44.160Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a00d3c251aab0ce40d05d",
+    "name": "Billiards",
+    "parentId": "687a00a1c251aab0ce40d036",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:07:47.742Z",
+    "updatedAt": "2025-07-18T08:07:47.742Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a00d8c251aab0ce40d060",
+    "name": "Miscellaneous",
+    "parentId": "687a00a1c251aab0ce40d036",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:07:52.191Z",
+    "updatedAt": "2025-07-18T08:07:52.191Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a00e5c251aab0ce40d062",
+    "name": "Plants",
+    "parentId": null,
+    "isActive": true,
+    "createdAt": "2025-07-18T08:08:05.091Z",
+    "updatedAt": "2025-07-18T08:08:05.091Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a00eec251aab0ce40d065",
+    "name": "Bouquet",
+    "parentId": "687a00e5c251aab0ce40d062",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:08:14.264Z",
+    "updatedAt": "2025-07-18T08:08:14.264Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a00f1c251aab0ce40d068",
+    "name": "Indoor",
+    "parentId": "687a00e5c251aab0ce40d062",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:08:17.009Z",
+    "updatedAt": "2025-07-18T08:08:17.009Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a00f4c251aab0ce40d06b",
+    "name": "Fitowall",
+    "parentId": "687a00e5c251aab0ce40d062",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:08:20.744Z",
+    "updatedAt": "2025-07-18T08:08:20.744Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a00f7c251aab0ce40d06e",
+    "name": "Tree",
+    "parentId": "687a00e5c251aab0ce40d062",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:08:23.995Z",
+    "updatedAt": "2025-07-18T08:08:23.995Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a00fbc251aab0ce40d071",
+    "name": "Bush",
+    "parentId": "687a00e5c251aab0ce40d062",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:08:27.491Z",
+    "updatedAt": "2025-07-18T08:08:27.491Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a00fec251aab0ce40d074",
+    "name": "Grass",
+    "parentId": "687a00e5c251aab0ce40d062",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:08:30.695Z",
+    "updatedAt": "2025-07-18T08:08:30.695Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a0101c251aab0ce40d077",
+    "name": "Outdoor",
+    "parentId": "687a00e5c251aab0ce40d062",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:08:33.761Z",
+    "updatedAt": "2025-07-18T08:08:33.761Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a0107c251aab0ce40d079",
+    "name": "Technology",
+    "parentId": null,
+    "isActive": true,
+    "createdAt": "2025-07-18T08:08:39.757Z",
+    "updatedAt": "2025-07-18T08:08:39.757Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a0111c251aab0ce40d07c",
+    "name": "PC & other electronics",
+    "parentId": "687a0107c251aab0ce40d079",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:08:49.006Z",
+    "updatedAt": "2025-07-18T08:08:49.006Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a0115c251aab0ce40d07f",
+    "name": "Household appliance",
+    "parentId": "687a0107c251aab0ce40d079",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:08:53.208Z",
+    "updatedAt": "2025-07-18T08:08:53.208Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a0119c251aab0ce40d082",
+    "name": "Tivi",
+    "parentId": "687a0107c251aab0ce40d079",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:08:57.041Z",
+    "updatedAt": "2025-10-21T15:51:27.416Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a011cc251aab0ce40d085",
+    "name": "Phones",
+    "parentId": "687a0107c251aab0ce40d079",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:09:00.085Z",
+    "updatedAt": "2025-07-18T08:09:00.085Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a0120c251aab0ce40d088",
+    "name": "Audio tech",
+    "parentId": "687a0107c251aab0ce40d079",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:09:04.910Z",
+    "updatedAt": "2025-07-18T08:09:04.910Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a0124c251aab0ce40d08b",
+    "name": "Miscellaneous",
+    "parentId": "687a0107c251aab0ce40d079",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:09:08.126Z",
+    "updatedAt": "2025-07-18T08:09:08.126Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a012dc251aab0ce40d08d",
+    "name": "Scripts",
+    "parentId": null,
+    "isActive": true,
+    "createdAt": "2025-07-18T08:09:17.358Z",
+    "updatedAt": "2025-07-18T08:09:17.358Z",
+    "__v": 0
+  },
+  {
+    "_id": "687a013ec251aab0ce40d090",
+    "name": "Scripts",
+    "parentId": "687a012dc251aab0ce40d08d",
+    "isActive": true,
+    "createdAt": "2025-07-18T08:09:34.315Z",
+    "updatedAt": "2025-07-18T08:09:34.315Z",
+    "__v": 0
+  },
+  {
+    "_id": "68e4ebab53f0b896b7dcd928",
+    "name": "Brick",
+    "parentId": "687a0066c251aab0ce40d019",
+    "isActive": true,
+    "createdAt": "2025-10-07T10:30:03.103Z",
+    "updatedAt": "2025-10-07T10:30:03.103Z",
+    "__v": 0
+  },
+  {
+    "_id": "68e4ebc153f0b896b7dcd93e",
+    "name": "Fabric",
+    "parentId": "687a0066c251aab0ce40d019",
+    "isActive": true,
+    "createdAt": "2025-10-07T10:30:25.713Z",
+    "updatedAt": "2025-10-07T10:30:25.713Z",
+    "__v": 0
+  },
+  {
+    "_id": "68e4ebda53f0b896b7dcd943",
+    "name": "Floor Coverings",
+    "parentId": "687a0066c251aab0ce40d019",
+    "isActive": true,
+    "createdAt": "2025-10-07T10:30:50.577Z",
+    "updatedAt": "2025-10-07T10:30:50.577Z",
+    "__v": 0
+  },
+  {
+    "_id": "68e4ebff53f0b896b7dcd959",
+    "name": "Natural",
+    "parentId": "687a0066c251aab0ce40d019",
+    "isActive": true,
+    "createdAt": "2025-10-07T10:31:27.233Z",
+    "updatedAt": "2025-10-07T10:31:27.233Z",
+    "__v": 0
+  },
+  {
+    "_id": "68e4ec3c53f0b896b7dcd96f",
+    "name": "Wall Covering",
+    "parentId": "687a0066c251aab0ce40d019",
+    "isActive": true,
+    "createdAt": "2025-10-07T10:32:28.717Z",
+    "updatedAt": "2025-10-07T10:32:28.717Z",
+    "__v": 0
+  }
+]

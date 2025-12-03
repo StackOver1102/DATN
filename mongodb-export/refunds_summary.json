@@ -1,0 +1,40 @@
+{
+  "collectionName": "refunds",
+  "totalDocuments": 6,
+  "sampleDocument": {
+    "_id": "68b1d75275c7b39a00cf6f35",
+    "userId": "68aed2232979fafa52b9ad28",
+    "orderId": "68b1cb3c75c7b39a00cf6d62",
+    "amount": 5,
+    "status": "rejected",
+    "description": "sp sai",
+    "imagesByAdmin": [],
+    "isWatchingByAdmin": false,
+    "isWatchingByUser": false,
+    "attachments": [],
+    "createdAt": "2025-08-29T16:37:38.321Z",
+    "updatedAt": "2025-08-29T16:39:36.524Z",
+    "__v": 0,
+    "adminNotes": "sp dung",
+    "processedAt": "2025-08-29T16:39:36.523Z",
+    "processedBy": "68b04ac6435b3bb0fd80ccd4"
+  },
+  "documentStructure": [
+    "_id",
+    "userId",
+    "orderId",
+    "amount",
+    "status",
+    "description",
+    "imagesByAdmin",
+    "isWatchingByAdmin",
+    "isWatchingByUser",
+    "attachments",
+    "createdAt",
+    "updatedAt",
+    "__v",
+    "adminNotes",
+    "processedAt",
+    "processedBy"
+  ]
+}

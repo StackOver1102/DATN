@@ -1,0 +1,26 @@
+[
+  {
+    "_id": "68f5bb406919ff14c04163d8",
+    "title": "trang chu",
+    "description": "",
+    "imageUrl": "https://r2-image-server.ngoctoanmtc.workers.dev/1760934720326-3e2089f0-2662-4207-9f85-72966d981da4.jpg",
+    "isActive": true,
+    "position": "home",
+    "url": "https://3dvn.org/deposit",
+    "createdAt": "2025-10-20T04:32:00.630Z",
+    "updatedAt": "2025-10-20T04:32:00.630Z",
+    "__v": 0
+  },
+  {
+    "_id": "68f83944ba318d50d9811950",
+    "title": "trang sp",
+    "description": "",
+    "imageUrl": "https://r2-image-server.ngoctoanmtc.workers.dev/1761098052130-d78ec1d6-385b-4f68-a088-c3dc8ca09fde.jpg",
+    "isActive": true,
+    "position": "product_detail",
+    "url": "https://3dvn.org/deposit",
+    "createdAt": "2025-10-22T01:54:12.478Z",
+    "updatedAt": "2025-10-22T01:54:12.478Z",
+    "__v": 0
+  }
+]

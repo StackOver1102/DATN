@@ -1,0 +1,40 @@
+{
+  "collectionName": "supportrequests",
+  "totalDocuments": 3,
+  "sampleDocument": {
+    "_id": "68b1d76075c7b39a00cf6f3d",
+    "name": "Toan",
+    "phone": "0963838297",
+    "email": "taquynhphuong25121954@gmail.com",
+    "message": "sp sai",
+    "attachments": [],
+    "imagesByAdmin": [],
+    "status": "resolved",
+    "userId": "68aed2232979fafa52b9ad28",
+    "isWatchingByAdmin": false,
+    "isWatchingByUser": false,
+    "createdAt": "2025-08-29T16:37:52.904Z",
+    "updatedAt": "2025-08-29T16:39:20.611Z",
+    "__v": 0,
+    "respondedBy": "68b04ac6435b3bb0fd80ccd4",
+    "response": "doi toi phan hoi"
+  },
+  "documentStructure": [
+    "_id",
+    "name",
+    "phone",
+    "email",
+    "message",
+    "attachments",
+    "imagesByAdmin",
+    "status",
+    "userId",
+    "isWatchingByAdmin",
+    "isWatchingByUser",
+    "createdAt",
+    "updatedAt",
+    "__v",
+    "respondedBy",
+    "response"
+  ]
+}

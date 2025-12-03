@@ -1,0 +1,30 @@
+{
+  "collectionName": "users",
+  "totalDocuments": 518,
+  "sampleDocument": {
+    "_id": "68afcfeca0d304ee84695024",
+    "fullName": "VQR",
+    "email": "payment_vqr@gmail.com",
+    "password": "$2b$10$YBg8pI7mQuL2A0SX5OVDG.MfeQ1T8gY5lkTka6tG9oxJv1uTumCPK",
+    "role": "user",
+    "isDeleted": false,
+    "balance": 0,
+    "productLike": [],
+    "createdAt": "2025-08-28T03:41:32.594Z",
+    "updatedAt": "2025-08-28T03:42:06.891Z",
+    "__v": 0
+  },
+  "documentStructure": [
+    "_id",
+    "fullName",
+    "email",
+    "password",
+    "role",
+    "isDeleted",
+    "balance",
+    "productLike",
+    "createdAt",
+    "updatedAt",
+    "__v"
+  ]
+}

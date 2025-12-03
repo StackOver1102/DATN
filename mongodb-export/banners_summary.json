@@ -1,0 +1,28 @@
+{
+  "collectionName": "banners",
+  "totalDocuments": 2,
+  "sampleDocument": {
+    "_id": "68f5bb406919ff14c04163d8",
+    "title": "trang chu",
+    "description": "",
+    "imageUrl": "https://r2-image-server.ngoctoanmtc.workers.dev/1760934720326-3e2089f0-2662-4207-9f85-72966d981da4.jpg",
+    "isActive": true,
+    "position": "home",
+    "url": "https://3dvn.org/deposit",
+    "createdAt": "2025-10-20T04:32:00.630Z",
+    "updatedAt": "2025-10-20T04:32:00.630Z",
+    "__v": 0
+  },
+  "documentStructure": [
+    "_id",
+    "title",
+    "description",
+    "imageUrl",
+    "isActive",
+    "position",
+    "url",
+    "createdAt",
+    "updatedAt",
+    "__v"
+  ]
+}

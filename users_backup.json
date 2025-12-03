@@ -1,0 +1,16 @@
+[
+  {
+    "_id": "6906fa3c50ceda2f7258675b",
+    "fullName": "Admin",
+    "email": "admin@gmail.com",
+    "password": "$2b$10$efTVq5X1ymEniNFKISP/2ejBz0Ycx7Ta4MFFr9ag1KZaDvamb4aTe",
+    "role": "admin",
+    "isDeleted": false,
+    "isVerified": false,
+    "balance": 0,
+    "productLike": [],
+    "createdAt": "2025-11-02 06:29:16.745000",
+    "updatedAt": "2025-11-02 06:29:16.745000",
+    "__v": 0
+  }
+]

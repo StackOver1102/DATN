@@ -1,0 +1,32 @@
+{
+  "collectionName": "orders",
+  "totalDocuments": 332,
+  "sampleDocument": {
+    "_id": "68b05e3a435b3bb0fd80d05b",
+    "userId": "68b04ac6435b3bb0fd80ccd4",
+    "productId": "68b05453435b3bb0fd80cefd",
+    "totalAmount": 5,
+    "status": "completed",
+    "transactionId": "68b05e3a435b3bb0fd80d058",
+    "isPaid": false,
+    "fileId": "12hwIcea8NoWHoSORssh8dO7e7-JLe6aT",
+    "isRemoveGoogleDrive": true,
+    "createdAt": "2025-08-28T13:48:42.632Z",
+    "updatedAt": "2025-08-29T08:22:00.038Z",
+    "__v": 0
+  },
+  "documentStructure": [
+    "_id",
+    "userId",
+    "productId",
+    "totalAmount",
+    "status",
+    "transactionId",
+    "isPaid",
+    "fileId",
+    "isRemoveGoogleDrive",
+    "createdAt",
+    "updatedAt",
+    "__v"
+  ]
+}

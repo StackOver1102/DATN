@@ -16,6 +16,8 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { Public } from './decorators/public.decorator';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -24,6 +26,7 @@ export class AuthController {
 
   @Public()
   @Post('login')
+  @Throttle({ default: { limit: 3, ttl: 300000 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'User login' })
   @ApiResponse({
@@ -35,6 +38,7 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
+  @Throttle({ default: { limit: 3, ttl: 300000 } })
   @Public()
   @Post('register')
   @ApiOperation({ summary: 'Register new user' })
@@ -58,6 +62,7 @@ export class AuthController {
     return req.user;
   }
 
+  @Throttle({ default: { limit: 3, ttl: 300000 } })
   @Public()
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
@@ -66,10 +71,12 @@ export class AuthController {
     status: 200,
     description: 'Password reset email sent',
   })
-  async forgotPassword(@Body('email') email: string) {
-    return this.authService.forgotPassword(email);
+  @ApiBody({ type: ForgotPasswordDto })
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(forgotPasswordDto);
   }
 
+  @Throttle({ default: { limit: 3, ttl: 300000 } })
   @Public()
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
@@ -83,6 +90,7 @@ export class AuthController {
     return this.authService.resetPassword(resetPasswordDto);
   }
 
+  @Throttle({ default: { limit: 3, ttl: 300000 } })
   @Public()
   @Post('verify-account')
   @HttpCode(HttpStatus.OK)

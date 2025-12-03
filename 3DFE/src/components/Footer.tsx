@@ -89,10 +89,10 @@ const Footer = () => {
                   >
                     <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.174-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.219-.359-1.219c0-1.142.662-1.995 1.488-1.995.701 0 1.039.526 1.039 1.155 0 .703-.448 1.754-.719 2.728-.219.903.452 1.637 1.342 1.637 1.610 0 2.846-1.697 2.846-4.142 0-2.165-1.558-3.679-3.783-3.679-2.578 0-4.086 1.933-4.086 3.933 0 .778.299 1.609.670 2.062.074.090.084.169.062.260-.069.286-.225.896-.256 1.021-.041.167-.135.202-.311.122-1.106-.513-1.799-2.123-1.799-3.42 0-2.851 2.071-5.471 5.967-5.471 3.131 0 5.565 2.234 5.565 5.218 0 3.111-1.961 5.617-4.686 5.617-.915 0-1.777-.477-2.071-1.048l-.56 2.149c-.203.783-.755 1.764-1.124 2.361 .845.261 1.739.401 2.668.401 6.624 0 11.99-5.367 11.99-11.987C24.007 5.367 18.641.001 12.017.001z" />
                   </svg>
-                </Link>
+                </Link >
 
                 {/* YouTube */}
-                <Link
+                < Link
                   href="https://www.youtube.com/@3dvn-org/featured"
                   className="w-8 h-8  hover:bg-red-600 rounded-full flex items-center justify-center transition-colors"
                 >
@@ -103,24 +103,24 @@ const Footer = () => {
                   >
                     <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
                   </svg>
-                </Link>
-              </div>
+                </Link >
+              </div >
 
               {/* Contact Info */}
-              <div className="text-center md:text-right text-xs ">
+              < div className="text-center md:text-right text-xs " >
                 <div>
                   © model3dvn.org, {new Date().getFullYear()} Specializing in
                   providing providing 3dsmax models
                 </div>
                 <div>📍 Ho Chi Minh City, VIET NAM</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+              </div >
+            </div >
+          </div >
+        </div >
+      </div >
 
       {/* Bottom Copyright */}
-      <div className="bg-neutral-700 py-3 text-center flex item-center">
+      < div className="bg-neutral-700 py-3 text-center flex item-center" >
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
           <div className="flex items-center gap-2 text-sm ">
             <div className="">
@@ -135,8 +135,8 @@ const Footer = () => {
             <span>Copyright {new Date().getFullYear()} © 3DVN.ORG</span>
           </div>
         </div>
-      </div>
-    </footer>
+      </div >
+    </footer >
   );
 };
 

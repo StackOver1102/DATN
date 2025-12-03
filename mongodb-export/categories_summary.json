@@ -1,0 +1,22 @@
+{
+  "collectionName": "categories",
+  "totalDocuments": 120,
+  "sampleDocument": {
+    "_id": "6879fadd5bc05b7344ca8055",
+    "name": "Architecture",
+    "parentId": null,
+    "isActive": true,
+    "createdAt": "2025-07-18T07:42:21.955Z",
+    "updatedAt": "2025-07-18T07:42:21.955Z",
+    "__v": 0
+  },
+  "documentStructure": [
+    "_id",
+    "name",
+    "parentId",
+    "isActive",
+    "createdAt",
+    "updatedAt",
+    "__v"
+  ]
+}

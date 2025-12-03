@@ -1,0 +1,38 @@
+🔗 MongoDB Connection Information for MongoDB Compass
+
+=== ADMIN USER CONNECTION ===
+Connection String:
+mongodb://mongo_user:mongo_password@YOUR_SERVER_IP:27017/?authSource=admin
+
+Individual Fields:
+- Host: YOUR_SERVER_IP
+- Port: 27017
+- Username: mongo_user
+- Password: mongo_password
+- Authentication Database: admin
+- Database: admin (or leave empty to see all)
+
+=== APPLICATION USER CONNECTION ===
+Connection String:
+mongodb://web3d_app:web3d_app_password@YOUR_SERVER_IP:27017/web3d?authSource=web3d
+
+Individual Fields:
+- Host: YOUR_SERVER_IP
+- Port: 27017
+- Username: web3d_app
+- Password: web3d_app_password
+- Authentication Database: web3d
+- Database: web3d
+
+=== SECURITY NOTES ===
+⚠️  Replace YOUR_SERVER_IP with actual server IP
+⚠️  Port 27017 must be accessible from your location
+⚠️  Consider using SSH tunnel for security:
+   ssh -L 27017:localhost:27017 user@YOUR_SERVER_IP
+
+=== TROUBLESHOOTING ===
+If connection fails:
+1. Check if port 27017 is open
+2. Verify credentials are correct
+3. Use SSH tunnel for security
+4. Check MongoDB logs: docker logs web3d-mongodb

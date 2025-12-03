@@ -1,0 +1,46 @@
+[
+  {
+    "_id": "68b1d76e75c7b39a00cf6f4c",
+    "userId": "68aed2232979fafa52b9ad28",
+    "productId": "68b04f5f435b3bb0fd80cdcc",
+    "content": "dep",
+    "rating": 5,
+    "isApproved": true,
+    "createdAt": "2025-08-29T16:38:06.399Z",
+    "updatedAt": "2025-08-29T16:39:00.181Z",
+    "__v": 0
+  },
+  {
+    "_id": "68bfc9d25750e38c3a5e33ec",
+    "userId": "68b04ac6435b3bb0fd80ccd4",
+    "productId": "68b074c130855f4b8bc817ad",
+    "content": "đẹp",
+    "rating": 5,
+    "isApproved": true,
+    "createdAt": "2025-09-09T06:31:46.362Z",
+    "updatedAt": "2025-09-09T06:31:58.527Z",
+    "__v": 0
+  },
+  {
+    "_id": "68faec539d99a4de64348466",
+    "userId": "68f70d7bba318d50d97f4d2b",
+    "productId": "68f45c3d6919ff14c03ece5e",
+    "content": "AD FIX LOI K DOWNLOAD DC\n",
+    "rating": 5,
+    "isApproved": true,
+    "createdAt": "2025-10-24T03:02:43.885Z",
+    "updatedAt": "2025-10-24T05:32:00.863Z",
+    "__v": 0
+  },
+  {
+    "_id": "68fb10439d99a4de6434cddc",
+    "userId": "68fb0fb69d99a4de6434c84e",
+    "productId": "68f45c3d6919ff14c03ece5e",
+    "content": "Kết bạn zalo hỗ trợ nhanh nha bạn: 0865.660.637",
+    "rating": 5,
+    "isApproved": true,
+    "createdAt": "2025-10-24T05:36:03.837Z",
+    "updatedAt": "2025-10-24T05:36:19.477Z",
+    "__v": 0
+  }
+]

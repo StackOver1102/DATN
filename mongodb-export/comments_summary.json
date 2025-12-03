@@ -1,0 +1,26 @@
+{
+  "collectionName": "comments",
+  "totalDocuments": 4,
+  "sampleDocument": {
+    "_id": "68b1d76e75c7b39a00cf6f4c",
+    "userId": "68aed2232979fafa52b9ad28",
+    "productId": "68b04f5f435b3bb0fd80cdcc",
+    "content": "dep",
+    "rating": 5,
+    "isApproved": true,
+    "createdAt": "2025-08-29T16:38:06.399Z",
+    "updatedAt": "2025-08-29T16:39:00.181Z",
+    "__v": 0
+  },
+  "documentStructure": [
+    "_id",
+    "userId",
+    "productId",
+    "content",
+    "rating",
+    "isApproved",
+    "createdAt",
+    "updatedAt",
+    "__v"
+  ]
+}

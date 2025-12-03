@@ -1,0 +1,58 @@
+[
+  {
+    "_id": "68b1d76075c7b39a00cf6f3d",
+    "name": "Toan",
+    "phone": "0963838297",
+    "email": "taquynhphuong25121954@gmail.com",
+    "message": "sp sai",
+    "attachments": [],
+    "imagesByAdmin": [],
+    "status": "resolved",
+    "userId": "68aed2232979fafa52b9ad28",
+    "isWatchingByAdmin": false,
+    "isWatchingByUser": false,
+    "createdAt": "2025-08-29T16:37:52.904Z",
+    "updatedAt": "2025-08-29T16:39:20.611Z",
+    "__v": 0,
+    "respondedBy": "68b04ac6435b3bb0fd80ccd4",
+    "response": "doi toi phan hoi"
+  },
+  {
+    "_id": "68f39c81d2acc0cea60244cf",
+    "name": "long",
+    "phone": "0911416611",
+    "email": "hoangvanlong01102000@gmail.com",
+    "message": "admin giup tôi với",
+    "attachments": [
+      "https://r2-image-server.ngoctoanmtc.workers.dev/1760795777409-4fac44a5-877b-49b4-aa33-d2070cc752d7.jpg"
+    ],
+    "imagesByAdmin": [],
+    "status": "resolved",
+    "userId": "68f3999dd2acc0cea6023d8a",
+    "isWatchingByAdmin": false,
+    "isWatchingByUser": false,
+    "createdAt": "2025-10-18T13:56:17.728Z",
+    "updatedAt": "2025-10-18T13:58:30.886Z",
+    "__v": 0,
+    "respondedBy": "68b04ac6435b3bb0fd80ccd4",
+    "response": "ok bạn"
+  },
+  {
+    "_id": "68f92fae9d99a4de643229be",
+    "name": "Hainguyen",
+    "phone": "0962355452",
+    "email": "nguyenhonghai.09091994@gmail.com",
+    "message": "Chưa nhận được điểm đổi",
+    "attachments": [],
+    "imagesByAdmin": [],
+    "status": "resolved",
+    "userId": "68f7f27aba318d50d980e033",
+    "isWatchingByAdmin": false,
+    "isWatchingByUser": false,
+    "createdAt": "2025-10-22T19:25:35.010Z",
+    "updatedAt": "2025-10-23T04:48:40.208Z",
+    "__v": 0,
+    "respondedBy": "68b04ac6435b3bb0fd80ccd4",
+    "response": "Mình đã cộng lai xu vào tài khoản cho bạn rồi ạ!"
+  }
+]

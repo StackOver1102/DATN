@@ -9,6 +9,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loading } from "@/components/ui/loading";
 import { LoadingButton } from "@/components/ui/loading-button";
+import { Turnstile } from "@marsidev/react-turnstile";
+import { toast } from "sonner";
 
 // Define validation schema with Zod
 const loginSchema = z.object({
@@ -25,6 +27,7 @@ function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [isUnverified, setIsUnverified] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string>("");
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
   const message = searchParams.get("message");
@@ -45,6 +48,12 @@ function SignInForm() {
 
   // Handle login
   const onSubmit = async (data: LoginFormValues) => {
+    // Validate CAPTCHA
+    if (!captchaToken) {
+      toast.error("Please complete the CAPTCHA verification");
+      return;
+    }
+
     setLoading(true);
     setAuthError(null);
 
@@ -52,6 +61,7 @@ function SignInForm() {
       const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
+        captchaToken,
         redirect: false, // Prevent automatic redirection
       });
 
@@ -149,9 +159,8 @@ function SignInForm() {
                   id="email"
                   type="email"
                   autoComplete="email"
-                  className={`appearance-none relative block w-full px-3 py-2 border ${
-                    errors.email ? "border-red-500" : "border-gray-300"
-                  } placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-[#3A5B22] focus:border-[#3A5B22] focus:z-10 sm:text-sm`}
+                  className={`appearance-none relative block w-full px-3 py-2 border ${errors.email ? "border-red-500" : "border-gray-300"
+                    } placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-[#3A5B22] focus:border-[#3A5B22] focus:z-10 sm:text-sm`}
                   placeholder="Enter your email"
                   {...register("email")}
                 />
@@ -181,9 +190,8 @@ function SignInForm() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
-                  className={`appearance-none relative block w-full px-3 py-2 border ${
-                    errors.password ? "border-red-500" : "border-gray-300"
-                  } placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-[#3A5B22] focus:border-[#3A5B22] focus:z-10 sm:text-sm`}
+                  className={`appearance-none relative block w-full px-3 py-2 border ${errors.password ? "border-red-500" : "border-gray-300"
+                    } placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-[#3A5B22] focus:border-[#3A5B22] focus:z-10 sm:text-sm`}
                   placeholder="••••••••"
                   {...register("password")}
                 />
@@ -245,27 +253,47 @@ function SignInForm() {
               </label>
             </div>
 
+            {/* Cloudflare Turnstile CAPTCHA */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium">
+                Security Verification
+              </label>
+              <Turnstile
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
+                onSuccess={(token: string) => setCaptchaToken(token)}
+                onError={() => {
+                  setCaptchaToken("");
+                  toast.error("CAPTCHA verification failed. Please try again.");
+                }}
+                onExpire={() => {
+                  setCaptchaToken("");
+                  toast.warning("CAPTCHA expired. Please verify again.");
+                }}
+              />
+            </div>
+
             {/* Login button */}
             <div>
               <LoadingButton
                 type="submit"
                 isLoading={loading}
-                className="w-full py-2 px-4 border border-transparent text-sm font-bold rounded-lg text-yellow-400 bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3A5B22]"
+                disabled={!captchaToken}
+                className="w-full py-2 px-4 border border-transparent text-sm font-bold rounded-lg text-yellow-400 bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3A5B22] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Login
               </LoadingButton>
             </div>
-          </form>
+          </form >
 
           {/* Divider */}
-          <div className="relative my-6">
+          < div className="relative my-6" >
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-200"></div>
             </div>
             <div className="relative flex justify-center text-xs">
               <span className="px-2 bg-white text-gray-500">Or</span>
             </div>
-          </div>
+          </div >
 
           <div className="text-center mt-6">
             <p className="text-sm">
@@ -295,9 +323,9 @@ function SignInForm() {
               Back to Home
             </Link>
           </div>
-        </div>
-      </div>
-    </div>
+        </div >
+      </div >
+    </div >
   );
 }
 
