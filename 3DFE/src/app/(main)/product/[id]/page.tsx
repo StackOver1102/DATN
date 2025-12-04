@@ -9,6 +9,8 @@ import {
   CircleDollarSign,
   Star,
   Send,
+  AlertCircle,
+  X,
 } from "lucide-react";
 import SimilarProductsSlider from "@/components/SimilarProductsSlider";
 import { useParams, useRouter } from "next/navigation";
@@ -30,14 +32,9 @@ interface CreateOrderRequest {
 
 // Response type from the API
 interface OrderResponse {
-  _id: string;
-  productId: string;
-  userId: string;
-  totalAmount: number;
-  status: string;
-  isPaid: boolean;
-  fileUrl?: string;
-  urlDownload?: string;
+  orderId: string;
+  downloadUrl: string;
+  filename: string;
 }
 
 // Comment interfaces
@@ -71,6 +68,8 @@ export default function ProductDetailPage() {
   const [rating, setRating] = useState(5);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [isBuying, setIsBuying] = useState(false);
+  const [showWarningModal, setShowWarningModal] = useState(false);
+
   // Use Redux hooks
   const dispatch = useAppDispatch();
   const { profile } = useAppSelector((state) => state.user);
@@ -112,17 +111,20 @@ export default function ProductDetailPage() {
     {
       onSuccess: (data) => {
         toast.success("Order placed successfully!");
-        // If there's a download URL available, open it
-        const downloadUrl = data?.fileUrl || data?.urlDownload;
-        if (downloadUrl) {
-          window.open(downloadUrl, "_blank");
-          setIsBuying(false);
+        setIsBuying(false);
+
+        // Open download URL directly
+        if (data?.downloadUrl) {
+          window.open(data.downloadUrl, "_blank");
+          toast.success("Download started!");
         }
+
         // Refresh profile after order
         fetchProfile();
       },
       onError: (err) => {
         toast.error(`Order failed: ${err.message}`);
+        setIsBuying(false);
       },
     }
   );
@@ -193,13 +195,22 @@ export default function ProductDetailPage() {
       }))
     : [];
 
-  const handleBuyModal = async () => {
-    setIsBuying(true);
+  // Function to handle buy button click - show warning modal first
+  const handleBuyClick = () => {
     if (!session?.user) {
       toast.error("Please login to buy this product");
       router.push("/signin?redirect=" + encodeURIComponent(`/product/${id}`));
       return;
     }
+
+    // Show warning modal
+    setShowWarningModal(true);
+  };
+
+  // Function to process the actual purchase
+  const processPurchase = async () => {
+    setShowWarningModal(false);
+    setIsBuying(true);
 
     // If no profile in store, fetch it
     if (!profile) {
@@ -211,6 +222,7 @@ export default function ProductDetailPage() {
       } catch {
         toast.dismiss();
         toast.error("Failed to load profile");
+        setIsBuying(false);
         return;
       }
     }
@@ -227,6 +239,7 @@ export default function ProductDetailPage() {
     ) {
       toast.error("Insufficient balance. Please deposit more money.");
       router.push("/deposit");
+      setIsBuying(false);
       return;
     }
 
@@ -247,10 +260,12 @@ export default function ProductDetailPage() {
         .catch((err) => {
           toast.dismiss();
           toast.error(err.message);
+          setIsBuying(false);
         });
     } else {
       toast.dismiss();
       toast.error("Product information is missing");
+      setIsBuying(false);
       return;
     }
   };
@@ -265,6 +280,60 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Warning Modal */}
+      {showWarningModal && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6 relative animate-in fade-in zoom-in duration-200">
+            <button
+              onClick={() => setShowWarningModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                <AlertCircle className="w-12 h-12 text-yellow-500" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-gray-900 mb-2">
+                  Important Notice
+                </h3>
+                <div className="text-sm text-gray-600 space-y-2">
+                  <p>
+                    The download link will be{" "}
+                    <strong>valid for only 5 minutes</strong> after purchase.
+                  </p>
+                  <p>
+                    Please download the file immediately after completing your
+                    purchase.
+                  </p>
+                  <p className="text-yellow-600 font-medium">
+                    ⚠️ Do not share the download link with others.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowWarningModal(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={processPurchase}
+                disabled={isBuying}
+                className="flex-1 px-4 py-2 bg-black text-yellow-400 font-bold rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isBuying ? "Processing..." : "I Understand, Continue"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Breadcrumb */}
       <div className="bg-gray-50 border-b px-4 py-3">
         <div className="max-w-7xl mx-auto">
@@ -415,7 +484,7 @@ export default function ProductDetailPage() {
             {/* Buy Button and Favorite */}
             <div className="flex gap-3">
               <button
-                onClick={handleBuyModal} 
+                onClick={handleBuyClick}
                 disabled={isBuying}
                 className="flex-1 bg-black text-yellow-400 font-bold py-3 px-6 rounded flex items-center justify-center gap-2 transition-all hover:bg-gray-800 hover:scale-105 hover:shadow-md"
               >
@@ -433,7 +502,12 @@ export default function ProductDetailPage() {
                 {bannersData.length > 0 && bannersData[0]?.isActive ? (
                   <div className="w-full h-full">
                     {bannersData[0].url ? (
-                      <Link href={bannersData[0].url} target="_blank" rel="noopener noreferrer" className="block h-full">
+                      <Link
+                        href={bannersData[0].url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block h-full"
+                      >
                         <Image
                           src={bannersData[0].imageUrl}
                           alt={bannersData[0].title || "Advertisement"}
