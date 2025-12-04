@@ -47,6 +47,13 @@ export class Order {
 
   @Prop({ default: false })
   isRemoveGoogleDrive: boolean;
+
+  // For temporary signed URL permissions
+  @Prop({ type: String })
+  tempPermissionId?: string;
+
+  @Prop({ type: Date })
+  permissionExpiresAt?: Date;
 }
 
 export type OrderDocument = HydratedDocument<Order>;

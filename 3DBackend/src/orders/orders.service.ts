@@ -37,19 +37,16 @@ export class OrdersService {
     private productsService: ProductsService,
     private driveService: GoogleDriveService,
     private filterService: FilterService,
-
-  ) { }
+  ) {}
 
   async create(
     createOrderDto: CreateOrderDto,
     userId: string,
-  ): Promise<{ urlDownload: string }> {
+  ): Promise<{ orderId: string; downloadUrl: string; filename: string }> {
     let transaction: TransactionDocument | null = null;
     let initialBalance = 0;
     try {
       const user = await this.usersService.findOne(userId);
-
-      const { email } = user;
 
       const { balance } = user;
       initialBalance = balance; // Store initial balance for rollback
@@ -65,7 +62,9 @@ export class OrdersService {
       const totalAmount = discount ? price - (price * discount) / 100 : price;
 
       if (balance < totalAmount) {
-        throw new BadRequestException('Insufficient balance to complete payment');
+        throw new BadRequestException(
+          'Insufficient balance to complete payment',
+        );
       }
 
       const fileId = this.driveService.getIdByUrl(urlDownload!);
@@ -100,8 +99,29 @@ export class OrdersService {
       });
 
       await createdOrder.save();
-      await this.driveService.addDrivePermission(fileId, email);
-      return { urlDownload: urlDownload! };
+
+      // Generate signed download URL (valid for 60 minutes)
+      const {
+        downloadUrl: signedUrl,
+        filename,
+        permissionId,
+      } = await this.driveService.generateSignedDownloadUrl(fileId, 5);
+
+      // Save permission info to database for cleanup later
+      const expirationTime = new Date();
+      expirationTime.setMinutes(expirationTime.getMinutes() + 5);
+
+      await this.orderModel.findByIdAndUpdate(createdOrder._id, {
+        tempPermissionId: permissionId,
+        permissionExpiresAt: expirationTime,
+      });
+
+      // Return orderId and download URL
+      return {
+        orderId: createdOrder._id.toString(),
+        downloadUrl: signedUrl,
+        filename,
+      };
     } catch (error) {
       // Rollback transaction if it was created
       if (transaction) {
@@ -117,6 +137,33 @@ export class OrdersService {
         error instanceof Error ? error.message : 'Order creation failed',
       );
     }
+  }
+
+  async downloadOrderFile(
+    orderId: string,
+    userId: string,
+  ): Promise<{ downloadUrl: string; filename: string; mimeType: string }> {
+    // Find the order and verify ownership
+    const order = await this.orderModel.findById(orderId).exec();
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    // Verify that the order belongs to the user
+    if (order.userId.toString() !== userId) {
+      throw new BadRequestException(
+        'You are not authorized to download this file',
+      );
+    }
+
+    // Verify order is completed
+    if (order.status !== OrderStatus.COMPLETED) {
+      throw new BadRequestException('Order is not completed');
+    }
+
+    // Generate temporary signed URL (valid for 60 minutes)
+    return await this.driveService.generateSignedDownloadUrl(order.fileId, 60);
   }
 
   async findAll(): Promise<Order[]> {
@@ -220,22 +267,49 @@ export class OrdersService {
     // Trừ thêm 3 giờ
     const cutoff = new Date(utcPlus7Now.getTime() - 3 * 60 * 60 * 1000);
 
-    const orders = await this.orderModel.find({ isRemoveGoogleDrive: false, createdAt: { $lte: cutoff } }).populate({
-      path: 'productId',
-      select: 'urlDownload'
-    })
+    const orders = await this.orderModel
+      .find({ isRemoveGoogleDrive: false, createdAt: { $lte: cutoff } })
+      .populate({
+        path: 'productId',
+        select: 'urlDownload',
+      })
       .populate({
         path: 'userId',
-        select: '-password'
-      }).exec();
+        select: '-password',
+      })
+      .exec();
     return orders as unknown as OrderToRemoveGoogleDrive[];
   }
 
   async updateIsRemoveGoogleDrive(orderId: string): Promise<Order> {
-    const order = await this.orderModel.findByIdAndUpdate(orderId, { isRemoveGoogleDrive: true }, { new: true }).exec();
+    const order = await this.orderModel
+      .findByIdAndUpdate(orderId, { isRemoveGoogleDrive: true }, { new: true })
+      .exec();
     if (!order) {
       throw new NotFoundException(`Không tìm thấy đơn hàng với ID ${orderId}`);
     }
     return order;
+  }
+
+  /**
+   * Get orders with expired temporary permissions that need cleanup
+   */
+  async getOrdersWithExpiredPermissions(): Promise<OrderDocument[]> {
+    const now = new Date();
+    return await this.orderModel
+      .find({
+        tempPermissionId: { $exists: true, $ne: null },
+        permissionExpiresAt: { $lte: now },
+      })
+      .exec();
+  }
+
+  /**
+   * Clear permission info after cleanup
+   */
+  async clearPermissionInfo(orderId: string): Promise<void> {
+    await this.orderModel.findByIdAndUpdate(orderId, {
+      $unset: { tempPermissionId: '', permissionExpiresAt: '' },
+    });
   }
 }

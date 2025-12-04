@@ -33,10 +33,18 @@ export class OrdersController {
   create(
     @Body() createOrderDto: CreateOrderDto,
     @CurrentUser() user: UserPayload,
-  ): Promise<{ urlDownload: string }> {
+  ): Promise<{ orderId: string; downloadUrl: string; filename: string }> {
     const { userId } = user;
 
     return this.ordersService.create(createOrderDto, userId);
+  }
+
+  @Get('download/:orderId')
+  async downloadFile(
+    @Param('orderId') orderId: string,
+    @CurrentUser() user: UserPayload,
+  ): Promise<{ downloadUrl: string; filename: string; mimeType: string }> {
+    return await this.ordersService.downloadOrderFile(orderId, user.userId);
   }
 
   @UseGuards(RolesGuard)

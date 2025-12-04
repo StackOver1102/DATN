@@ -185,9 +185,102 @@ export class GoogleDriveService {
     });
   }
 
-  async removeDrivePermission(fileUrl: string, email: string, orderId?: string) {
+  /**
+   * Generate a temporary signed URL for direct download from Google Drive
+   * @param fileId ID of the file to generate signed URL for
+   * @param expirationMinutes Number of minutes until the URL expires (default: 60)
+   * @returns Object containing signed URL, filename, mimeType, and permissionId
+   */
+  async generateSignedDownloadUrl(
+    fileId: string,
+    expirationMinutes: number = 60,
+  ): Promise<{
+    downloadUrl: string;
+    filename: string;
+    mimeType: string;
+    permissionId: string;
+  }> {
     try {
-      if(!fileUrl) return false;
+      // Get file metadata
+      const fileMetadata = await this.drive.files.get({
+        fileId,
+        fields: 'id,name,mimeType',
+      });
+
+      if (!fileMetadata.data) {
+        throw new Error('File not found');
+      }
+
+      const { name, mimeType } = fileMetadata.data;
+
+      // Temporarily add public permission
+      const permission = await this.drive.permissions.create({
+        fileId,
+        requestBody: {
+          type: 'anyone',
+          role: 'reader',
+        },
+        fields: 'id',
+      });
+
+      const permissionId = permission.data.id;
+
+      if (!permissionId) {
+        throw new Error('Failed to create permission');
+      }
+
+      // Generate download URL
+      const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+
+      console.log(
+        `Created temporary permission ${permissionId} for file ${fileId}, expires in ${expirationMinutes} minutes`,
+      );
+
+      return {
+        downloadUrl,
+        filename: name || 'download',
+        mimeType: mimeType || 'application/octet-stream',
+        permissionId,
+      };
+    } catch (error) {
+      console.error('Error generating signed download URL:', error);
+      throw new Error(
+        `Cannot generate signed download URL: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
+      );
+    }
+  }
+
+  /**
+   * Remove a specific permission from a file by permissionId
+   * @param fileId ID of the file
+   * @param permissionId ID of the permission to remove
+   */
+  async removePermissionById(
+    fileId: string,
+    permissionId: string,
+  ): Promise<boolean> {
+    try {
+      await this.drive.permissions.delete({
+        fileId,
+        permissionId,
+      });
+      console.log(`Removed permission ${permissionId} from file ${fileId}`);
+      return true;
+    } catch (error) {
+      console.error('Error removing permission:', error);
+      return false;
+    }
+  }
+
+  async removeDrivePermission(
+    fileUrl: string,
+    email: string,
+    // orderId?: string,
+  ) {
+    try {
+      if (!fileUrl) return false;
       const fileId = this.getIdByUrl(fileUrl);
       // First, list permissions to find the permission ID for the email
       const response = await this.drive.permissions.list({
@@ -198,7 +291,7 @@ export class GoogleDriveService {
       const permission = permissions.find((p) => p.emailAddress === email);
       if (permission && permission.id) {
         // Delete the permission using its ID
-         await this.drive.permissions.delete({
+        await this.drive.permissions.delete({
           fileId,
           permissionId: permission.id,
         });
@@ -211,7 +304,7 @@ export class GoogleDriveService {
       return false;
     }
   }
-  
+
   /**
    * Tự động hủy quyền truy cập của một email cụ thể cho tất cả các file trong một thư mục
    * @param folderId ID của thư mục cần xóa quyền
@@ -219,7 +312,11 @@ export class GoogleDriveService {
    * @param recursive Có xóa quyền trong các thư mục con không
    * @returns Danh sách kết quả xóa quyền
    */
-  async autoRevokePermission(folderId: string, email: string, recursive: boolean = false): Promise<{
+  async autoRevokePermission(
+    folderId: string,
+    email: string,
+    recursive: boolean = false,
+  ): Promise<{
     success: boolean;
     totalFiles: number;
     revokedCount: number;
@@ -228,7 +325,7 @@ export class GoogleDriveService {
     try {
       // Lấy danh sách tất cả các file trong thư mục
       const allFiles: DriveFile[] = await this.listFiles(folderId);
-      
+
       // Kết quả xóa quyền
       const result = {
         success: true,
@@ -236,7 +333,7 @@ export class GoogleDriveService {
         revokedCount: 0,
         failedFiles: [] as { id: string; name: string }[],
       };
-      
+
       // Xóa quyền cho từng file
       for (const file of allFiles) {
         try {
@@ -245,36 +342,49 @@ export class GoogleDriveService {
             result.revokedCount++;
           }
         } catch (error) {
-          console.error(`Lỗi khi xóa quyền cho file ${file.name} (${file.id}):`, error);
+          console.error(
+            `Lỗi khi xóa quyền cho file ${file.name} (${file.id}):`,
+            error,
+          );
           result.failedFiles.push({ id: file.id, name: file.name });
         }
       }
-      
+
       // Nếu recursive = true, xử lý các thư mục con
       if (recursive) {
         const subFolders = await this.listFolders(folderId);
-        
+
         for (const folder of subFolders) {
           try {
-            const subResult = await this.autoRevokePermission(folder.id, email, true);
-            
+            const subResult = await this.autoRevokePermission(
+              folder.id,
+              email,
+              true,
+            );
+
             // Cập nhật kết quả tổng
             result.totalFiles += subResult.totalFiles;
             result.revokedCount += subResult.revokedCount;
-            result.failedFiles = [...result.failedFiles, ...subResult.failedFiles];
+            result.failedFiles = [
+              ...result.failedFiles,
+              ...subResult.failedFiles,
+            ];
           } catch (error) {
-            console.error(`Lỗi khi xử lý thư mục con ${folder.name} (${folder.id}):`, error);
+            console.error(
+              `Lỗi khi xử lý thư mục con ${folder.name} (${folder.id}):`,
+              error,
+            );
           }
         }
       }
-      
+
       result.success = result.failedFiles.length === 0;
       return result;
     } catch (error) {
       console.error('Lỗi khi tự động hủy quyền truy cập:', error);
       throw new HttpException(
         `Không thể hủy quyền truy cập: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        HttpStatus.BAD_REQUEST
+        HttpStatus.BAD_REQUEST,
       );
     }
   }

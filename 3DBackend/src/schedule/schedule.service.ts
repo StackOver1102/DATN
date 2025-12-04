@@ -1,5 +1,16 @@
-import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
-import { Cron, CronExpression, Interval, Timeout, SchedulerRegistry } from '@nestjs/schedule';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  Cron,
+  CronExpression,
+  Interval,
+  Timeout,
+  SchedulerRegistry,
+} from '@nestjs/schedule';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ScheduledTask } from './interfaces/scheduled-task.interface';
@@ -14,13 +25,12 @@ import { GoogleDriveService } from 'src/drive/google-drive.service';
 export class ScheduleService {
   private readonly logger = new Logger(ScheduleService.name);
   private tasks: Map<string, ScheduledTask> = new Map();
- 
 
   constructor(
     private schedulerRegistry: SchedulerRegistry,
     @InjectModel(Schedule.name) private scheduleModel: Model<ScheduleDocument>,
     private ordersService: OrdersService,
-    private driveService: GoogleDriveService
+    private driveService: GoogleDriveService,
   ) {
     // Initialize tasks map
     this.initializeTasksMap();
@@ -33,7 +43,9 @@ export class ScheduleService {
    */
   private async loadTasksFromDatabase() {
     try {
-      const dbTasks = await this.scheduleModel.find({ status: 'active' }).exec();
+      const dbTasks = await this.scheduleModel
+        .find({ status: 'active' })
+        .exec();
 
       this.logger.log(`Loading ${dbTasks.length} tasks from database`);
 
@@ -56,7 +68,9 @@ export class ScheduleService {
 
           this.logger.debug(`Loaded task ${dbTask.name} from database`);
         } catch (error) {
-          this.logger.error(`Failed to load task ${dbTask.name} from database: ${error.message}`);
+          this.logger.error(
+            `Failed to load task ${dbTask.name} from database: ${error.message}`,
+          );
         }
       }
     } catch (error) {
@@ -156,23 +170,58 @@ export class ScheduleService {
   /**
    * This cronjob runs every 3 hours
    */
-  @Cron('0 0 */3 * * *')
-  async handleEvery3HoursTask() {
+  @Cron('0 */10 * * * *') // Run every 10 minutes
+  async handleCleanupExpiredPermissions() {
     // Update task metadata
-    const task = this.tasks.get('every3HoursTask');
+    const task = this.tasks.get('cleanupPermissionsTask');
     if (task) {
       task.lastRun = new Date();
-      task.nextRun = this.calculateNext3Hours();
+      task.nextRun = new Date(Date.now() + 10 * 60 * 1000); // Next run in 10 minutes
     }
 
-    let count = 0;
-    const orders = await this.ordersService.getOrdersToRemoveGoogleDrive();
-    for (const order of orders) {
-      await this.driveService.removeDrivePermission(order.productId.urlDownload || "", order.userId.email, order._id);
-      await this.ordersService.updateIsRemoveGoogleDrive(order._id);
-      count++;
+    try {
+      // Get all orders with expired permissions
+      const orders = await this.ordersService.getOrdersWithExpiredPermissions();
+
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const order of orders) {
+        try {
+          if (order.fileId && order.tempPermissionId) {
+            // Remove the temporary permission
+            const removed = await this.driveService.removePermissionById(
+              order.fileId,
+              order.tempPermissionId,
+            );
+
+            if (removed) {
+              // Clear permission info from database
+              await this.ordersService.clearPermissionInfo(
+                order._id.toString(),
+              );
+              successCount++;
+            } else {
+              failCount++;
+            }
+          }
+        } catch (error) {
+          this.logger.error(
+            `Failed to remove permission for order ${order._id.toString()}:`,
+            error,
+          );
+          failCount++;
+        }
+      }
+
+      if (successCount > 0 || failCount > 0) {
+        this.logger.log(
+          `Cleaned up ${successCount} expired permissions, ${failCount} failed`,
+        );
+      }
+    } catch (error) {
+      this.logger.error('Error in cleanup expired permissions task:', error);
     }
-    this.logger.debug(`Removed ${count} drive permissions`);
   }
 
   // /**
@@ -226,7 +275,10 @@ export class ScheduleService {
   /**
    * Update task status (enable/disable)
    */
-  async updateTaskStatus(name: string, status: 'active' | 'inactive'): Promise<boolean> {
+  async updateTaskStatus(
+    name: string,
+    status: 'active' | 'inactive',
+  ): Promise<boolean> {
     const task = this.tasks.get(name);
     if (!task) {
       return false;
@@ -245,7 +297,9 @@ export class ScheduleService {
           job.stop();
         }
       } catch (error) {
-        this.logger.error(`Failed to update cron job status for ${name}: ${error.message}`);
+        this.logger.error(
+          `Failed to update cron job status for ${name}: ${error.message}`,
+        );
       }
     }
 
@@ -261,17 +315,26 @@ export class ScheduleService {
    * @param saveToDb Whether to save the task to the database (default: true)
    * @returns The created task
    */
-  async createTask(createTaskDto: CreateTaskDto, saveToDb: boolean = true): Promise<ScheduledTask> {
+  async createTask(
+    createTaskDto: CreateTaskDto,
+    saveToDb: boolean = true,
+  ): Promise<ScheduledTask> {
     // Check if task with this name already exists in memory
     if (this.tasks.has(createTaskDto.name)) {
-      throw new BadRequestException(`Task with name ${createTaskDto.name} already exists in memory`);
+      throw new BadRequestException(
+        `Task with name ${createTaskDto.name} already exists in memory`,
+      );
     }
 
     // Check if task exists in database
     if (saveToDb) {
-      const existingTask = await this.scheduleModel.findOne({ name: createTaskDto.name }).exec();
+      const existingTask = await this.scheduleModel
+        .findOne({ name: createTaskDto.name })
+        .exec();
       if (existingTask) {
-        throw new BadRequestException(`Task with name ${createTaskDto.name} already exists in database`);
+        throw new BadRequestException(
+          `Task with name ${createTaskDto.name} already exists in database`,
+        );
       }
     }
 
@@ -293,7 +356,9 @@ export class ScheduleService {
     switch (createTaskDto.type) {
       case 'cron':
         if (!createTaskDto.cronExpression) {
-          throw new BadRequestException('Cron expression is required for cron tasks');
+          throw new BadRequestException(
+            'Cron expression is required for cron tasks',
+          );
         }
 
         newTask.cronExpression = createTaskDto.cronExpression;
@@ -316,13 +381,17 @@ export class ScheduleService {
           nextRun = job.nextDate().toJSDate();
           newTask.nextRun = nextRun;
         } catch (error) {
-          throw new BadRequestException(`Invalid cron expression: ${error.message}`);
+          throw new BadRequestException(
+            `Invalid cron expression: ${error.message}`,
+          );
         }
         break;
 
       case 'interval':
         if (!createTaskDto.interval) {
-          throw new BadRequestException('Interval is required for interval tasks');
+          throw new BadRequestException(
+            'Interval is required for interval tasks',
+          );
         }
 
         newTask.interval = createTaskDto.interval;
@@ -342,13 +411,17 @@ export class ScheduleService {
           nextRun = new Date(now.getTime() + createTaskDto.interval);
           newTask.nextRun = nextRun;
         } catch (error) {
-          throw new BadRequestException(`Failed to create interval: ${error.message}`);
+          throw new BadRequestException(
+            `Failed to create interval: ${error.message}`,
+          );
         }
         break;
 
       case 'timeout':
         if (!createTaskDto.timeout) {
-          throw new BadRequestException('Timeout is required for timeout tasks');
+          throw new BadRequestException(
+            'Timeout is required for timeout tasks',
+          );
         }
 
         newTask.timeout = createTaskDto.timeout;
@@ -380,7 +453,9 @@ export class ScheduleService {
           nextRun = new Date(now.getTime() + createTaskDto.timeout);
           newTask.nextRun = nextRun;
         } catch (error) {
-          throw new BadRequestException(`Failed to create timeout: ${error.message}`);
+          throw new BadRequestException(
+            `Failed to create timeout: ${error.message}`,
+          );
         }
         break;
 
@@ -422,8 +497,12 @@ export class ScheduleService {
 
       this.logger.debug(`Task ${task.name} saved to database`);
     } catch (error) {
-      this.logger.error(`Failed to save task ${task.name} to database: ${error.message}`);
-      throw new BadRequestException(`Failed to save task to database: ${error.message}`);
+      this.logger.error(
+        `Failed to save task ${task.name} to database: ${error.message}`,
+      );
+      throw new BadRequestException(
+        `Failed to save task to database: ${error.message}`,
+      );
     }
   }
 
@@ -455,7 +534,9 @@ export class ScheduleService {
 
       this.logger.debug(`Task ${name} updated in database`);
     } catch (error) {
-      this.logger.error(`Failed to update task ${name} in database: ${error.message}`);
+      this.logger.error(
+        `Failed to update task ${name} in database: ${error.message}`,
+      );
     }
   }
 
@@ -502,7 +583,7 @@ export class ScheduleService {
   async getAllTasksFromDb(): Promise<ScheduleDto[]> {
     try {
       const dbTasks = await this.scheduleModel.find().exec();
-      return dbTasks.map(task => ({
+      return dbTasks.map((task) => ({
         _id: task._id ? task._id.toString() : undefined,
         name: task.name,
         description: task.description,
@@ -519,7 +600,9 @@ export class ScheduleService {
       }));
     } catch (error) {
       this.logger.error(`Failed to get tasks from database: ${error.message}`);
-      throw new BadRequestException(`Failed to get tasks from database: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to get tasks from database: ${error.message}`,
+      );
     }
   }
 
@@ -561,7 +644,10 @@ export class ScheduleService {
    * Execute a handler function by name
    * This is a simple implementation that supports a few predefined handlers
    */
-  private async executeHandler(taskName: string, handlerName: string): Promise<void> {
+  private async executeHandler(
+    taskName: string,
+    handlerName: string,
+  ): Promise<void> {
     this.logger.debug(`Executing handler ${handlerName} for task ${taskName}`);
 
     // Update task metadata
@@ -575,7 +661,9 @@ export class ScheduleService {
           const job = this.schedulerRegistry.getCronJob(taskName);
           task.nextRun = job.nextDate().toJSDate();
         } catch (error) {
-          this.logger.error(`Failed to get next run time for ${taskName}: ${error.message}`);
+          this.logger.error(
+            `Failed to get next run time for ${taskName}: ${error.message}`,
+          );
         }
       } else if (task.type === 'interval' && task.interval) {
         task.nextRun = new Date(Date.now() + task.interval);
@@ -595,9 +683,9 @@ export class ScheduleService {
       case 'handleHourlyTask':
         this.handleHourlyTask();
         break;
-      case 'handleEvery3HoursTask':
-        this.handleEvery3HoursTask();
-        break;
+      // case 'handleEvery3HoursTask':
+      //   this.handleEvery3HoursTask();
+      //   break;
       // case 'handleIntervalTask':
       //   this.handleIntervalTask();
       //   break;
