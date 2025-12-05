@@ -9,7 +9,7 @@ import {
   CircleDollarSign,
   Star,
   Send,
-  AlertCircle,
+  Bell,
   X,
 } from "lucide-react";
 import SimilarProductsSlider from "@/components/SimilarProductsSlider";
@@ -293,7 +293,7 @@ export default function ProductDetailPage() {
 
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0">
-                <AlertCircle className="w-12 h-12 text-yellow-500" />
+                <Bell className="w-12 h-12 text-yellow-500" />
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-bold text-gray-900 mb-2">
