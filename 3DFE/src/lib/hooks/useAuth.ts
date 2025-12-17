@@ -16,6 +16,7 @@ interface RegisterCredentials {
   fullName: string;
   email: string;
   password: string;
+  captchaToken: string;
 }
 
 /**

@@ -102,17 +102,17 @@ export interface UserProfileData {
  * Auth-related API functions
  */
 export const authApi = {
-  login: (email: string, password: string) =>
-    apiRequest('auth/login', 'POST', { email, password }),
+  login: (email: string, password: string, captchaToken: string) =>
+    apiRequest('auth/login', 'POST', { email, password, captchaToken }),
 
-  register: (name: string, email: string, password: string) =>
-    apiRequest('auth/register', 'POST', { name, email, password }),
+  register: (name: string, email: string, password: string, captchaToken: string) =>
+    apiRequest('auth/register', 'POST', { name, email, password, captchaToken }),
 
-  forgotPassword: (email: string) =>
-    apiRequest('auth/forgot-password', 'POST', { email }),
+  forgotPassword: (email: string, captchaToken: string) =>
+    apiRequest('auth/forgot-password', 'POST', { email, captchaToken }),
 
-  resetPassword: (token: string, password: string) =>
-    apiRequest('auth/reset-password', 'POST', { token, password }),
+  resetPassword: (token: string, password: string, captchaToken: string) =>
+    apiRequest('auth/reset-password', 'POST', { token, password, captchaToken }),
 
   verifyAccount: (token: string) =>
     apiRequest('auth/verify-account', 'POST', { token }),
