@@ -129,17 +129,36 @@ interface ModelsPageProps {
     categoryName?: string;
     subSearch?: string;
     q?: string;
+    searchType?: string;  // Add searchType param
   }>;
 }
 
 export default async function ModelsPage({ searchParams }: ModelsPageProps) {
   // Get query parameters from URL
+  const searchType = (await searchParams).searchType;
+  
+  // For image search, skip server-side product fetch
+  // Client component will load results from sessionStorage
+  if (searchType === 'image') {
+    const categoriesData = await getCategories();
+    
+    return (
+      <ClientSideModelsPage
+        categories={categoriesData || []}
+        initialModels={[]}  // Empty - client loads from sessionStorage
+        totalModels={0}
+        currentPage={1}
+        totalPages={1}
+        categoryParam={undefined}
+        itemParam={undefined}
+      />
+    );
+  }
+
+  // Normal server-side fetch for text search and browsing
   const categoryParam = (await searchParams).categoryName;
-
   const itemParam = (await searchParams).subSearch;
-
   const searchQuery = (await searchParams).q;
-
   const currentPage = Number((await searchParams).page) || 1;
 
   // Fetch data in parallel

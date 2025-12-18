@@ -215,6 +215,34 @@ export default function ClientSideModelsPage({
     }
   }, [searchParams]);
 
+  // Effect to handle image search results from sessionStorage
+  useEffect(() => {
+    const searchType = searchParams.get('searchType');
+    
+    if (searchType === 'image' && typeof window !== 'undefined') {
+      try {
+        const savedResults = sessionStorage.getItem('imageSearchResults');
+        
+        if (savedResults) {
+          const data = JSON.parse(savedResults);
+          
+          if (data.success && data.results) {
+            setModels(data.results);
+            setCount(data.total || data.results.length);
+            setCurrentTotalPages(1); // Image search shows all results on one page
+            
+            // Clear sessionStorage after loading
+            sessionStorage.removeItem('imageSearchResults');
+            
+            console.log('✅ Loaded image search results:', data.results.length);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading image search results:', error);
+      }
+    }
+  }, [searchParams]);
+
   // Effect to initialize and sync with URL parameters
   useEffect(() => {
     // Extract filter parameters from URL
@@ -296,9 +324,9 @@ export default function ClientSideModelsPage({
                   {count} models found
                 </span>
 
-                {/* Show current search query with clear button */}
+                {/* Show current search query or image search indicator */}
                 {
-                  searchParams.get("q") && (
+                  searchParams.get("q") ? (
                     <div className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-full">
                       <span className="text-sm text-gray-700">
                         Search: <span className="font-medium">{searchParams.get("q")}</span>
@@ -329,7 +357,38 @@ export default function ClientSideModelsPage({
                         </svg>
                       </button>
                     </div>
-                  )
+                  ) : searchParams.get("searchType") === "image" ? (
+                    <div className="flex items-center gap-2 bg-purple-50 px-3 py-1 rounded-full">
+                      <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <span className="text-sm text-purple-700">
+                        <span className="font-medium">Image Search Results</span>
+                      </span>
+                      <button
+                        onClick={() => {
+                          router.push('/models', { scroll: false });
+                        }}
+                        className="text-purple-500 hover:text-purple-700 transition-colors"
+                        title="Clear image search"
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  ) : null
                 }
 
                 {/* Filter tabs for All/Pro/Free */}

@@ -50,6 +50,23 @@ services:
     networks:
       - web3d-network
 
+  clip-service:
+    build:
+      context: ./clip_service_recovered
+      dockerfile: Dockerfile
+    container_name: web3d-clip-service
+    expose:
+      - "5001"
+    environment:
+      - FLASK_ENV=production
+    restart: unless-stopped
+    networks:
+      - web3d-network
+    volumes:
+      - ./clip_service_recovered/faiss_index_3d_products_clip.idx:/app/faiss_index_3d_products_clip.idx
+      - ./clip_service_recovered/product_paths_clip.npy:/app/product_paths_clip.npy
+      - ./clip_service_recovered/product_metadata.json:/app/product_metadata.json
+
   mongodb:
     image: mongo:latest
     container_name: web3d-mongodb

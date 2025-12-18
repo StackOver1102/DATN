@@ -1,10 +1,8 @@
-# Base image với Python 3.9
 FROM python:3.9-slim
 
-# Set working directory
 WORKDIR /app
 
-# Install system dependencies
+# System dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
     git \
@@ -13,21 +11,22 @@ RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
+# Python dependencies
 COPY requirements.txt .
-
-# Install Python dependencies
-# CLIP is included in transformers
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Application code
 COPY app.py .
 
-# Create directory for product images
-RUN mkdir -p product_images
+# IMPORTANT: Copy FAISS index files (needed for search)
+COPY faiss_index_3d_products_clip.idx .
+COPY product_paths_clip.npy .
+COPY product_metadata.json .
 
-# Expose port
-EXPOSE 6000
+# Optional: product_images folder (only if using /add endpoint)
+# RUN mkdir -p product_images
 
-# Run the application
+# Fix port to match app.py
+EXPOSE 5001
+
 CMD ["python", "app.py"]

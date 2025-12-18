@@ -232,12 +232,19 @@ export class ProductsController {
         filters: category ? { category } : undefined,
       });
 
+      // DEBUG: Log Flask response
+      console.log('🔍 Flask search results:', JSON.stringify(results, null, 2));
+
       // Lấy product details từ MongoDB
       const productIds = results
         .map((r) => r.metadata?.product_id)
         .filter(Boolean);
 
+      // DEBUG: Log extracted product IDs
+      console.log('📦 Extracted product IDs:', productIds);
+
       if (productIds.length === 0) {
+        console.log('⚠️  No product IDs found in Flask results!');
         return {
           success: true,
           message: 'No similar products found',
@@ -248,6 +255,9 @@ export class ProductsController {
       const products = await Promise.all(
         productIds.map((id) => this.productsService.findById(id)),
       );
+
+      // DEBUG: Log MongoDB query results
+      console.log('🗄️  MongoDB products found:', products.filter(Boolean).length, '/', productIds.length);
 
       // Merge với scores
       const productsWithScores = products
@@ -265,6 +275,8 @@ export class ProductsController {
           };
         })
         .sort((a, b) => b.similarity_score - a.similarity_score);
+
+      console.log('✅ Final results with scores:', productsWithScores.length);
 
       return {
         success: true,

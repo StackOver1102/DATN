@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import torch
 import faiss
 import numpy as np
@@ -10,6 +11,7 @@ from transformers import CLIPProcessor, CLIPModel
 import json
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # === Đường dẫn ===
@@ -361,8 +363,8 @@ def search_product():
         k = min(top_k * 5, index.ntotal)
         D, I = index.search(vec, k=k)
 
-        results = []
-        category_counts = {}
+        # BƯỚC 1: Thu thập kết quả và deduplication (chỉ giữ best score per product_id)
+        seen_products = {}  # Track best score for each product_id
         
         for idx, (i, score) in enumerate(zip(I[0], D[0])):
             if i >= len(image_paths):
@@ -384,20 +386,27 @@ def search_product():
                 if skip:
                     continue
             
-            # Category boosting
-            category = metadata.get('category', 'unknown')
-            category_counts[category] = category_counts.get(category, 0) + 1
+            # Deduplication: Chỉ giữ ảnh có original_score cao nhất cho mỗi product_id
+            product_id = metadata.get('product_id', img_path)  # Fallback to path if no product_id
             
-            boosted_score = score
-            if category_counts[category] > 1:
-                boosted_score *= 1.15  # CLIP: 15% boost (vs 10% cho DINOv2)
+            if product_id not in seen_products or score > seen_products[product_id]['original_score']:
+                seen_products[product_id] = {
+                    "path": img_path,
+                    "original_score": float(score),
+                    "metadata": metadata
+                }
+        
+        # BƯỚC 2: Tạo results với true CLIP scores (không boost)
+        results = []
+        
+        for product_data in seen_products.values():
+            original_score = product_data['original_score']
             
             results.append({
-                "path": img_path,
-                "score": float(boosted_score),
-                "original_score": float(score),
-                "rank": len(results) + 1,
-                "metadata": metadata
+                "path": product_data['path'],
+                "score": float(original_score),  # Sử dụng score gốc từ CLIP
+                "original_score": original_score,
+                "metadata": product_data['metadata']
             })
         
         results.sort(key=lambda x: x['score'], reverse=True)
@@ -406,6 +415,7 @@ def search_product():
             result['rank'] = idx + 1
         
         results = results[:top_k]
+        print(results)
         
         elapsed = time.time() - start_time
         print(f"🔍 CLIP Search: {elapsed:.2f}s, found {len(results)} results")
@@ -570,4 +580,4 @@ if __name__ == '__main__':
     print(f"🔧 Device: {DEVICE}")
     print(f"🤖 Model: CLIP ViT-B/32 (512-dim)")
     
-    app.run(host="0.0.0.0", port=6000, threaded=True)
+    app.run(host="0.0.0.0", port=5001, threaded=True)
