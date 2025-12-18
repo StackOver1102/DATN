@@ -65,7 +65,7 @@ const authOptions: NextAuthOptions = {
             body: JSON.stringify({
               email: credentials.email,
               password: credentials.password,
-              captchaToken: credentials.captchaToken,
+              captchaToken: credentials.captchaToken
             }),
           });
 

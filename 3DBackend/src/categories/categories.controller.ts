@@ -10,6 +10,7 @@ import {
   Query,
   NotFoundException,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -21,6 +22,7 @@ import { Public } from 'src/auth/decorators/public.decorator';
 
 @ApiTags('categories')
 @Controller('categories')
+@SkipThrottle()
 export class CategoriesController extends BaseController {
   constructor(private readonly categoriesService: CategoriesService) {
     super();

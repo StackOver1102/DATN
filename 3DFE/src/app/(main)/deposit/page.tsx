@@ -24,8 +24,8 @@ export default function DepositPage() {
   const [cancelUrl, setCancelUrl] = useState<string>("");
 
   // Payment methods and region
-  const [paymentMethod, setPaymentMethod] = useState<string>("paypal");
-  const [paymentRegion, setPaymentRegion] = useState<string>("international"); // "international" or "vietnam"
+  const [paymentMethod, setPaymentMethod] = useState<string>("banking");
+  const [paymentRegion, setPaymentRegion] = useState<string>("vietnam"); // "international" or "vietnam"
 
   // Use Redux store
   const dispatch = useAppDispatch();
@@ -435,8 +435,8 @@ export default function DepositPage() {
 
               <div
                 className={`text-5xl font-bold text-center ${paymentRegion === "international"
-                    ? "text-blue-600"
-                    : "text-green-600"
+                  ? "text-blue-600"
+                  : "text-green-600"
                   }`}
               >
                 {getPaymentAmount().toLocaleString()} {getPaymentCurrency()}

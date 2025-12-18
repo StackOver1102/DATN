@@ -94,7 +94,7 @@ async function getProducts(
 async function getCategories() {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/categories/grouped`,
+      `${process.env.NEXT_PUBLIC_API_URL_SSR}/categories/grouped`,
       {
         next: { revalidate: 1 }, // Revalidate 1p hour
       }

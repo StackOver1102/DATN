@@ -92,7 +92,8 @@ export class GoogleDriveService {
             (fileName.endsWith('.jpg') ||
               fileName.endsWith('.jpeg') ||
               fileName.endsWith('.png') ||
-              fileName.endsWith('.rar'))
+              fileName.endsWith('.rar') ||
+              fileName.endsWith('.zip'))
           );
         });
         allFiles.push(...filtered);
@@ -139,6 +140,7 @@ export class GoogleDriveService {
 
   async getFolderInfo(folderId: string, name?: string): Promise<FolderInfo> {
     const files = await this.listFiles(folderId, name);
+    console.debug(files);
     const result: FolderInfo = {
       stt: null,
       title: null,
@@ -155,7 +157,8 @@ export class GoogleDriveService {
 
     for (const file of files) {
       const ext = path.extname(file.name).toLowerCase();
-      if (ext === '.rar') {
+      console.log('ext', ext);
+      if (ext === '.rar' || ext === '.zip') {
         result.rar = {
           id: file.id,
           name: file.name,
@@ -245,8 +248,7 @@ export class GoogleDriveService {
     } catch (error) {
       console.error('Error generating signed download URL:', error);
       throw new Error(
-        `Cannot generate signed download URL: ${
-          error instanceof Error ? error.message : 'Unknown error'
+        `Cannot generate signed download URL: ${error instanceof Error ? error.message : 'Unknown error'
         }`,
       );
     }
@@ -477,8 +479,7 @@ export class GoogleDriveService {
     } catch (error) {
       console.error('Lỗi khi thêm quyền public:', error);
       throw new Error(
-        `Không thể thêm quyền public: ${
-          error instanceof Error ? error.message : 'Unknown error'
+        `Không thể thêm quyền public: ${error instanceof Error ? error.message : 'Unknown error'
         }`,
       );
     }
@@ -560,8 +561,7 @@ export class GoogleDriveService {
     } catch (error) {
       console.error('Lỗi khi tìm kiếm file hoặc tải về local:', error);
       throw new HttpException(
-        `Không thể tìm kiếm file hoặc tải về local: ${
-          error instanceof Error ? error.message : 'Unknown error'
+        `Không thể tìm kiếm file hoặc tải về local: ${error instanceof Error ? error.message : 'Unknown error'
         }`,
         HttpStatus.BAD_REQUEST,
       );

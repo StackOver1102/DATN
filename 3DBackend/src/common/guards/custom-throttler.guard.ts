@@ -6,12 +6,14 @@ export class CustomThrottlerGuard extends ThrottlerGuard {
     protected async getTracker(req: Record<string, any>): Promise<string> {
         // Ưu tiên 1: Lấy IP từ Cloudflare header (quan trọng nhất)
         const cfConnectingIp = req.headers['cf-connecting-ip'];
+        console.log(cfConnectingIp);
         if (cfConnectingIp) {
             return cfConnectingIp;
         }
 
         // Ưu tiên 2: Lấy IP từ x-forwarded-for (cho các reverse proxy khác)
         const forwarded = req.headers['x-forwarded-for'];
+        console.log(forwarded);
         if (forwarded) {
             // x-forwarded-for có thể chứa nhiều IP, lấy IP đầu tiên (IP của client)
             const ips = forwarded.split(',');
@@ -20,6 +22,7 @@ export class CustomThrottlerGuard extends ThrottlerGuard {
 
         // Ưu tiên 3: x-real-ip
         const realIp = req.headers['x-real-ip'];
+        console.log(realIp);
         if (realIp) {
             return realIp;
         }

@@ -215,6 +215,7 @@ export class ImageSearchService {
 
       return response.data;
     } catch (error) {
+      this.logger.error(error)
       this.logger.error('Failed to search similar products', error.message);
       return [];
     }
