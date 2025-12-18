@@ -101,7 +101,7 @@ export default function ClientSideModelsPage({
       }
 
       if (!apiParams.limit) {
-        queryParams.append("limit", "60");
+        queryParams.append("limit", "30");
       }
 
       // Make API request
@@ -187,7 +187,7 @@ export default function ClientSideModelsPage({
       (apiParams as Record<string, string>)[key] = value;
     });
     apiParams.page = 1;
-    apiParams.limit = 60;
+    apiParams.limit = 30;
 
     fetchModels(apiParams);
 
@@ -222,6 +222,42 @@ export default function ClientSideModelsPage({
     if (searchType === 'image' && typeof window !== 'undefined') {
       console.log('🔍 Image search mode detected');
 
+      // First, try to load from existing allImageSearchResults (for pagination)
+      const allStoredResults = sessionStorage.getItem('allImageSearchResults');
+
+      if (allStoredResults) {
+        // Page change in image search mode - repaginate from stored results
+        try {
+          const allResults = JSON.parse(allStoredResults);
+          const currentPage = parseInt(searchParams.get('page') || '1', 10);
+          const itemsPerPage = 30;
+
+          // Calculate pagination
+          const totalPages = Math.ceil(allResults.length / itemsPerPage);
+          const startIndex = (currentPage - 1) * itemsPerPage;
+          const endIndex = startIndex + itemsPerPage;
+          const paginatedResults = allResults.slice(startIndex, endIndex);
+
+          console.log('📄 Re-paginating image search results:', {
+            totalResults: allResults.length,
+            currentPage,
+            totalPages,
+            showingResults: paginatedResults.length,
+            range: `${startIndex + 1}-${Math.min(endIndex, allResults.length)}`
+          });
+
+          setModels(paginatedResults);
+          setCount(allResults.length);
+          setCurrentTotalPages(totalPages);
+          setLoading(false);
+
+          return; // Skip the initial load logic below
+        } catch (error) {
+          console.error('❌ Error re-paginating image search results:', error);
+        }
+      }
+
+      // Initial load from imageSearchResults (first time after search)
       try {
         const savedResults = sessionStorage.getItem('imageSearchResults');
         console.log('📦 Raw sessionStorage data:', savedResults);
@@ -240,39 +276,62 @@ export default function ClientSideModelsPage({
           });
 
           // Check for results in different possible formats
-          let results = [];
+          let allResults = [];
           let total = 0;
 
           if (data.success && Array.isArray(data.results)) {
             // Format: {success: true, results: [...], total: X}
-            results = data.results;
-            total = data.total || results.length;
+            allResults = data.results;
+            total = data.total || allResults.length;
             console.log('✅ Found results in format 1 (success + results)');
           } else if (Array.isArray(data.results)) {
             // Format: {results: [...], total: X}
-            results = data.results;
-            total = data.total || results.length;
+            allResults = data.results;
+            total = data.total || allResults.length;
             console.log('✅ Found results in format 2 (results only)');
           } else if (Array.isArray(data)) {
             // Format: [...]
-            results = data;
+            allResults = data;
             total = data.length;
             console.log('✅ Found results in format 3 (array)');
           }
 
-          if (results.length > 0) {
-            console.log('🎯 Setting models with', results.length, 'items');
-            console.log('📝 First result sample:', results[0]);
+          if (allResults.length > 0) {
+            console.log('🎯 Total image search results:', allResults.length, 'items');
+            console.log('📝 First result sample:', allResults[0]);
 
-            setModels(results);
+            // Store all results in sessionStorage for pagination
+            sessionStorage.setItem('allImageSearchResults', JSON.stringify(allResults));
+
+            // Get current page from URL (default to 1)
+            const currentPage = parseInt(searchParams.get('page') || '1', 10);
+            const itemsPerPage = 30;
+
+            // Calculate pagination
+            const totalPages = Math.ceil(allResults.length / itemsPerPage);
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const paginatedResults = allResults.slice(startIndex, endIndex);
+
+            console.log('📄 Pagination info:', {
+              totalResults: allResults.length,
+              currentPage,
+              totalPages,
+              itemsPerPage,
+              showingResults: paginatedResults.length,
+              range: `${startIndex + 1}-${Math.min(endIndex, allResults.length)}`
+            });
+
+            // Set state with paginated results
+            setModels(paginatedResults);
             setCount(total);
-            setCurrentTotalPages(1); // Image search shows all results on one page
+            setCurrentTotalPages(totalPages);
             setLoading(false);
 
-            // Clear sessionStorage after loading
+            // Clear the initial search results after storing all results
             sessionStorage.removeItem('imageSearchResults');
 
-            console.log('✅ Successfully loaded image search results:', results.length);
+            console.log('✅ Successfully loaded paginated image search results:', paginatedResults.length, 'of', allResults.length);
           } else {
             console.warn('⚠️ No results found in parsed data');
             setModels([]);
@@ -324,7 +383,7 @@ export default function ClientSideModelsPage({
       params.page = parseInt(params.page.toString(), 10);
     }
 
-    params.limit = params.limit ? parseInt(params.limit.toString(), 10) : 60;
+    params.limit = params.limit ? parseInt(params.limit.toString(), 10) : 30;
 
     // On initial mount, just set currentApiParams without fetching
     // since we already have initialModels from server
@@ -434,6 +493,7 @@ export default function ClientSideModelsPage({
                           // Clear sessionStorage to ensure no old data remains
                           if (typeof window !== 'undefined') {
                             sessionStorage.removeItem('imageSearchResults');
+                            sessionStorage.removeItem('allImageSearchResults');
                           }
                           // Navigate back to models page and force reload to fetch all products
                           window.location.href = '/models';
@@ -640,26 +700,38 @@ export default function ClientSideModelsPage({
                       // Update or add the page parameter
                       params.set("page", page.toString());
 
-                      // Directly fetch data for the new page
-                      const apiParams: ApiFilterParams = {};
-                      params.forEach((value, key) => {
-                        (apiParams as Record<string, string>)[key] = value;
-                      });
+                      // Check if we're in image search mode
+                      const searchType = searchParams.get('searchType');
 
-                      // Convert page to number
-                      apiParams.page = parseInt(
-                        apiParams.page?.toString() || "1",
-                        10
-                      );
+                      if (searchType === 'image') {
+                        // Image search mode - just update URL, useEffect will handle repagination
+                        console.log('🔄 Image search pagination - updating URL only');
+                        router.push(`?${params.toString()}`, { scroll: false });
 
-                      // Fetch data directly
-                      fetchModels(apiParams);
+                        // Scroll to top of page
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      } else {
+                        // Regular mode - fetch data from API
+                        const apiParams: ApiFilterParams = {};
+                        params.forEach((value, key) => {
+                          (apiParams as Record<string, string>)[key] = value;
+                        });
 
-                      // Scroll to top of page
-                      window.scrollTo({ top: 0, behavior: "smooth" });
+                        // Convert page to number
+                        apiParams.page = parseInt(
+                          apiParams.page?.toString() || "1",
+                          10
+                        );
 
-                      // Also update the URL (this won't cause a full page reload)
-                      router.push(`?${params.toString()}`, { scroll: false });
+                        // Fetch data directly
+                        fetchModels(apiParams);
+
+                        // Scroll to top of page
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+
+                        // Also update the URL (this won't cause a full page reload)
+                        router.push(`?${params.toString()}`, { scroll: false });
+                      }
                     }}
                   />
                 </div>

@@ -136,12 +136,12 @@ interface ModelsPageProps {
 export default async function ModelsPage({ searchParams }: ModelsPageProps) {
   // Get query parameters from URL
   const searchType = (await searchParams).searchType;
-  
+
   // For image search, skip server-side product fetch
   // Client component will load results from sessionStorage
   if (searchType === 'image') {
     const categoriesData = await getCategories();
-    
+
     return (
       <ClientSideModelsPage
         categories={categoriesData || []}
