@@ -9,6 +9,9 @@ import { DriveModule } from 'src/drive/drive.module';
 import { CommonModule } from 'src/common/common.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { UploadService } from 'src/upload/upload.service';
+import { ImageSearchService } from './image-search.service';
+import { ProductMigrationService } from './product-migration.service';
+import { ProductMigrationController } from './product-migration.controller';
 
 @Module({
   imports: [
@@ -24,8 +27,13 @@ import { UploadService } from 'src/upload/upload.service';
       inject: [UploadService],
     }),
   ],
-  controllers: [ProductsController],
-  providers: [ProductsService, FilterService],
-  exports: [ProductsService],
+  controllers: [ProductsController, ProductMigrationController],
+  providers: [
+    ProductsService,
+    FilterService,
+    ImageSearchService,
+    ProductMigrationService,
+  ],
+  exports: [ProductsService, ImageSearchService],
 })
-export class ProductsModule {}
+export class ProductsModule { }

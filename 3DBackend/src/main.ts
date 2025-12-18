@@ -16,15 +16,7 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://localhost:4000',
-      'http://frontend:3000',
-      'http://dashboard:4000',
-      'https://3dvn.org',
-      'https://dashboard.3dvn.org',
-    ],
+    origin: true, // Allow all origins for local testing
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
