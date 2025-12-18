@@ -218,33 +218,95 @@ export default function ClientSideModelsPage({
   // Effect to handle image search results from sessionStorage
   useEffect(() => {
     const searchType = searchParams.get('searchType');
-    
+
     if (searchType === 'image' && typeof window !== 'undefined') {
+      console.log('🔍 Image search mode detected');
+
       try {
         const savedResults = sessionStorage.getItem('imageSearchResults');
-        
+        console.log('📦 Raw sessionStorage data:', savedResults);
+
         if (savedResults) {
           const data = JSON.parse(savedResults);
-          
-          if (data.success && data.results) {
-            setModels(data.results);
-            setCount(data.total || data.results.length);
+          console.log('📊 Parsed data object:', data);
+          console.log('📈 Data structure check:', {
+            hasSuccess: 'success' in data,
+            successValue: data.success,
+            hasResults: 'results' in data,
+            resultsType: Array.isArray(data.results) ? 'array' : typeof data.results,
+            resultsLength: data.results?.length,
+            hasTotal: 'total' in data,
+            totalValue: data.total
+          });
+
+          // Check for results in different possible formats
+          let results = [];
+          let total = 0;
+
+          if (data.success && Array.isArray(data.results)) {
+            // Format: {success: true, results: [...], total: X}
+            results = data.results;
+            total = data.total || results.length;
+            console.log('✅ Found results in format 1 (success + results)');
+          } else if (Array.isArray(data.results)) {
+            // Format: {results: [...], total: X}
+            results = data.results;
+            total = data.total || results.length;
+            console.log('✅ Found results in format 2 (results only)');
+          } else if (Array.isArray(data)) {
+            // Format: [...]
+            results = data;
+            total = data.length;
+            console.log('✅ Found results in format 3 (array)');
+          }
+
+          if (results.length > 0) {
+            console.log('🎯 Setting models with', results.length, 'items');
+            console.log('📝 First result sample:', results[0]);
+
+            setModels(results);
+            setCount(total);
             setCurrentTotalPages(1); // Image search shows all results on one page
-            
+            setLoading(false);
+
             // Clear sessionStorage after loading
             sessionStorage.removeItem('imageSearchResults');
-            
-            console.log('✅ Loaded image search results:', data.results.length);
+
+            console.log('✅ Successfully loaded image search results:', results.length);
+          } else {
+            console.warn('⚠️ No results found in parsed data');
+            setModels([]);
+            setCount(0);
+            setCurrentTotalPages(1);
+            setLoading(false);
           }
+        } else {
+          console.warn('⚠️ No imageSearchResults found in sessionStorage');
+          setModels([]);
+          setCount(0);
+          setCurrentTotalPages(1);
+          setLoading(false);
         }
       } catch (error) {
-        console.error('Error loading image search results:', error);
+        console.error('❌ Error loading image search results:', error);
+        setModels([]);
+        setCount(0);
+        setCurrentTotalPages(1);
+        setLoading(false);
       }
     }
   }, [searchParams]);
 
   // Effect to initialize and sync with URL parameters
   useEffect(() => {
+    // Skip this effect if we're in image search mode
+    // Image search results are handled by the image search useEffect above
+    const searchType = searchParams.get('searchType');
+    if (searchType === 'image') {
+      console.log('⏭️ Skipping regular fetch - image search mode active');
+      return;
+    }
+
     // Extract filter parameters from URL
     const params: ApiFilterParams = {};
 
@@ -368,7 +430,13 @@ export default function ClientSideModelsPage({
                       </span>
                       <button
                         onClick={() => {
-                          router.push('/models', { scroll: false });
+                          console.log('🗑️ Clearing image search results');
+                          // Clear sessionStorage to ensure no old data remains
+                          if (typeof window !== 'undefined') {
+                            sessionStorage.removeItem('imageSearchResults');
+                          }
+                          // Navigate back to models page and force reload to fetch all products
+                          window.location.href = '/models';
                         }}
                         className="text-purple-500 hover:text-purple-700 transition-colors"
                         title="Clear image search"

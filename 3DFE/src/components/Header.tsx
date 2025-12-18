@@ -106,13 +106,13 @@ export default function Header() {
     }
 
     setImageSearching(true);
-    
+
     try {
       const formData = new FormData();
       formData.append('image', file);
 
       const response = await fetch(
-        `${API_URL}/products/search-by-image?top_k=20&threshold=0.3`,
+        `${API_URL}/products/search-by-image?top_k=200&threshold=0.3`,
         {
           method: 'POST',
           body: formData,
@@ -124,14 +124,19 @@ export default function Header() {
       }
 
       const data = await response.json();
-      
+
+      console.log('🔍 Image search API response:', data);
+
       // Extract actual search results from NestJS response wrapper
       // Response format: {success, data: {success, total, results}}
       const searchResults = data.data || data;
-      
+
+      console.log('📦 Extracted search results:', searchResults);
+      console.log('📊 Number of results:', searchResults.results?.length || 0);
+
       // Store results in sessionStorage to pass to models page
       sessionStorage.setItem('imageSearchResults', JSON.stringify(searchResults));
-      
+
       // Navigate to models page
       router.push('/models?searchType=image');
     } catch (error) {
@@ -432,6 +437,36 @@ export default function Header() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
+                  {/* Search button */}
+                  <Button
+                    type="submit"
+                    className="absolute right-0 top-1/2 transform -translate-y-1/2"
+                    variant="ghost"
+                  >
+                    <svg
+                      className="w-5 h-5 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                  </Button>
+
+                  {/* Hidden file input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+
                   {/* Camera button for image search */}
                   <Button
                     type="button"
@@ -482,34 +517,6 @@ export default function Header() {
                         />
                       </svg>
                     )}
-                  </Button>
-                  {/* Hidden file input */}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
-                  {/* Search button */}
-                  <Button
-                    type="submit"
-                    className="absolute right-0 top-1/2 transform -translate-y-1/2"
-                    variant="ghost"
-                  >
-                    <svg
-                      className="w-5 h-5 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
                   </Button>
                 </form>
               </div>
