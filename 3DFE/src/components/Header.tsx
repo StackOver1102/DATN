@@ -134,11 +134,16 @@ export default function Header() {
       console.log('📦 Extracted search results:', searchResults);
       console.log('📊 Number of results:', searchResults.results?.length || 0);
 
+      // Clear old session storage data before setting new results
+      sessionStorage.removeItem('imageSearchResults');
+      sessionStorage.removeItem('allImageSearchResults');
+
       // Store results in sessionStorage to pass to models page
       sessionStorage.setItem('imageSearchResults', JSON.stringify(searchResults));
 
-      // Navigate to models page
-      router.push('/models?searchType=image');
+      // Navigate to models page with timestamp to force re-render
+      const timestamp = Date.now();
+      router.push(`/models?searchType=image&t=${timestamp}`);
     } catch (error) {
       console.error('Image search error:', error);
       alert('Search failed. Please try again.');
@@ -440,8 +445,9 @@ export default function Header() {
                   {/* Search button */}
                   <Button
                     type="submit"
-                    className="absolute right-0 top-1/2 transform -translate-y-1/2"
+                    className="absolute right-10 top-1/2 transform -translate-y-1/2"
                     variant="ghost"
+                    size="sm"
                   >
                     <svg
                       className="w-5 h-5 text-gray-400"
@@ -472,7 +478,7 @@ export default function Header() {
                     type="button"
                     onClick={handleCameraClick}
                     disabled={imageSearching}
-                    className="absolute right-10 top-1/2 transform -translate-y-1/2 hover:bg-gray-100 disabled:opacity-50"
+                    className="absolute right-0 top-1/2 transform -translate-y-1/2 hover:bg-gray-100 disabled:opacity-50"
                     variant="ghost"
                     size="sm"
                   >
