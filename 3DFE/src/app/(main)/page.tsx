@@ -11,8 +11,10 @@ import Link from "next/link";
 async function getProducts(page = 1, limit = 12) {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL_SSR}/products?page=${page}&limit=${limit}`,
-   
+
   );
+
+  console.log(res);
 
   if (!res.ok) {
     throw new Error("Failed to fetch products");
@@ -90,11 +92,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           title: category.title || "Uncategorized",
           items: Array.isArray(category.items)
             ? category.items.map((item) => ({
-                name: typeof item.name === "string" ? item.name : "Unknown",
-                subcategories: Array.isArray(item.subcategories)
-                  ? item.subcategories
-                  : undefined,
-              }))
+              name: typeof item.name === "string" ? item.name : "Unknown",
+              subcategories: Array.isArray(item.subcategories)
+                ? item.subcategories
+                : undefined,
+            }))
             : [],
         };
       });
@@ -106,7 +108,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   return (
     <div className="bg-gray-50">
       {/* Init Modal Popup - Client Side */}
-      <InitModalPopup 
+      <InitModalPopup
         showOnce={true}
         position="center"
       />

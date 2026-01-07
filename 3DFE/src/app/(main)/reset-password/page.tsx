@@ -80,7 +80,7 @@ function ResetPasswordForm() {
     try {
       // Call the API to reset password
       const { authApi } = await import('@/lib/api');
-      const response = await authApi.resetPassword(token, data.password);
+      const response = await authApi.resetPassword(token, data.password, captchaToken);
 
       if (response.success) {
         setSuccess("Mật khẩu của bạn đã được đặt lại thành công. Bạn có thể đăng nhập bằng mật khẩu mới.");

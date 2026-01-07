@@ -16,7 +16,7 @@ import {
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { SkipThrottle } from '@nestjs/throttler';
 import { FilterDto } from 'src/common/dto/filter.dto';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/auth/decorators/public.decorator';
@@ -24,8 +24,10 @@ import { ImageSearchService } from './image-search.service';
 import * as fs from 'fs';
 import * as path from 'path';
 
+import { FileInterceptor } from '@nestjs/platform-express';
 @ApiTags('products')
 @Controller('products')
+@SkipThrottle()
 export class ProductsController {
   constructor(
     private readonly productsService: ProductsService,

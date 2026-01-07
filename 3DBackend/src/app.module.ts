@@ -48,7 +48,7 @@ const validationSchema = Joi.object({
     ThrottlerModule.forRoot([
       {
         ttl: 60000, // 60 seconds
-        limit: 10, // 10 requests per ttl
+        limit: 100, // 10 requests per ttl
       },
     ]),
     MongooseModule.forRoot(

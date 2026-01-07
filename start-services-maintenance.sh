@@ -72,6 +72,8 @@ sleep 5
 # Start backend
 start_service "Backend" "web3d-backend"
 
+start_service "Image Search" "web3d-image-search"
+
 # Wait for backend to be ready
 echo -e "${BLUE}Waiting for backend to be ready...${NC}"
 sleep 3

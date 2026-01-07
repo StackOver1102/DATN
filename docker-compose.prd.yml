@@ -90,6 +90,7 @@ services:
       - "80:80"
     volumes:
       - ./nginx/conf:/etc/nginx/conf.d
+      - ./nginx/maintenance.html:/usr/share/nginx/html/maintenance.html
     environment:
       - NGINX_HOST=3dvn.org
       - NGINX_PORT=80

@@ -78,6 +78,11 @@ export class ProductsService {
       `${updateStt}. ${name}`,
     );
 
+    console.log('updateStt', updateStt)
+    console.log('name', name)
+    console.log('folderId', folderId)
+    console.log('folderInfo', folderInfo)
+
     const isPro = Number(price) > 0;
 
     const productData = {
