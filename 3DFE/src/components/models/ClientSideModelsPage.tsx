@@ -101,7 +101,7 @@ export default function ClientSideModelsPage({
       }
 
       if (!apiParams.limit) {
-        queryParams.append("limit", "30");
+        queryParams.append("limit", "60");
       }
 
       // Make API request
@@ -230,7 +230,7 @@ export default function ClientSideModelsPage({
         try {
           const allResults = JSON.parse(allStoredResults);
           const currentPage = parseInt(searchParams.get('page') || '1', 10);
-          const itemsPerPage = 30;
+          const itemsPerPage = 60;
 
           // Calculate pagination
           const totalPages = Math.ceil(allResults.length / itemsPerPage);

@@ -442,7 +442,7 @@ export class ProductsService {
   }
 
   async findById(id: string): Promise<Product | null> {
-    return this.productModel.findById(id).select('urlDownload price discount images name categoryName');
+    return this.productModel.findById(id).select('urlDownload price discount images name categoryName isPro quantityCommand format');
   }
 
   async getLastSttFromCategory(

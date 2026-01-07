@@ -163,7 +163,7 @@ export default async function ModelsPage({ searchParams }: ModelsPageProps) {
 
   // Fetch data in parallel
   const [productsData, categoriesData] = await Promise.all([
-    getProducts(currentPage, 30, categoryParam, itemParam, searchQuery),
+    getProducts(currentPage, 60, categoryParam, itemParam, searchQuery),
     getCategories(),
   ]);
 
