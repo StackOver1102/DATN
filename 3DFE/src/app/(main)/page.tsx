@@ -9,6 +9,7 @@ import { Banner } from "@/interface/banner";
 import Link from "next/link";
 
 async function getProducts(page = 1, limit = 12) {
+  console.log(process.env.NEXT_PUBLIC_API_URL_SSR);
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL_SSR}/products?page=${page}&limit=${limit}`,
 
