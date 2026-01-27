@@ -110,20 +110,20 @@ export default function ProductDetailPage() {
     ["order"],
     {
       onSuccess: (data) => {
-        toast.success("Order placed successfully!");
+        toast.success("Đặt hàng thành công!");
         setIsBuying(false);
 
         // Open download URL directly
         if (data?.downloadUrl) {
           window.open(data.downloadUrl, "_blank");
-          toast.success("Download started!");
+          toast.success("Bắt đầu tải xuống!");
         }
 
         // Refresh profile after order
         fetchProfile();
       },
       onError: (err) => {
-        toast.error(`Order failed: ${err.message}`);
+        toast.error(`Đặt hàng thất bại: ${err.message}`);
         setIsBuying(false);
       },
     }
@@ -135,13 +135,13 @@ export default function ProductDetailPage() {
     ["comments", id],
     {
       onSuccess: () => {
-        toast.success("Comment posted successfully!");
+        toast.success("Đăng bình luận thành công!");
         setCommentContent("");
         setRating(5);
         refetchComments();
       },
       onError: (err) => {
-        toast.error(`Failed to post comment: ${err.message}`);
+        toast.error(`Đăng bình luận thất bại: ${err.message}`);
       },
     }
   );
@@ -159,13 +159,13 @@ export default function ProductDetailPage() {
   // Function to handle comment submission
   const handleCommentSubmit = async () => {
     if (!session?.user) {
-      toast.error("Please login to comment");
+      toast.error("Vui lòng đăng nhập để bình luận");
       router.push("/signin?redirect=" + encodeURIComponent(`/product/${id}`));
       return;
     }
 
     if (!commentContent.trim()) {
-      toast.error("Comment cannot be empty");
+      toast.error("Bình luận không được để trống");
       return;
     }
 
@@ -188,17 +188,17 @@ export default function ProductDetailPage() {
   // Transform similar products to match the expected interface
   const similarProducts = similarProductsData
     ? similarProductsData.map((item) => ({
-        id: item._id || "",
-        name: item.name,
-        price: item.price,
-        image: item.images || "/placeholder-image.jpg",
-      }))
+      id: item._id || "",
+      name: item.name,
+      price: item.price,
+      image: item.images || "/placeholder-image.jpg",
+    }))
     : [];
 
   // Function to handle buy button click - show warning modal first
   const handleBuyClick = () => {
     if (!session?.user) {
-      toast.error("Please login to buy this product");
+      toast.error("Vui lòng đăng nhập để mua sản phẩm này");
       router.push("/signin?redirect=" + encodeURIComponent(`/product/${id}`));
       return;
     }
@@ -214,14 +214,14 @@ export default function ProductDetailPage() {
 
     // If no profile in store, fetch it
     if (!profile) {
-      toast.loading("Loading your profile...");
+      toast.loading("Đang tải thông tin của bạn...");
       try {
         const token = session?.accessToken as string | undefined;
         await dispatch(fetchUserProfile(token)).unwrap();
         toast.dismiss();
       } catch {
         toast.dismiss();
-        toast.error("Failed to load profile");
+        toast.error("Không thể tải thông tin");
         setIsBuying(false);
         return;
       }
@@ -237,14 +237,14 @@ export default function ProductDetailPage() {
       product &&
       updatedProfile.balance < product.price
     ) {
-      toast.error("Insufficient balance. Please deposit more money.");
+      toast.error("Số dư không đủ. Vui lòng nạp thêm xu.");
       router.push("/deposit");
       setIsBuying(false);
       return;
     }
 
     // Process order
-    toast.loading("Processing your order...");
+    toast.loading("Đang xử lý đơn hàng...");
 
     // Create order
     if (product && product._id) {
@@ -264,7 +264,7 @@ export default function ProductDetailPage() {
         });
     } else {
       toast.dismiss();
-      toast.error("Product information is missing");
+      toast.error("Thiếu thông tin sản phẩm");
       setIsBuying(false);
       return;
     }
@@ -297,19 +297,18 @@ export default function ProductDetailPage() {
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-bold text-gray-900 mb-2">
-                  Important Notice
+                  Thông báo quan trọng
                 </h3>
                 <div className="text-sm text-gray-600 space-y-2">
                   <p>
-                    The download link will be{" "}
-                    <strong>valid for only 5 minutes</strong> after purchase.
+                    Liên kết tải xuống sẽ{" "}
+                    <strong>chỉ có hiệu lực trong 5 phút</strong> sau khi mua.
                   </p>
                   <p>
-                    Please download the file immediately after completing your
-                    purchase.
+                    Vui lòng tải file ngay sau khi hoàn tất giao dịch.
                   </p>
                   <p className="text-yellow-600 font-medium">
-                    ⚠️ Do not share the download link with others.
+                    ⚠️ Không chia sẻ liên kết tải xuống cho người khác.
                   </p>
                 </div>
               </div>
@@ -320,14 +319,14 @@ export default function ProductDetailPage() {
                 onClick={() => setShowWarningModal(false)}
                 className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
               >
-                Cancel
+                Hủy
               </button>
               <button
                 onClick={processPurchase}
                 disabled={isBuying}
                 className="flex-1 px-4 py-2 bg-black text-yellow-400 font-bold rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isBuying ? "Processing..." : "I Understand, Continue"}
+                {isBuying ? "Đang xử lý..." : "Tôi đã hiểu, Tiếp tục"}
               </button>
             </div>
           </div>
@@ -342,14 +341,14 @@ export default function ProductDetailPage() {
               href="/"
               className="hover:text-blue-600 transition-colors hover:underline"
             >
-              Home
+              Trang chủ
             </Link>
             <ChevronRight className="w-4 h-4 mx-2 text-gray-400" />
             <Link
               href="/models"
               className="hover:text-blue-600 transition-colors hover:underline"
             >
-              3D Models
+              Mô hình 3D
             </Link>
             <ChevronRight className="w-4 h-4 mx-2 text-gray-400" />
             <Link
@@ -398,13 +397,13 @@ export default function ProductDetailPage() {
             {/* Price Section */}
             <div className="bg-gray-50 border rounded-lg p-4">
               <div className="flex items-center gap-3 mb-4">
-                <span className="text-sm text-gray-600">Price:</span>
+                <span className="text-sm text-gray-600">Giá:</span>
                 <div className="flex items-center gap-2">
                   <span className="text-2xl font-bold text-blue-600">
                     {product?.price}
                   </span>
                   <CircleDollarSign className="w-5 h-5 text-yellow-500" />
-                  <span className="text-gray-600">Coin</span>
+                  <span className="text-gray-600">Xu</span>
                   {product?.isPro && (
                     <span className="bg-black text-yellow-400 px-2 py-1 rounded text-xs font-bold">
                       PRO
@@ -424,14 +423,14 @@ export default function ProductDetailPage() {
             <div className="space-y-3">
               <div className="grid grid-cols-1 gap-3 text-sm">
                 <div className="flex justify-between border-b pb-2 hover:bg-gray-100 px-2 rounded transition-colors">
-                  <span className="text-gray-600">ID Product:</span>
+                  <span className="text-gray-600">Mã sản phẩm:</span>
                   <span className="text-gray-900 font-mono text-xs">
                     {product?._id}
                   </span>
                 </div>
 
                 <div className="flex justify-between border-b pb-2 hover:bg-gray-100 px-2 rounded transition-colors">
-                  <span className="text-gray-600">Platform:</span>
+                  <span className="text-gray-600">Nền tảng:</span>
                   <span className="text-gray-900 font-medium">
                     {product?.platform || "-"}
                   </span>
@@ -445,28 +444,28 @@ export default function ProductDetailPage() {
                 </div>
 
                 <div className="flex justify-between border-b pb-2 hover:bg-gray-100 px-2 rounded transition-colors">
-                  <span className="text-gray-600">Size:</span>
+                  <span className="text-gray-600">Kích thước:</span>
                   <span className="text-gray-900 font-medium">
                     {product?.size ? `${product?.size} MB` : "-"}
                   </span>
                 </div>
 
                 <div className="flex justify-between border-b pb-2 hover:bg-gray-100 px-2 rounded transition-colors">
-                  <span className="text-gray-600">Materials:</span>
+                  <span className="text-gray-600">Chất liệu:</span>
                   <span className="text-gray-900 font-medium first-letter:uppercase">
                     {product?.materials || "-"}
                   </span>
                 </div>
 
                 <div className="flex justify-between border-b pb-2 hover:bg-gray-100 px-2 rounded transition-colors">
-                  <span className="text-gray-600">Style:</span>
+                  <span className="text-gray-600">Phong cách:</span>
                   <span className="text-gray-900 font-medium first-letter:uppercase">
                     {product?.style || "-"}
                   </span>
                 </div>
 
                 <div className="flex justify-between hover:bg-gray-100 px-2 rounded transition-colors">
-                  <span className="text-gray-600">Color:</span>
+                  <span className="text-gray-600">Màu sắc:</span>
                   {product?.color ? (
                     <div className="flex items-center gap-2">
                       <div
@@ -489,7 +488,7 @@ export default function ProductDetailPage() {
                 className="flex-1 bg-black text-yellow-400 font-bold py-3 px-6 rounded flex items-center justify-center gap-2 transition-all hover:bg-gray-800 hover:scale-105 hover:shadow-md"
               >
                 <Download className="w-5 h-5" />
-                Buy Model
+                Mua Mô hình
               </button>
               <button className="bg-white border border-gray-300 hover:bg-gray-100 hover:text-red-500 hover:border-red-300 text-gray-700 p-3 rounded transition-all hover:scale-110 hover:shadow-sm">
                 <Heart className="w-5 h-5" />
@@ -540,7 +539,7 @@ export default function ProductDetailPage() {
         {product?.description && (
           <div className="mt-10">
             <h2 className="text-xl font-bold mb-4 text-gray-900">
-              Description
+              Mô tả
             </h2>
             <div className="bg-gray-50 border rounded-lg p-6 transition-all hover:shadow-md hover:border-gray-300">
               <p className="text-gray-700 whitespace-pre-line first-letter:uppercase">
@@ -579,7 +578,7 @@ export default function ProductDetailPage() {
             <div className="border-b">
               <div className="flex">
                 <button className="px-4 py-3 text-sm font-medium border-b-2 border-blue-500 text-blue-600 hover:bg-blue-50 transition-colors">
-                  Comments
+                  Bình luận
                 </button>
               </div>
             </div>
@@ -598,23 +597,22 @@ export default function ProductDetailPage() {
                       className="focus:outline-none"
                     >
                       <Star
-                        className={`w-5 h-5 ${
-                          star <= (hoveredRating || rating)
-                            ? "text-yellow-400 fill-yellow-400"
-                            : "text-gray-300"
-                        } transition-colors`}
+                        className={`w-5 h-5 ${star <= (hoveredRating || rating)
+                          ? "text-yellow-400 fill-yellow-400"
+                          : "text-gray-300"
+                          } transition-colors`}
                       />
                     </button>
                   ))}
                   <span className="text-sm text-gray-600 ml-2">
-                    {rating} out of 5 stars
+                    {rating} trên 5 sao
                   </span>
                 </div>
 
                 <textarea
                   value={commentContent}
                   onChange={(e) => setCommentContent(e.target.value)}
-                  placeholder="Write your comment here..."
+                  placeholder="Viết bình luận của bạn tại đây..."
                   className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                   rows={3}
                 />
@@ -630,7 +628,7 @@ export default function ProductDetailPage() {
                     ) : (
                       <Send className="w-4 h-4" />
                     )}
-                    <span>Post Comment</span>
+                    <span>Đăng bình luận</span>
                   </button>
                 </div>
               </div>
@@ -662,11 +660,10 @@ export default function ProductDetailPage() {
                               {[...Array(5)].map((_, i) => (
                                 <Star
                                   key={i}
-                                  className={`w-3 h-3 ${
-                                    i < comment.rating
-                                      ? "text-yellow-400 fill-yellow-400"
-                                      : "text-gray-300"
-                                  }`}
+                                  className={`w-3 h-3 ${i < comment.rating
+                                    ? "text-yellow-400 fill-yellow-400"
+                                    : "text-gray-300"
+                                    }`}
                                 />
                               ))}
                               <span className="text-xs text-gray-500 ml-1">
@@ -684,7 +681,7 @@ export default function ProductDetailPage() {
                 </div>
               ) : (
                 <p className="text-sm text-gray-500 text-center py-8">
-                  No comments yet. Be the first to comment!
+                  Chưa có bình luận nào. Hãy là người đầu tiên bình luận!
                 </p>
               )}
             </div>
@@ -695,7 +692,7 @@ export default function ProductDetailPage() {
         {isLoadingSimilar ? (
           <div className="mt-16 border-t pt-8">
             <h2 className="text-2xl font-bold mb-8 text-gray-900 hover:text-blue-600 transition-colors inline-block">
-              Similar 3D Models
+              Mô hình 3D tương tự
             </h2>
             <div className="flex items-center justify-center py-10">
               <LoadingSpinner size="md" />
@@ -704,7 +701,7 @@ export default function ProductDetailPage() {
         ) : similarProducts.length > 0 ? (
           <div className="mt-16 border-t pt-8">
             <h2 className="text-2xl font-bold mb-8 text-gray-900 hover:text-blue-600 transition-colors inline-block">
-              Similar 3D Models
+              Mô hình 3D tương tự
             </h2>
             <SimilarProductsSlider products={similarProducts} />
           </div>

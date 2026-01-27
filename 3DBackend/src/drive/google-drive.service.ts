@@ -44,22 +44,33 @@ export class GoogleDriveService {
   private drive: drive_v3.Drive;
 
   constructor() {
+    // Khởi tạo Google Auth và Drive Client với Service Account
     const auth = new google.auth.GoogleAuth({
-      keyFile: 'service-account.json',
+      keyFile: 'service-account.json', // Đường dẫn đến file credential
       scopes: ['https://www.googleapis.com/auth/drive'],
     });
 
     this.drive = google.drive({ version: 'v3', auth });
   }
 
+  /**
+   * Lấy danh sách thư mục con trong một thư mục cha.
+   * @param parentId ID của thư mục cha.
+   */
   async listFolders(parentId: string): Promise<DriveFile[]> {
     const res = await this.drive.files.list({
-      q: `'${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+      q: `'${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`, // Query lọc folder và không nằm trong thùng rác
       fields: 'files(id, name)',
     });
     return (res.data.files || []) as DriveFile[];
   }
 
+  /**
+   * Lấy danh sách file trong một thư mục.
+   * - Hỗ trợ phân trang để lấy tất cả file.
+   * - Có thể lọc theo tiền tố tên file (namePrefix).
+   * - Chỉ lấy các định dạng ảnh, rar, zip nếu có namePrefix.
+   */
   async listFiles(folderId: string, namePrefix?: string): Promise<DriveFile[]> {
     const allFiles: DriveFile[] = [];
     let pageToken: string | undefined = undefined;
@@ -73,7 +84,7 @@ export class GoogleDriveService {
       const res = await this.drive.files.list({
         q,
         fields: 'nextPageToken, files(id, name, mimeType, size)',
-        pageSize: 1000,
+        pageSize: 1000, // Lấy tối đa 1000 file mỗi trang
         pageToken,
       });
 
@@ -85,6 +96,7 @@ export class GoogleDriveService {
       const files = response.files || [];
 
       if (namePrefix) {
+        // Filter thủ công thêm để đảm bảo chính xác các extension mong muốn
         const filtered = files.filter((file) => {
           const fileName = file.name.toLowerCase();
           return (
@@ -107,6 +119,11 @@ export class GoogleDriveService {
     return allFiles;
   }
 
+  /**
+   * Xây dựng cấu trúc cây thư mục (Recursive).
+   * - Dùng để hiển thị danh sách Categories/Subcategories từ Drive lên Frontend.
+   * - Cấu trúc: Category -> SubCategories -> Folders (Leaf).
+   */
   async buildTree(rootId: string): Promise<TreeNode[]> {
     const categories = await this.listFolders(rootId);
 
@@ -138,6 +155,12 @@ export class GoogleDriveService {
     return tree;
   }
 
+  /**
+   * Lấy thông tin chi tiết của một thư mục (Folder chứa sản phẩm).
+   * - Phân tích tên thư mục để lấy STT và Title (Ví dụ: "1. Tên Sản Phẩm").
+   * - Tìm file RAR/ZIP (file model).
+   * - Tìm file ảnh (ảnh thumbnail).
+   */
   async getFolderInfo(folderId: string, name?: string): Promise<FolderInfo> {
     const files = await this.listFiles(folderId, name);
     console.debug(files);
@@ -148,6 +171,7 @@ export class GoogleDriveService {
       image: null,
     };
 
+    // Parse tên thư mục (Nếu name được truyền vào) để lấy số thứ tự
     const folderName = files[0]?.name;
     const nameMatch = folderName?.match(/^(\d+)\.\s*(.+)/);
     if (nameMatch) {
@@ -155,6 +179,7 @@ export class GoogleDriveService {
       result.title = nameMatch[2];
     }
 
+    // Phân loại file
     for (const file of files) {
       const ext = path.extname(file.name).toLowerCase();
       console.log('ext', ext);
@@ -176,6 +201,10 @@ export class GoogleDriveService {
     return result;
   }
 
+  /**
+   * Cấp quyền truy cập (Reader) cho một email cụ thể vào một file.
+   * - Thường dùng khi user mua hàng xong -> Add permission vào file RAR.
+   */
   async addDrivePermission(fileId: string, email: string) {
     await this.drive.permissions.create({
       fileId,
@@ -189,10 +218,11 @@ export class GoogleDriveService {
   }
 
   /**
-   * Generate a temporary signed URL for direct download from Google Drive
-   * @param fileId ID of the file to generate signed URL for
-   * @param expirationMinutes Number of minutes until the URL expires (default: 60)
-   * @returns Object containing signed URL, filename, mimeType, and permissionId
+   * Tạo link tải xuống trực tiếp có thời hạn (Signed URL).
+   * - Cơ chế: Tạo permission "anyone" tạm thời, sau đó xóa đi (hoặc dùng cơ chế khác nếu có).
+   * - Ở đây: Tạo permission "anyone" -> Trả về link -> Permission sẽ cần được xóa thủ công hoặc qua cron job sau thời gian hết hạn.
+   * @param fileId ID của file.
+   * @param expirationMinutes Thời gian hết hạn (phút).
    */
   async generateSignedDownloadUrl(
     fileId: string,
@@ -216,7 +246,7 @@ export class GoogleDriveService {
 
       const { name, mimeType } = fileMetadata.data;
 
-      // Temporarily add public permission
+      // Temporarily add public permission (anyone with link can read)
       const permission = await this.drive.permissions.create({
         fileId,
         requestBody: {
@@ -255,9 +285,7 @@ export class GoogleDriveService {
   }
 
   /**
-   * Remove a specific permission from a file by permissionId
-   * @param fileId ID of the file
-   * @param permissionId ID of the permission to remove
+   * Xóa một permission cụ thể theo ID.
    */
   async removePermissionById(
     fileId: string,
@@ -276,6 +304,10 @@ export class GoogleDriveService {
     }
   }
 
+  /**
+   * Xóa quyền truy cập của một email cụ thể khỏi file.
+   * - Tìm permission ID tương ứng với email rồi xóa.
+   */
   async removeDrivePermission(
     fileUrl: string,
     email: string,
@@ -308,11 +340,8 @@ export class GoogleDriveService {
   }
 
   /**
-   * Tự động hủy quyền truy cập của một email cụ thể cho tất cả các file trong một thư mục
-   * @param folderId ID của thư mục cần xóa quyền
-   * @param email Email cần hủy quyền truy cập
-   * @param recursive Có xóa quyền trong các thư mục con không
-   * @returns Danh sách kết quả xóa quyền
+   * Tự động hủy quyền truy cập của một email cho TẤT CẢ các file trong một thư mục (quét đệ quy).
+   * - Dùng để dọn dẹp quyền truy cập định kỳ hoặc thu hồi quyền.
    */
   async autoRevokePermission(
     folderId: string,
@@ -391,6 +420,10 @@ export class GoogleDriveService {
     }
   }
 
+  /**
+   * Trích xuất File ID từ URL Google Drive.
+   * - Hỗ trợ nhiều định dạng URL khác nhau.
+   */
   getIdByUrl(url: string): string {
     // Extract ID from URL like https://drive.google.com/uc?id=1RaRoIhSHk4JJgZ2m_rAx8QesKTPSZkEx
     try {
@@ -413,13 +446,15 @@ export class GoogleDriveService {
     }
   }
 
+  /**
+   * Tạo URL xem ảnh trực tiếp từ File ID.
+   */
   getImageUrl(fileId: string, name: string): string {
     return `https://drive.google.com/uc?id=${fileId}&export=view&name=${name}`;
   }
 
   /**
-   * Đảm bảo thư mục tồn tại, nếu không thì tạo mới
-   * @param dirPath Đường dẫn thư mục cần kiểm tra/tạo
+   * Đảm bảo thư mục local tồn tại, nếu không thì tạo mới.
    */
   private async ensureDirectoryExists(dirPath: string): Promise<void> {
     try {
@@ -431,9 +466,7 @@ export class GoogleDriveService {
   }
 
   /**
-   * Kiểm tra xem file đã có quyền public chưa
-   * @param fileId ID của file cần kiểm tra
-   * @returns true nếu file đã có quyền public, false nếu chưa
+   * Kiểm tra xem file đã có quyền public chưa.
    */
   async hasPublicPermission(fileId: string): Promise<boolean> {
     try {
@@ -453,8 +486,7 @@ export class GoogleDriveService {
   }
 
   /**
-   * Thêm quyền truy cập public cho file nếu chưa có
-   * @param fileId ID của file cần thêm quyền
+   * Thêm quyền public cho file (để ai cũng xem được - thường dùng cho ảnh).
    */
   async makeFilePublic(fileId: string): Promise<void> {
     try {
@@ -486,11 +518,8 @@ export class GoogleDriveService {
   }
 
   /**
-   * Tìm kiếm file theo tên, tải về thư mục local và trả về đường dẫn
-   * @param searchTerm Từ khóa tìm kiếm
-   * @param folderId ID của thư mục cần tìm kiếm
-   * @param localDir Thư mục local để lưu file (mặc định là 'uploads/images')
-   * @returns Thông tin về file đã tìm thấy và đường dẫn local
+   * Tìm kiếm file ảnh theo tên trong thư mục Drive, make public và tải về Local.
+   * - Dùng khi cần copy ảnh từ Drive về server mình để serve nhanh hơn.
    */
   async searchImageByName(
     searchTerm: string,
@@ -554,7 +583,7 @@ export class GoogleDriveService {
 
       return {
         url, // URL Google Drive (vẫn giữ để tương thích ngược)
-        localPath: relativePath.replace(/\\/g, '/'), // Đường dẫn local (thêm mới)
+        localPath: relativePath.replace(/\\/g, '/'), // Đường dẫn local
         name: imageFile.name,
         id: imageFile.id,
       };

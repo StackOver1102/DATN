@@ -33,7 +33,7 @@ const AboutUsPage = () => {
   return (
     <Container className="py-10">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">About Us</h1>
+        <h1 className="text-3xl font-bold mb-6">Về chúng tôi</h1>
 
         {isLoading ? (
           <div className="flex justify-center py-20">
@@ -45,7 +45,7 @@ const AboutUsPage = () => {
             dangerouslySetInnerHTML={{ __html: content }}
           />
         ) : (
-          <p>About Us content is not available at this time.</p>
+          <p>Nội dung Về chúng tôi chưa có sẵn vào lúc này.</p>
         )}
       </div>
     </Container>

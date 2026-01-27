@@ -253,11 +253,11 @@ export default function ModelFilter({
   const transformedCategories =
     categories.length > 0
       ? sortedCategories.map((category) => ({
-          id: category.title.toLowerCase().replace(/\s+/g, "-"),
-          name: category.title,
-          count: category.items?.length || 0,
-          subcategories: category.items?.map((item) => item.name) || [],
-        }))
+        id: category.title.toLowerCase().replace(/\s+/g, "-"),
+        name: category.title,
+        count: category.items?.length || 0,
+        subcategories: category.items?.map((item) => item.name) || [],
+      }))
       : defaultCategories;
 
   // const sortedCategories = transformedCategories.map((category) => {
@@ -428,41 +428,41 @@ export default function ModelFilter({
       name: "Corona",
       icon: <Image src="/corona.svg" alt="Corona" width={17} height={16} />,
     },
-    { id: "standard", name: "Standard" },
+    { id: "standard", name: "Tiêu chuẩn" },
     { id: "vray+corona", name: "Vray + Corona" },
     { id: "mentalray", name: "Mental Ray" },
   ];
 
   const colors = [
-    { hex: "#ffffff", name: "White" },
-    { hex: "#6b7280", name: "Gray" },
-    { hex: "#000000", name: "Black" },
-    { hex: "#8b4513", name: "Brown" },
-    { hex: "#dc2626", name: "Red" },
-    { hex: "#f97316", name: "Orange" },
-    { hex: "#eab308", name: "Yellow" },
-    { hex: "#f3e8d0", name: "Cream" },
-    { hex: "#fbb6ce", name: "Pink" },
-    { hex: "#d946ef", name: "Purple" },
+    { hex: "#ffffff", name: "Trắng" },
+    { hex: "#6b7280", name: "Xám" },
+    { hex: "#000000", name: "Đen" },
+    { hex: "#8b4513", name: "Nâu" },
+    { hex: "#dc2626", name: "Đỏ" },
+    { hex: "#f97316", name: "Cam" },
+    { hex: "#eab308", name: "Vàng" },
+    { hex: "#f3e8d0", name: "Kem" },
+    { hex: "#fbb6ce", name: "Hồng" },
+    { hex: "#d946ef", name: "Tím" },
     { hex: "#8b5cf6", name: "Violet" },
-    { hex: "#3b82f6", name: "Blue" },
-    { hex: "#06b6d4", name: "Cyan" },
-    { hex: "#10b981", name: "Green" },
-    { hex: "#84cc16", name: "Lime" },
-    { hex: "#65a30d", name: "Olive" },
+    { hex: "#3b82f6", name: "Xanh dương" },
+    { hex: "#06b6d4", name: "Xanh lơ" },
+    { hex: "#10b981", name: "Xanh lá" },
+    { hex: "#84cc16", name: "Xanh chanh" },
+    { hex: "#65a30d", name: "Ô liu" },
   ];
 
   const forms = [
-    { id: "shape", name: "Shape", shape: "◊" },
-    { id: "rhombus", name: "Rhombus", shape: "◇" },
-    { id: "line", name: "Line", shape: "—" },
-    { id: "star", name: "Star", shape: "☆" },
-    { id: "hexagon", name: "Hexagon", shape: "⬡" },
-    { id: "triangle", name: "Triangle", shape: "△" },
-    { id: "rectangle", name: "Rectangle", shape: "▭" },
-    { id: "square", name: "Square", shape: "□" },
-    { id: "oval", name: "Oval", shape: "⬭" },
-    { id: "circle", name: "Circle", shape: "○" },
+    { id: "shape", name: "Hình dạng", shape: "◊" },
+    { id: "rhombus", name: "Hình thoi", shape: "◇" },
+    { id: "line", name: "Đường kẻ", shape: "—" },
+    { id: "star", name: "Ngôi sao", shape: "☆" },
+    { id: "hexagon", name: "Lục giác", shape: "⬡" },
+    { id: "triangle", name: "Tam giác", shape: "△" },
+    { id: "rectangle", name: "Chữ nhật", shape: "▭" },
+    { id: "square", name: "Vuông", shape: "□" },
+    { id: "oval", name: "Bầu dục", shape: "⬭" },
+    { id: "circle", name: "Tròn", shape: "○" },
   ];
 
   const toggleSection = (section: keyof typeof expandedSections) => {
@@ -599,30 +599,30 @@ export default function ModelFilter({
   };
 
   const styles = [
-    { id: "luxury", name: "Luxury" },
-    { id: "indochine", name: "Indochine" },
-    { id: "ethnic", name: "Ethnic" },
-    { id: "modern", name: "Modern" },
-    { id: "classic", name: "Classic" },
+    { id: "luxury", name: "Sang trọng" },
+    { id: "indochine", name: "Đông Dương" },
+    { id: "ethnic", name: "Dân tộc" },
+    { id: "modern", name: "Hiện đại" },
+    { id: "classic", name: "Cổ điển" },
   ];
 
   const materials = [
-    { id: "brick", name: "Brick" },
-    { id: "ceramics", name: "Ceramics" },
-    { id: "concrete", name: "Concrete" },
-    { id: "fabric", name: "Fabric" },
-    { id: "fur", name: "Fur" },
-    { id: "glass", name: "Glass" },
-    { id: "gypsum", name: "Gypsum" },
-    { id: "leather", name: "Leather" },
-    { id: "liquid", name: "Liquid" },
-    { id: "metal", name: "Metal" },
-    { id: "organics", name: "Organics" },
-    { id: "paper", name: "Paper" },
-    { id: "plastic", name: "Plastic" },
-    { id: "rattan", name: "Rattan" },
-    { id: "stone", name: "Stone" },
-    { id: "wood", name: "Wood" },
+    { id: "brick", name: "Gạch" },
+    { id: "ceramics", name: "Gốm sứ" },
+    { id: "concrete", name: "Bê tông" },
+    { id: "fabric", name: "Vải" },
+    { id: "fur", name: "Lông thú" },
+    { id: "glass", name: "Kính" },
+    { id: "gypsum", name: "Thạch cao" },
+    { id: "leather", name: "Da" },
+    { id: "liquid", name: "Chất lỏng" },
+    { id: "metal", name: "Kim loại" },
+    { id: "organics", name: "Hữu cơ" },
+    { id: "paper", name: "Giấy" },
+    { id: "plastic", name: "Nhựa" },
+    { id: "rattan", name: "Mây tre" },
+    { id: "stone", name: "Đá" },
+    { id: "wood", name: "Gỗ" },
   ];
 
   const handleStyleChange = (styleId: string) => {
@@ -819,7 +819,7 @@ export default function ModelFilter({
       <div className="p-3 lg:p-4 border-b border-gray-200 sticky top-0 bg-white z-10">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base lg:text-lg font-semibold text-gray-900">
-            Filters
+            Bộ lọc
           </h2>
           {hasActiveFilters && (
             <Button
@@ -829,8 +829,8 @@ export default function ModelFilter({
               className="text-xs lg:text-sm text-blue-600 hover:text-blue-800 h-6 lg:h-8 px-1 lg:px-2"
             >
               <X className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
-              <span className="hidden sm:inline">Clear all</span>
-              <span className="sm:hidden">Clear</span>
+              <span className="hidden sm:inline">Xóa tất cả</span>
+              <span className="sm:hidden">Xóa</span>
             </Button>
           )}
         </div>
@@ -844,7 +844,7 @@ export default function ModelFilter({
           className="w-full px-3 lg:px-4 py-2.5 lg:py-3 h-auto justify-between text-left hover:bg-gray-50"
         >
           <span className="font-medium text-gray-900 text-sm lg:text-base">
-            Categories
+            Danh mục
           </span>
           {expandedSections.categories ? (
             <ChevronUp className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-gray-500" />
@@ -938,11 +938,10 @@ export default function ModelFilter({
                 }
                 size="sm"
                 onClick={() => handleRenderEngineChange(engine.id)}
-                className={`h-auto px-2 py-1.5 w-full justify-center ${
-                  filters.renderEngine.includes(engine.id)
-                    ? "bg-blue-50 border-blue-200 text-blue-700 font-medium"
-                    : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
-                }`}
+                className={`h-auto px-2 py-1.5 w-full justify-center ${filters.renderEngine.includes(engine.id)
+                  ? "bg-blue-50 border-blue-200 text-blue-700 font-medium"
+                  : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
+                  }`}
               >
                 {engine.icon && (
                   <span className="mr-1.5 flex items-center justify-center">
@@ -960,7 +959,7 @@ export default function ModelFilter({
       <div className="border-b border-gray-200">
         <div className="px-3 lg:px-4 py-2.5 lg:py-3">
           <span className="font-medium text-gray-900 text-sm lg:text-base">
-            Form
+            Hình dạng
           </span>
         </div>
         <div className="px-3 lg:px-4 pb-3 lg:pb-4">
@@ -969,11 +968,10 @@ export default function ModelFilter({
               <button
                 key={form.id}
                 onClick={() => handleFormChange(form.id)}
-                className={`w-8 h-8 lg:w-10 lg:h-10 border-2 rounded flex items-center justify-center text-sm lg:text-lg transition-colors ${
-                  filters.forms.includes(form.id)
-                    ? "border-blue-500 bg-blue-50 text-blue-600"
-                    : "border-gray-300 hover:border-gray-400"
-                }`}
+                className={`w-8 h-8 lg:w-10 lg:h-10 border-2 rounded flex items-center justify-center text-sm lg:text-lg transition-colors ${filters.forms.includes(form.id)
+                  ? "border-blue-500 bg-blue-50 text-blue-600"
+                  : "border-gray-300 hover:border-gray-400"
+                  }`}
                 title={form.name}
               >
                 {form.shape}
@@ -987,7 +985,7 @@ export default function ModelFilter({
       <div className="border-b border-gray-200">
         <div className="px-3 lg:px-4 py-2.5 lg:py-3">
           <span className="font-medium text-gray-900 text-sm lg:text-base">
-            Color
+            Màu sắc
           </span>
         </div>
         <div className="px-3 lg:px-4 pb-3 lg:pb-4">
@@ -996,23 +994,21 @@ export default function ModelFilter({
               <div key={index} className="relative group">
                 <button
                   onClick={() => handleColorChange(color.hex)}
-                  className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full border-2 transition-all ${
-                    filters.colors.includes(color.hex)
-                      ? "border-gray-800 scale-110"
-                      : "border-gray-300 hover:border-gray-400"
-                  } ${color.hex === "#ffffff" ? "border-gray-400" : ""}`}
+                  className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full border-2 transition-all ${filters.colors.includes(color.hex)
+                    ? "border-gray-800 scale-110"
+                    : "border-gray-300 hover:border-gray-400"
+                    } ${color.hex === "#ffffff" ? "border-gray-400" : ""}`}
                   style={{ backgroundColor: color.hex }}
                   aria-label={color.name}
                 >
                   {filters.colors.includes(color.hex) && (
                     <span
-                      className={`text-xs ${
-                        color.hex === "#ffffff" ||
+                      className={`text-xs ${color.hex === "#ffffff" ||
                         color.hex === "#f3e8d0" ||
                         color.hex === "#fbb6ce"
-                          ? "text-black"
-                          : "text-white"
-                      }`}
+                        ? "text-black"
+                        : "text-white"
+                        }`}
                     >
                       ✓
                     </span>
@@ -1035,7 +1031,7 @@ export default function ModelFilter({
           className="w-full px-3 lg:px-4 py-2.5 lg:py-3 h-auto justify-between text-left hover:bg-gray-50"
         >
           <span className="font-medium text-gray-900 text-sm lg:text-base">
-            Style
+            Phong cách
           </span>
           {expandedSections.style ? (
             <ChevronUp className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-gray-500" />
@@ -1074,7 +1070,7 @@ export default function ModelFilter({
           className="w-full px-3 lg:px-4 py-2.5 lg:py-3 h-auto justify-between text-left hover:bg-gray-50"
         >
           <span className="font-medium text-gray-900 text-sm lg:text-base">
-            Material
+            Chất liệu
           </span>
           {expandedSections.material ? (
             <ChevronUp className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-gray-500" />

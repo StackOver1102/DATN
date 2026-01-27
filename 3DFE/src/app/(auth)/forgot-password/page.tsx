@@ -7,12 +7,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loading } from "@/components/ui/loading";
 import { LoadingButton } from "@/components/ui/loading-button";
-import { Turnstile } from "@marsidev/react-turnstile";
+
 import { toast } from "sonner";
 
 // Define validation schema with Zod
 const forgotPasswordSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.string().email("Địa chỉ email không hợp lệ"),
 });
 
 // Define form data type from schema
@@ -22,7 +22,7 @@ function ForgotPasswordForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [captchaToken, setCaptchaToken] = useState<string>("");
+
 
   // Initialize React Hook Form with Zod resolver
   const {
@@ -38,11 +38,6 @@ function ForgotPasswordForm() {
 
   // Handle form submission
   const onSubmit = async (data: ForgotPasswordFormValues) => {
-    // Validate CAPTCHA
-    if (!captchaToken) {
-      toast.error("Please complete the CAPTCHA verification");
-      return;
-    }
 
     setLoading(true);
     setError(null);
@@ -51,22 +46,22 @@ function ForgotPasswordForm() {
     try {
       // Call the API to request password reset
       const { authApi } = await import("@/lib/api");
-      const response = await authApi.forgotPassword(data.email, captchaToken);
+      const response = await authApi.forgotPassword(data.email, "");
 
       if (response.success) {
         setSuccess(
-          "A password reset email has been sent to your email address."
+          "Email đặt lại mật khẩu đã được gửi đến địa chỉ email của bạn."
         );
       } else {
         setError(
           response.message ||
-          "An error occurred while sending the password reset request."
+          "Đã xảy ra lỗi khi gửi yêu cầu đặt lại mật khẩu."
         );
       }
     } catch (error) {
       console.error("Password reset error:", error);
       setError(
-        "An error occurred while sending the password reset request. Please try again later."
+        "Đã xảy ra lỗi khi gửi yêu cầu đặt lại mật khẩu. Vui lòng thử lại sau."
       );
     } finally {
       setLoading(false);
@@ -78,7 +73,7 @@ function ForgotPasswordForm() {
       <Loading
         variant="spinner"
         size="lg"
-        text="Sending request..."
+        text="Đang gửi yêu cầu..."
         fullScreen
       />
     );
@@ -90,9 +85,9 @@ function ForgotPasswordForm() {
       <div className="w-full flex items-center justify-center px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-md space-y-8 py-12 px-6 sm:px-8 bg-white rounded-lg shadow-md">
           <div className="text-center">
-            <h1 className="text-3xl font-medium mb-2">Forgot Password</h1>
+            <h1 className="text-3xl font-medium mb-2">Quên mật khẩu</h1>
             <p className="text-base text-gray-700">
-              Enter your email address to reset your password
+              Nhập địa chỉ email để đặt lại mật khẩu
             </p>
           </div>
 
@@ -112,7 +107,7 @@ function ForgotPasswordForm() {
             {/* Email field */}
             <div className="space-y-2">
               <label htmlFor="email" className="block text-sm font-medium">
-                Email address
+                Địa chỉ email
               </label>
               <div className="relative">
                 <input
@@ -121,7 +116,7 @@ function ForgotPasswordForm() {
                   autoComplete="email"
                   className={`appearance-none relative block w-full px-3 py-2 border ${errors.email ? "border-red-500" : "border-gray-300"
                     } placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-[#3A5B22] focus:border-[#3A5B22] focus:z-10 sm:text-sm`}
-                  placeholder="Enter your email"
+                  placeholder="Nhập email của bạn"
                   {...register("email")}
                 />
                 {errors.email && (
@@ -132,46 +127,29 @@ function ForgotPasswordForm() {
               </div>
             </div>
 
-            {/* Cloudflare Turnstile CAPTCHA */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium">
-                Security Verification
-              </label>
-              <Turnstile
-                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
-                onSuccess={(token: string) => setCaptchaToken(token)}
-                onError={() => {
-                  setCaptchaToken("");
-                  toast.error("CAPTCHA verification failed. Please try again.");
-                }}
-                onExpire={() => {
-                  setCaptchaToken("");
-                  toast.warning("CAPTCHA expired. Please verify again.");
-                }}
-              />
-            </div>
+
 
             {/* Reset Password button */}
             <div>
               <LoadingButton
                 type="submit"
                 isLoading={loading}
-                disabled={!captchaToken}
+                disabled={loading}
                 className="w-full py-2 px-4 border border-transparent text-sm font-bold rounded-lg text-yellow-400 bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3A5B22] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Reset Password
+                Đặt lại mật khẩu
               </LoadingButton>
             </div>
           </form >
 
           <div className="text-center mt-6">
             <p className="text-sm">
-              Remember your password?{" "}
+              Bạn nhớ mật khẩu?{" "}
               <Link
                 href="/signin"
                 className="font-medium text-black hover:underline"
               >
-                Sign In
+                Đăng nhập
               </Link>
             </p>
           </div>
@@ -189,7 +167,7 @@ function ForgotPasswordForm() {
               >
                 <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
               </svg>
-              Back to Home
+              Về trang chủ
             </Link>
           </div>
         </div >

@@ -127,8 +127,8 @@ interface SupportTicket {
 
 // Schema validation for user profile form
 const userProfileSchema = z.object({
-  fullName: z.string().min(2, "Name must have at least 2 characters"),
-  email: z.string().email("Invalid email address"),
+  fullName: z.string().min(2, "Tên phải có ít nhất 2 ký tự"),
+  email: z.string().email("Địa chỉ email không hợp lệ"),
   phone: z.string().optional(),
   address: z.string().optional(),
 });
@@ -136,16 +136,16 @@ const userProfileSchema = z.object({
 // Schema validation for password change form
 const passwordSchema = z
   .object({
-    oldPassword: z.string().min(6, "Password must have at least 6 characters"),
+    oldPassword: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
     newPassword: z
       .string()
-      .min(6, "New password must have at least 6 characters"),
+      .min(6, "Mật khẩu mới phải có ít nhất 6 ký tự"),
     confirmPassword: z
       .string()
-      .min(6, "Confirm password must have at least 6 characters"),
+      .min(6, "Xác nhận mật khẩu phải có ít nhất 6 ký tự"),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Passwords do not match",
+    message: "Mật khẩu không khớp",
     path: ["confirmPassword"],
   });
 
@@ -159,6 +159,11 @@ function ProfileContentInner() {
   // const paymentSuccess = searchParams?.get("payment_success");
   const router = useRouter();
   const { data: session } = useSession();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Rest of the component logic
   return (
@@ -276,7 +281,7 @@ function ProfilePageContent({
         enabled: activeTab === "refunds",
       }
     );
-    
+
   // Function to fetch refund details
   const fetchRefundDetails = async (refundId: string) => {
     try {
@@ -288,21 +293,21 @@ function ProfilePageContent({
           },
         }
       );
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         setSelectedRefund(data.data);
         setShowRefundDetailsModal(true);
       } else {
-        toast.error(data.message || "Failed to fetch refund details");
+        toast.error(data.message || "Không thể tải chi tiết hoàn tiền");
       }
     } catch (error) {
       console.error("Error fetching refund details:", error);
-      toast.error("An error occurred while fetching refund details");
+      toast.error("Đã xảy ra lỗi khi tải chi tiết hoàn tiền");
     }
   };
-  
+
   // Function to fetch ticket details
   const fetchTicketDetails = async (ticketId: string) => {
     try {
@@ -314,18 +319,18 @@ function ProfilePageContent({
           },
         }
       );
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         setSelectedTicket(data.data);
         setShowTicketDetailsModal(true);
       } else {
-        toast.error(data.message || "Failed to fetch ticket details");
+        toast.error(data.message || "Không thể tải chi tiết yêu cầu hỗ trợ");
       }
     } catch (error) {
       console.error("Error fetching ticket details:", error);
-      toast.error("An error occurred while fetching ticket details");
+      toast.error("Đã xảy ra lỗi khi tải chi tiết yêu cầu hỗ trợ");
     }
   };
 
@@ -349,7 +354,7 @@ function ProfilePageContent({
   });
 
 
-  
+
   // Extract data from paginated responses
   const purchases = purchasesData?.items || [];
   const purchasesTotalPages = purchasesData?.meta.totalPages || 1;
@@ -369,7 +374,7 @@ function ProfilePageContent({
     [notificationData]
   );
 
-  const {  patch } = useApi();
+  const { patch } = useApi();
 
   // Function to handle avatar file selection
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -427,14 +432,14 @@ function ProfilePageContent({
           );
         }
 
-        toast.success("Avatar updated successfully!");
+        toast.success("Đã cập nhật ảnh đại diện thành công!");
         setShowAvatarModal(false);
       } else {
-        toast.error(data.message || "Failed to update avatar");
+        toast.error(data.message || "Không thể cập nhật ảnh đại diện");
       }
     } catch (error) {
       console.error("Error uploading avatar:", error);
-      toast.error("An error occurred while uploading avatar");
+      toast.error("Đã xảy ra lỗi khi tải ảnh đại diện");
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -480,7 +485,7 @@ function ProfilePageContent({
     avatar:
       session?.user?.image ||
       "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-    joinDate: new Date().toISOString().split("T")[0],
+    joinDate: "",
     balance: session?.user?.balance || 0,
     totalDownloads: 0,
   });
@@ -541,42 +546,42 @@ function ProfilePageContent({
   const tabs = [
     {
       id: "info" as TabType,
-      label: "Personal Information",
+      label: "Thông tin cá nhân",
       icon: UserIcon,
       notifications: 0,
       hasUpdates: false,
     },
     {
       id: "password" as TabType,
-      label: "Change Password",
+      label: "Đổi mật khẩu",
       icon: Lock,
       notifications: 0,
       hasUpdates: false,
     },
     {
       id: "purchases" as TabType,
-      label: "Purchase History",
+      label: "Lịch sử mua hàng",
       icon: ShoppingBag,
       notifications: 0,
       hasUpdates: false,
     },
     {
       id: "payments" as TabType,
-      label: "Payment History",
+      label: "Lịch sử thanh toán",
       icon: CreditCard,
       notifications: 0,
       hasUpdates: false,
     },
     {
       id: "refunds" as TabType,
-      label: "Refund Requests",
+      label: "Yêu cầu hoàn tiền",
       icon: RefreshCcw,
       notifications: refundNotificationCount,
       hasUpdates: refundNotificationCount > 0,
     },
     {
       id: "support" as TabType,
-      label: "Support Tickets",
+      label: "Yêu cầu hỗ trợ",
       icon: LifeBuoy,
       notifications: supportNotificationCount,
       hasUpdates: supportNotificationCount > 0,
@@ -617,12 +622,11 @@ function ProfilePageContent({
           ...data,
         });
         setIsEditing(false);
-        toast.success("Information updated successfully!");
+        toast.success("Cập nhật thông tin thành công!");
       }
     } catch (error) {
       toast.error(
-        `An error occurred while updating information: ${
-          error instanceof Error ? error.message : "Unknown error"
+        `Đã xảy ra lỗi khi cập nhật thông tin: ${error instanceof Error ? error.message : "Lỗi không xác định"
         }`
       );
     }
@@ -636,10 +640,10 @@ function ProfilePageContent({
         newPassword: data.newPassword,
       });
       resetPassword();
-      toast.success("Password changed successfully!");
+      toast.success("Đổi mật khẩu thành công!");
     } catch (error) {
       toast.error(
-        `${error instanceof Error ? error.message : "Unknown error"}`
+        `${error instanceof Error ? error.message : "Lỗi không xác định"}`
       );
     }
   };
@@ -651,7 +655,7 @@ function ProfilePageContent({
 
   const handleRefundSubmit = async () => {
     if (!refundReason.trim()) {
-      alert("Please enter a reason for the refund request!");
+      alert("Vui lòng nhập lý do yêu cầu hoàn tiền!");
       return;
     }
 
@@ -660,7 +664,7 @@ function ProfilePageContent({
       const formData = new FormData();
       formData.append('description', refundReason);
       formData.append('orderId', selectedPurchase?._id || '');
-      
+
       // Add image if available
       if (refundImage) {
         formData.append('attachments', refundImage);
@@ -679,14 +683,14 @@ function ProfilePageContent({
 
       if (data.success) {
         toast.success(
-          "Refund request submitted! We will process it within 24-48 hours."
+          "Yêu cầu hoàn tiền đã được gửi! Chúng tôi sẽ xử lý trong vòng 24-48 giờ."
         );
       } else {
         toast.error(data.message);
       }
     } catch (error) {
       console.error("Error submitting refund request:", error);
-      toast.error("An error occurred while submitting the refund request!");
+      toast.error("Đã xảy ra lỗi khi gửi yêu cầu hoàn tiền!");
     } finally {
       setShowRefundModal(false);
       setSelectedPurchase(null);
@@ -716,13 +720,13 @@ function ProfilePageContent({
     switch (status) {
       case "completed":
       case "success":
-        return "Completed";
+        return "Hoàn thành";
       case "pending":
-        return "Processing";
+        return "Đang xử lý";
       case "failed":
-        return "Failed";
+        return "Thất bại";
       case "refunded":
-        return "Refunded";
+        return "Đã hoàn tiền";
       default:
         return status;
     }
@@ -755,11 +759,11 @@ function ProfilePageContent({
         refetchNotifications();
 
         // Show subtle toast notification
-        toast.success("Notification marked as read");
+        toast.success("Đã đánh dấu thông báo là đã đọc");
       }
     } catch (error) {
       console.error("Error marking notification as read:", error);
-      toast.error("Failed to mark notification as read");
+      toast.error("Không thể đánh dấu thông báo là đã đọc");
     }
   };
 
@@ -773,7 +777,7 @@ function ProfilePageContent({
   ) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <Loading variant="spinner" size="lg" text="Loading information..." />
+        <Loading variant="spinner" size="lg" text="Đang tải thông tin..." />
       </div>
     );
   }
@@ -826,20 +830,20 @@ function ProfilePageContent({
                       </span>
                     </div>
                     <div className="text-sm text-gray-600">
-                      Available Balance
+                      Số dư khả dụng
                     </div>
                   </div>
                   <div className="bg-green-50 rounded-lg p-4">
                     <div className="text-2xl font-bold text-green-600">
                       {userData.totalDownloads}
                     </div>
-                    <div className="text-sm text-gray-600">Downloads</div>
+                    <div className="text-sm text-gray-600">Lượt tải</div>
                   </div>
                   <div className="bg-purple-50 rounded-lg p-4">
                     <div className="text-2xl font-bold text-purple-600">
-                      {formatDate(userData.joinDate)}
+                      {userData.joinDate ? formatDate(userData.joinDate) : "..."}
                     </div>
-                    <div className="text-sm text-gray-600">Join Date</div>
+                    <div className="text-sm text-gray-600">Ngày tham gia</div>
                   </div>
                 </div>
               </div>
@@ -856,11 +860,10 @@ function ProfilePageContent({
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                        activeTab === tab.id
-                          ? "border-blue-500 text-blue-600"
-                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                      } relative`}
+                      className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
+                        ? "border-blue-500 text-blue-600"
+                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        } relative`}
                     >
                       <div className="relative">
                         <Icon className="w-5 h-5" />
@@ -897,7 +900,7 @@ function ProfilePageContent({
                 <div className="space-y-6">
                   <div className="flex justify-between items-center">
                     <h2 className="text-2xl font-bold text-gray-900">
-                      Personal Information
+                      Thông tin cá nhân
                     </h2>
                     <Button
                       onClick={() =>
@@ -912,7 +915,7 @@ function ProfilePageContent({
                       ) : (
                         <Edit3 className="w-4 h-4" />
                       )}
-                      {isEditing ? "Save" : "Edit"}
+                      {isEditing ? "Lưu" : "Sửa"}
                     </Button>
                   </div>
 
@@ -922,16 +925,15 @@ function ProfilePageContent({
                   >
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Full Name
+                        Họ và tên
                       </label>
                       <input
                         {...registerProfile("fullName")}
                         disabled={!isEditing}
-                        className={`w-full px-4 py-3 border ${
-                          profileErrors.fullName
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500`}
+                        className={`w-full px-4 py-3 border ${profileErrors.fullName
+                          ? "border-red-500"
+                          : "border-gray-300"
+                          } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500`}
                       />
                       {profileErrors.fullName && (
                         <p className="mt-1 text-xs text-red-500">
@@ -947,11 +949,10 @@ function ProfilePageContent({
                       <input
                         {...registerProfile("email")}
                         disabled={!isEditing}
-                        className={`w-full px-4 py-3 border ${
-                          profileErrors.email
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500`}
+                        className={`w-full px-4 py-3 border ${profileErrors.email
+                          ? "border-red-500"
+                          : "border-gray-300"
+                          } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500`}
                       />
                       {profileErrors.email && (
                         <p className="mt-1 text-xs text-red-500">
@@ -962,16 +963,15 @@ function ProfilePageContent({
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Phone Number
+                        Số điện thoại
                       </label>
                       <input
                         {...registerProfile("phone")}
                         disabled={!isEditing}
-                        className={`w-full px-4 py-3 border ${
-                          profileErrors.phone
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500`}
+                        className={`w-full px-4 py-3 border ${profileErrors.phone
+                          ? "border-red-500"
+                          : "border-gray-300"
+                          } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500`}
                       />
                       {profileErrors.phone && (
                         <p className="mt-1 text-xs text-red-500">
@@ -982,17 +982,16 @@ function ProfilePageContent({
 
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Address
+                        Địa chỉ
                       </label>
                       <textarea
                         {...registerProfile("address")}
                         disabled={!isEditing}
                         rows={3}
-                        className={`w-full px-4 py-3 border ${
-                          profileErrors.address
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 resize-none`}
+                        className={`w-full px-4 py-3 border ${profileErrors.address
+                          ? "border-red-500"
+                          : "border-gray-300"
+                          } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 resize-none`}
                       />
                       {profileErrors.address && (
                         <p className="mt-1 text-xs text-red-500">
@@ -1007,7 +1006,7 @@ function ProfilePageContent({
               {activeTab === "password" && (
                 <div className="space-y-6 max-w-md">
                   <h2 className="text-2xl font-bold text-gray-900">
-                    Change Password
+                    Đổi mật khẩu
                   </h2>
 
                   <form
@@ -1016,17 +1015,16 @@ function ProfilePageContent({
                   >
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Current Password
+                        Mật khẩu hiện tại
                       </label>
                       <div className="relative">
                         <input
                           type={showOldPassword ? "text" : "password"}
                           {...registerPassword("oldPassword")}
-                          className={`w-full px-4 py-3 pr-12 border ${
-                            passwordErrors.oldPassword
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                          className={`w-full px-4 py-3 pr-12 border ${passwordErrors.oldPassword
+                            ? "border-red-500"
+                            : "border-gray-300"
+                            } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
                         />
                         <Button
                           type="button"
@@ -1051,17 +1049,16 @@ function ProfilePageContent({
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        New Password
+                        Mật khẩu mới
                       </label>
                       <div className="relative">
                         <input
                           type={showNewPassword ? "text" : "password"}
                           {...registerPassword("newPassword")}
-                          className={`w-full px-4 py-3 pr-12 border ${
-                            passwordErrors.newPassword
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                          className={`w-full px-4 py-3 pr-12 border ${passwordErrors.newPassword
+                            ? "border-red-500"
+                            : "border-gray-300"
+                            } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
                         />
                         <Button
                           type="button"
@@ -1086,17 +1083,16 @@ function ProfilePageContent({
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Confirm New Password
+                        Xác nhận mật khẩu mới
                       </label>
                       <div className="relative">
                         <input
                           type={showConfirmPassword ? "text" : "password"}
                           {...registerPassword("confirmPassword")}
-                          className={`w-full px-4 py-3 pr-12 border ${
-                            passwordErrors.confirmPassword
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                          className={`w-full px-4 py-3 pr-12 border ${passwordErrors.confirmPassword
+                            ? "border-red-500"
+                            : "border-gray-300"
+                            } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
                         />
                         <Button
                           type="button"
@@ -1122,7 +1118,7 @@ function ProfilePageContent({
                     </div>
 
                     <Button type="submit" className="w-full text-yellow-400">
-                      Change Password
+                      Đổi mật khẩu
                     </Button>
                   </form>
                 </div>
@@ -1131,7 +1127,7 @@ function ProfilePageContent({
               {activeTab === "purchases" && (
                 <div className="space-y-6">
                   <h2 className="text-2xl font-bold text-gray-900">
-                    Purchase History
+                    Lịch sử mua hàng
                   </h2>
 
                   <div className="space-y-4">
@@ -1145,15 +1141,13 @@ function ProfilePageContent({
                           <div
                             key={index}
                             className={`bg-gray-50 rounded-lg p-4 flex items-center justify-between
-                              ${
-                                purchase.notificationId && !purchase.isRead
-                                  ? "border-l-4 border-yellow-400"
-                                  : ""
+                              ${purchase.notificationId && !purchase.isRead
+                                ? "border-l-4 border-yellow-400"
+                                : ""
                               }
-                              ${
-                                purchase.notificationId
-                                  ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md"
-                                  : ""
+                              ${purchase.notificationId
+                                ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md"
+                                : ""
                               }`}
                             onClick={() => {
                               if (purchase.notificationId) {
@@ -1184,7 +1178,7 @@ function ProfilePageContent({
                                   {purchase.notificationId &&
                                     !purchase.isRead && (
                                       <span className="ml-2 px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
-                                        New
+                                        Mới
                                       </span>
                                     )}
                                 </h3>
@@ -1213,21 +1207,21 @@ function ProfilePageContent({
                                   fill="#eab308"
                                 />
                               )}
-                              {purchase.status === "completed" && 
-                               isWithinLastThreeDays(purchase.createdAt) && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation(); // Prevent triggering the parent onClick
-                                    handleRefundRequest(purchase);
-                                  }}
-                                  className="flex items-center gap-2 text-yellow-400 bg-black"
-                                >
-                                  <AlertTriangle className="w-4 h-4" />
-                                  Report
-                                </Button>
-                              )}
+                              {purchase.status === "completed" && isMounted &&
+                                isWithinLastThreeDays(purchase.createdAt) && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation(); // Prevent triggering the parent onClick
+                                      handleRefundRequest(purchase);
+                                    }}
+                                    className="flex items-center gap-2 text-yellow-400 bg-black"
+                                  >
+                                    <AlertTriangle className="w-4 h-4" />
+                                    Báo cáo
+                                  </Button>
+                                )}
                             </div>
                           </div>
                         ))}
@@ -1247,16 +1241,16 @@ function ProfilePageContent({
                           <ShoppingBag className="w-12 h-12 mx-auto text-gray-400" />
                         </div>
                         <h3 className="text-lg font-medium text-gray-900">
-                          No purchase history
+                          Chưa có lịch sử mua hàng
                         </h3>
                         <p className="text-gray-500 mt-2">
-                          You haven&apos;t made any purchases yet.
+                          Bạn chưa thực hiện giao dịch mua nào.
                         </p>
                         <Button
                           className="mt-4 text-yellow-400"
                           onClick={() => router.push("/models")}
                         >
-                          Explore Products
+                          Khám phá sản phẩm
                         </Button>
                       </div>
                     )}
@@ -1267,7 +1261,7 @@ function ProfilePageContent({
               {activeTab === "payments" && (
                 <div className="space-y-6">
                   <h2 className="text-2xl font-bold text-gray-900">
-                    Payment History
+                    Lịch sử thanh toán
                   </h2>
 
                   <div className="space-y-4">
@@ -1281,15 +1275,13 @@ function ProfilePageContent({
                           <div
                             key={index}
                             className={`bg-gray-50 rounded-lg p-4 flex items-center justify-between 
-                              ${
-                                payment.notificationId && !payment.isRead
-                                  ? "border-l-4 border-yellow-400"
-                                  : ""
+                              ${payment.notificationId && !payment.isRead
+                                ? "border-l-4 border-yellow-400"
+                                : ""
                               }
-                              ${
-                                payment.notificationId
-                                  ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md"
-                                  : ""
+                              ${payment.notificationId
+                                ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md"
+                                : ""
                               }`}
                             onClick={() => {
                               if (payment.notificationId && !payment.isRead) {
@@ -1299,11 +1291,10 @@ function ProfilePageContent({
                           >
                             <div className="flex items-center gap-4">
                               <div
-                                className={`w-12 h-12 ${
-                                  payment.type === "payment"
-                                    ? "bg-red-100"
-                                    : "bg-green-100"
-                                } rounded-lg flex items-center justify-center relative`}
+                                className={`w-12 h-12 ${payment.type === "payment"
+                                  ? "bg-red-100"
+                                  : "bg-green-100"
+                                  } rounded-lg flex items-center justify-center relative`}
                               >
                                 {payment.type === "payment" ? (
                                   <ShoppingBag className="w-6 h-6 text-red-600" />
@@ -1320,12 +1311,12 @@ function ProfilePageContent({
                               <div>
                                 <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                                   {payment.type === "payment"
-                                    ? "Order Payment"
+                                    ? "Thanh toán đơn hàng"
                                     : payment.description}
                                   {payment.notificationId &&
                                     !payment.isRead && (
                                       <span className="ml-2 px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
-                                        New
+                                        Mới
                                       </span>
                                     )}
                                 </h3>
@@ -1337,12 +1328,12 @@ function ProfilePageContent({
                                   payment.balanceBefore && (
                                     <div>
                                       <p className="text-xs text-gray-500">
-                                        Balance before transaction:{" "}
+                                        Số dư trước giao dịch:{" "}
                                         {formatNumber(payment.balanceBefore)}
                                       </p>
 
                                       <p className="text-xs text-gray-500">
-                                        Balance after transaction:{" "}
+                                        Số dư sau giao dịch:{" "}
                                         {formatNumber(payment.balanceAfter)}
                                       </p>
                                     </div>
@@ -1394,23 +1385,23 @@ function ProfilePageContent({
                           <CreditCard className="w-12 h-12 mx-auto text-gray-400" />
                         </div>
                         <h3 className="text-lg font-medium text-gray-900">
-                          No transaction history
+                          Chưa có lịch sử giao dịch
                         </h3>
                         <p className="text-gray-500 mt-2">
-                          You haven&apos;t made any transactions yet.
+                          Bạn chưa thực hiện giao dịch nào.
                         </p>
                         <div className="flex gap-3 justify-center mt-4">
                           <Button
                             className="text-yellow-400"
                             onClick={() => router.push("/deposit")}
                           >
-                            Deposit
+                            Nạp xu
                           </Button>
                           <Button
                             className="text-yellow-400"
                             onClick={() => router.push("/models")}
                           >
-                            Shop
+                            Mua sắm
                           </Button>
                         </div>
                       </div>
@@ -1422,7 +1413,7 @@ function ProfilePageContent({
               {activeTab === "refunds" && (
                 <div className="space-y-6">
                   <h2 className="text-2xl font-bold text-gray-900">
-                    Refund Requests
+                    Yêu cầu hoàn tiền
                   </h2>
 
                   <div className="space-y-4">
@@ -1459,7 +1450,7 @@ function ProfilePageContent({
                                     matchingNotification._id
                                   );
                                 }
-                                
+
                                 // Fetch and show refund details
                                 fetchRefundDetails(refund._id);
                               }}
@@ -1467,23 +1458,21 @@ function ProfilePageContent({
                               <div className="flex items-center gap-4">
                                 <div
                                   className={`w-12 h-12 rounded-lg flex items-center justify-center relative
-                                ${
-                                  refund.status === "pending"
-                                    ? "bg-yellow-100"
-                                    : refund.status === "approved"
-                                    ? "bg-green-100"
-                                    : "bg-red-100"
-                                }`}
+                                ${refund.status === "pending"
+                                      ? "bg-yellow-100"
+                                      : refund.status === "approved"
+                                        ? "bg-green-100"
+                                        : "bg-red-100"
+                                    }`}
                                 >
                                   <RefreshCcw
                                     className={`w-6 h-6 
-                                  ${
-                                    refund.status === "pending"
-                                      ? "text-yellow-600"
-                                      : refund.status === "approved"
-                                      ? "text-green-600"
-                                      : "text-red-600"
-                                  }`}
+                                  ${refund.status === "pending"
+                                        ? "text-yellow-600"
+                                        : refund.status === "approved"
+                                          ? "text-green-600"
+                                          : "text-red-600"
+                                      }`}
                                   />
                                   {isUnread && (
                                     <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -1494,12 +1483,12 @@ function ProfilePageContent({
                                 </div>
                                 <div>
                                   <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                                    Refund Request{" "}
+                                    Yêu cầu hoàn tiền{" "}
                                     {refund.order &&
-                                      `for ${refund.order.productId.name}`}
+                                      `cho ${refund.order.productId.name}`}
                                     {isUnread && (
                                       <span className="ml-2 px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
-                                        New
+                                        Mới
                                       </span>
                                     )}
                                   </h3>
@@ -1510,25 +1499,24 @@ function ProfilePageContent({
                                   <p className="text-sm text-gray-600 mt-1">
                                     {refund.description.length > 80
                                       ? refund.description.substring(0, 80) +
-                                        "..."
+                                      "..."
                                       : refund.description}
                                   </p>
                                   <div className="flex items-center gap-2 mt-1">
                                     <span
                                       className={`px-2 py-1 rounded-full text-xs font-medium 
-                                      ${
-                                        refund.status === "pending"
+                                      ${refund.status === "pending"
                                           ? "text-yellow-600 bg-yellow-100"
                                           : refund.status === "approved"
-                                          ? "text-green-600 bg-green-100"
-                                          : "text-red-600 bg-red-100"
-                                      }`}
+                                            ? "text-green-600 bg-green-100"
+                                            : "text-red-600 bg-red-100"
+                                        }`}
                                     >
                                       {refund.status === "pending"
-                                        ? "Pending"
+                                        ? "Đang chờ"
                                         : refund.status === "approved"
-                                        ? "Approved"
-                                        : "Rejected"}
+                                          ? "Đã duyệt"
+                                          : "Từ chối"}
                                     </span>
                                   </div>
                                 </div>
@@ -1560,10 +1548,10 @@ function ProfilePageContent({
                           <RefreshCcw className="w-12 h-12 mx-auto text-gray-400" />
                         </div>
                         <h3 className="text-lg font-medium text-gray-900">
-                          No refund requests
+                          Chưa có yêu cầu hoàn tiền
                         </h3>
                         <p className="text-gray-500 mt-2">
-                          You haven&apos;t made any refund requests yet.
+                          Bạn chưa gửi yêu cầu hoàn tiền nào.
                         </p>
                       </div>
                     )}
@@ -1575,14 +1563,14 @@ function ProfilePageContent({
                 <div className="space-y-6">
                   <div className="flex justify-between items-center">
                     <h2 className="text-2xl font-bold text-gray-900">
-                      Support Tickets
+                      Yêu cầu hỗ trợ
                     </h2>
                     <Button
                       onClick={() => router.push("/support")}
                       className="flex items-center gap-2 text-yellow-400"
                     >
                       <LifeBuoy className="w-4 h-4" />
-                      New Ticket
+                      Tạo yêu cầu mới
                     </Button>
                   </div>
 
@@ -1619,7 +1607,7 @@ function ProfilePageContent({
                                     matchingNotification._id
                                   );
                                 }
-                                
+
                                 // Fetch and show ticket details
                                 fetchTicketDetails(ticket._id);
                               }}
@@ -1627,23 +1615,21 @@ function ProfilePageContent({
                               <div className="flex items-center gap-4">
                                 <div
                                   className={`w-12 h-12 rounded-lg flex items-center justify-center relative
-                                ${
-                                  ticket.status === "pending"
-                                    ? "bg-blue-100"
-                                    : ticket.status === "in_progress"
-                                    ? "bg-yellow-100"
-                                    : "bg-green-100"
-                                }`}
+                                ${ticket.status === "pending"
+                                      ? "bg-blue-100"
+                                      : ticket.status === "in_progress"
+                                        ? "bg-yellow-100"
+                                        : "bg-green-100"
+                                    }`}
                                 >
                                   <LifeBuoy
                                     className={`w-6 h-6 
-                                  ${
-                                    ticket.status === "pending"
-                                      ? "text-blue-600"
-                                      : ticket.status === "in_progress"
-                                      ? "text-yellow-600"
-                                      : "text-green-600"
-                                  }`}
+                                  ${ticket.status === "pending"
+                                        ? "text-blue-600"
+                                        : ticket.status === "in_progress"
+                                          ? "text-yellow-600"
+                                          : "text-green-600"
+                                      }`}
                                   />
                                   {isUnread && (
                                     <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -1657,7 +1643,7 @@ function ProfilePageContent({
                                     {ticket.subject}
                                     {isUnread && (
                                       <span className="ml-2 px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
-                                        New
+                                        Mới
                                       </span>
                                     )}
                                   </h3>
@@ -1673,19 +1659,18 @@ function ProfilePageContent({
                                   <div className="flex items-center gap-2 mt-1">
                                     <span
                                       className={`px-2 py-1 rounded-full text-xs font-medium 
-                                      ${
-                                        ticket.status === "pending"
+                                      ${ticket.status === "pending"
                                           ? "text-blue-600 bg-blue-100"
                                           : ticket.status === "in_progress"
-                                          ? "text-yellow-600 bg-yellow-100"
-                                          : "text-green-600 bg-green-100"
-                                      }`}
+                                            ? "text-yellow-600 bg-yellow-100"
+                                            : "text-green-600 bg-green-100"
+                                        }`}
                                     >
                                       {ticket.status === "pending"
-                                        ? "Open"
+                                        ? "Mở"
                                         : ticket.status === "in_progress"
-                                        ? "In Progress"
-                                        : "Closed"}
+                                          ? "Đang xử lý"
+                                          : "Đã đóng"}
                                     </span>
                                   </div>
                                 </div>
@@ -1717,16 +1702,16 @@ function ProfilePageContent({
                           <LifeBuoy className="w-12 h-12 mx-auto text-gray-400" />
                         </div>
                         <h3 className="text-lg font-medium text-gray-900">
-                          No support tickets
+                          Chưa có yêu cầu hỗ trợ
                         </h3>
                         <p className="text-gray-500 mt-2">
-                          You haven&apos;t created any support tickets yet.
+                          Bạn chưa tạo yêu cầu hỗ trợ nào.
                         </p>
                         <Button
                           className="mt-4 text-yellow-400"
                           onClick={() => router.push("/support")}
                         >
-                          Create Support Ticket
+                          Tạo yêu cầu hỗ trợ
                         </Button>
                       </div>
                     )}
@@ -1750,7 +1735,7 @@ function ProfilePageContent({
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
-                    Refund Request
+                    Yêu cầu hoàn tiền
                   </h3>
                   <p className="text-sm text-gray-500">
                     #{selectedPurchase._id}
@@ -1789,7 +1774,7 @@ function ProfilePageContent({
                     {formatCurrency(selectedPurchase.totalAmount)}
                   </p>
                   <p className="text-xs text-gray-500">
-                    Purchase date: {formatDate(selectedPurchase.createdAt)}
+                    Ngày mua: {formatDate(selectedPurchase.createdAt)}
                   </p>
                 </div>
               </div>
@@ -1798,25 +1783,25 @@ function ProfilePageContent({
             {/* Refund Reason */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Reason for refund *
+                Lý do hoàn tiền *
               </label>
               <textarea
                 value={refundReason}
                 onChange={(e) => setRefundReason(e.target.value)}
-                placeholder="Please describe why you want a refund..."
+                placeholder="Vui lòng mô tả lý do bạn muốn hoàn tiền..."
                 rows={4}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
               />
               <p className="text-xs text-gray-500 mt-1">
-                We will review your request within 24-48 hours
+                Chúng tôi sẽ xác minh yêu cầu của bạn trong vòng 24-48 giờ
               </p>
             </div>
 
 
-   {/* Image Evidence Upload */}
-   <div className="mb-4">
+            {/* Image Evidence Upload */}
+            <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Upload Evidence (optional)
+                Tải lên bằng chứng (tùy chọn)
               </label>
               <div className="space-y-3">
                 <input
@@ -1841,12 +1826,12 @@ function ProfilePageContent({
                     file:bg-blue-50 file:text-blue-700
                     hover:file:bg-blue-100"
                 />
-                
+
                 {refundImagePreview && (
                   <div className="relative w-full h-40 bg-gray-100 rounded-lg overflow-hidden">
-                    <Image 
+                    <Image
                       src={refundImagePreview}
-                      alt="Evidence preview"
+                      alt="Xem trước bằng chứng"
                       fill
                       sizes="100%"
                       className="object-contain"
@@ -1864,7 +1849,7 @@ function ProfilePageContent({
                 )}
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Upload screenshots or images to support your refund request
+                Tải lên ảnh chụp màn hình hoặc hình ảnh để hỗ trợ yêu cầu hoàn tiền
               </p>
             </div>
 
@@ -1879,13 +1864,13 @@ function ProfilePageContent({
                 }}
                 className="flex-1"
               >
-                Cancel
+                Hủy
               </Button>
               <Button
                 onClick={handleRefundSubmit}
                 className="flex-1 bg-red-600 hover:bg-red-700"
               >
-                Submit Request
+                Gửi yêu cầu
               </Button>
             </div>
           </div>
@@ -1904,10 +1889,10 @@ function ProfilePageContent({
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
-                    Update Profile Picture
+                    Cập nhật ảnh đại diện
                   </h3>
                   <p className="text-sm text-gray-500">
-                    Preview and confirm your new profile picture
+                    Xem trước và xác nhận ảnh đại diện mới
                   </p>
                 </div>
               </div>
@@ -1930,7 +1915,7 @@ function ProfilePageContent({
               <div className="relative w-40 h-40">
                 <Image
                   src={avatarPreview}
-                  alt="Avatar Preview"
+                  alt="Xem trước ảnh đại diện"
                   fill
                   sizes="160px"
                   className="rounded-full object-cover border-4 border-blue-100"
@@ -1950,7 +1935,7 @@ function ProfilePageContent({
                 className="flex-1"
                 disabled={isUploadingAvatar}
               >
-                Cancel
+                Hủy
               </Button>
               <Button
                 onClick={handleAvatarUpload}
@@ -1960,12 +1945,12 @@ function ProfilePageContent({
                 {isUploadingAvatar ? (
                   <div className="flex items-center gap-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
-                    <span>Uploading...</span>
+                    <span>Đang tải lên...</span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
                     <Upload className="w-4 h-4" />
-                    <span>Upload</span>
+                    <span>Tải lên</span>
                   </div>
                 )}
               </Button>
@@ -1982,15 +1967,15 @@ function ProfilePageContent({
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center
-                  ${selectedRefund.status === "pending" ? "bg-yellow-100" : 
+                  ${selectedRefund.status === "pending" ? "bg-yellow-100" :
                     selectedRefund.status === "approved" ? "bg-green-100" : "bg-red-100"}`}>
                   <RefreshCcw className={`w-5 h-5 
-                    ${selectedRefund.status === "pending" ? "text-yellow-600" : 
+                    ${selectedRefund.status === "pending" ? "text-yellow-600" :
                       selectedRefund.status === "approved" ? "text-green-600" : "text-red-600"}`} />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
-                    Refund Request Details
+                    Chi tiết yêu cầu hoàn tiền
                   </h3>
                   <p className="text-sm text-gray-500">
                     #{selectedRefund._id}
@@ -2013,34 +1998,34 @@ function ProfilePageContent({
             {/* Refund Status */}
             <div className="mb-6">
               <div className="flex justify-between items-center mb-2">
-                <h4 className="font-medium text-gray-700">Status</h4>
+                <h4 className="font-medium text-gray-700">Trạng thái</h4>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium
-                  ${selectedRefund.status === "pending" ? "text-yellow-600 bg-yellow-100" : 
+                  ${selectedRefund.status === "pending" ? "text-yellow-600 bg-yellow-100" :
                     selectedRefund.status === "approved" ? "text-green-600 bg-green-100" : "text-red-600 bg-red-100"}`}>
-                  {selectedRefund.status === "pending" ? "Pending" : 
-                    selectedRefund.status === "approved" ? "Approved" : "Rejected"}
+                  {selectedRefund.status === "pending" ? "Đang chờ" :
+                    selectedRefund.status === "approved" ? "Đã duyệt" : "Từ chối"}
                 </span>
               </div>
               <div className="flex justify-between items-center mb-2">
-                <h4 className="font-medium text-gray-700">Created</h4>
+                <h4 className="font-medium text-gray-700">Ngày tạo</h4>
                 <span className="text-gray-600">{formatDate(selectedRefund.createdAt)}</span>
               </div>
               {selectedRefund.processedAt && (
                 <div className="flex justify-between items-center mb-2">
-                  <h4 className="font-medium text-gray-700">Processed</h4>
+                  <h4 className="font-medium text-gray-700">Đã xử lý</h4>
                   <span className="text-gray-600">{formatDate(selectedRefund.processedAt)}</span>
                 </div>
               )}
               <div className="flex justify-between items-center">
-                <h4 className="font-medium text-gray-700">Refund Amount</h4>
-                <span className="font-bold text-blue-600">{formatNumber(selectedRefund.amount || 0)} coins</span>
+                <h4 className="font-medium text-gray-700">Số tiền hoàn</h4>
+                <span className="font-bold text-blue-600">{formatNumber(selectedRefund.amount || 0)} xu</span>
               </div>
             </div>
 
             {/* Order Details */}
             {selectedRefund.order && (
               <div className="mb-6">
-                <h4 className="font-medium text-gray-900 mb-2">Order Information</h4>
+                <h4 className="font-medium text-gray-900 mb-2">Thông tin đơn hàng</h4>
                 <div className="bg-gray-50 rounded-lg p-4">
                   <div className="flex items-center gap-3">
                     <Image
@@ -2058,10 +2043,10 @@ function ProfilePageContent({
                         {formatCurrency(selectedRefund.order.totalAmount)}
                       </p>
                       <p className="text-xs text-gray-500">
-                        Order ID: #{selectedRefund.orderId}
+                        Mã đơn hàng: #{selectedRefund.orderId}
                       </p>
                       <p className="text-xs text-gray-500">
-                        Purchase date: {formatDate(selectedRefund.order.createdAt)}
+                        Ngày mua: {formatDate(selectedRefund.order.createdAt)}
                       </p>
                     </div>
                   </div>
@@ -2071,14 +2056,14 @@ function ProfilePageContent({
 
             {/* Refund Reason */}
             <div className="mb-6">
-              <h4 className="font-medium text-gray-900 mb-2">Reason for Refund</h4>
+              <h4 className="font-medium text-gray-900 mb-2">Lý do hoàn tiền</h4>
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-gray-700">{selectedRefund.description}</p>
               </div>
             </div>
             {((selectedRefund.attachments && selectedRefund.attachments.length > 0) || (selectedRefund.images && selectedRefund.images.length > 0)) && (
               <div className="mb-6">
-                <h4 className="font-medium text-gray-900 mb-2">Attachments</h4>
+                <h4 className="font-medium text-gray-900 mb-2">Tệp đính kèm</h4>
                 <div className="grid grid-cols-2 gap-2">
                   {[...(selectedRefund.attachments || []), ...(selectedRefund.images || [])].map((attachment, index) => (
                     <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
@@ -2098,7 +2083,7 @@ function ProfilePageContent({
             {/* Admin Notes */}
             {selectedRefund.adminNotes && (
               <div className="mb-6">
-                <h4 className="font-medium text-gray-900 mb-2">Admin Response</h4>
+                <h4 className="font-medium text-gray-900 mb-2">Phản hồi từ quản trị</h4>
                 <div className="bg-gray-50 rounded-lg p-4">
                   <p className="text-gray-700">{selectedRefund.adminNotes}</p>
                 </div>
@@ -2108,7 +2093,7 @@ function ProfilePageContent({
             {/* Attachments */}
             {((selectedRefund.attachments && selectedRefund.attachments.length > 0) || (selectedRefund.images && selectedRefund.images.length > 0)) && (
               <div className="mb-6">
-                <h4 className="font-medium text-gray-900 mb-2">Attachments admin</h4>
+                <h4 className="font-medium text-gray-900 mb-2">Tệp đính kèm từ quản trị</h4>
                 <div className="grid grid-cols-2 gap-2">
                   {[...(selectedRefund.imagesByAdmin || [])].map((attachment, index) => (
                     <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
@@ -2134,7 +2119,7 @@ function ProfilePageContent({
                 }}
                 className="bg-gray-200 hover:bg-gray-300 text-gray-800"
               >
-                Close
+                Đóng
               </Button>
             </div>
           </div>
@@ -2151,15 +2136,15 @@ function ProfilePageContent({
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center
                   ${selectedTicket.status === "pending" ? "bg-blue-100" :
                     selectedTicket.status === "in_progress" ? "bg-yellow-100" :
-                    selectedTicket.status === "resolved" ? "bg-green-100" : "bg-green-100"}`}>
+                      selectedTicket.status === "resolved" ? "bg-green-100" : "bg-green-100"}`}>
                   <LifeBuoy className={`w-5 h-5 
                     ${selectedTicket.status === "pending" ? "text-blue-600" :
                       selectedTicket.status === "in_progress" ? "text-yellow-600" :
-                      selectedTicket.status === "resolved" ? "text-green-600" : "text-green-600"}`} />
+                        selectedTicket.status === "resolved" ? "text-green-600" : "text-green-600"}`} />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
-                    Support Ticket Details
+                    Chi tiết yêu cầu hỗ trợ
                   </h3>
                   <p className="text-sm text-gray-500">
                     #{selectedTicket._id}
@@ -2182,23 +2167,23 @@ function ProfilePageContent({
             {/* Ticket Status */}
             <div className="mb-6">
               <div className="flex justify-between items-center mb-2">
-                <h4 className="font-medium text-gray-700">Status</h4>
+                <h4 className="font-medium text-gray-700">Trạng thái</h4>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium
                   ${selectedTicket.status === "pending" ? "text-blue-600 bg-blue-100" :
                     selectedTicket.status === "in_progress" ? "text-yellow-600 bg-yellow-100" :
-                    selectedTicket.status === "resolved" ? "text-green-600 bg-green-100" : "text-green-600 bg-green-100"}`}>
-                  {selectedTicket.status === "pending" ? "Open" :
-                    selectedTicket.status === "in_progress" ? "In Progress" :
-                    selectedTicket.status === "resolved" ? "Resolved" : "Closed"}
+                      selectedTicket.status === "resolved" ? "text-green-600 bg-green-100" : "text-green-600 bg-green-100"}`}>
+                  {selectedTicket.status === "pending" ? "Mở" :
+                    selectedTicket.status === "in_progress" ? "Đang xử lý" :
+                      selectedTicket.status === "resolved" ? "Đã giải quyết" : "Đã đóng"}
                 </span>
               </div>
               <div className="flex justify-between items-center mb-2">
-                <h4 className="font-medium text-gray-700">Created</h4>
+                <h4 className="font-medium text-gray-700">Ngày tạo</h4>
                 <span className="text-gray-600">{formatDate(selectedTicket.createdAt)}</span>
               </div>
               {selectedTicket.updatedAt && selectedTicket.updatedAt !== selectedTicket.createdAt && (
                 <div className="flex justify-between items-center mb-2">
-                  <h4 className="font-medium text-gray-700">Last Updated</h4>
+                  <h4 className="font-medium text-gray-700">Cập nhật lần cuối</h4>
                   <span className="text-gray-600">{formatDate(selectedTicket.updatedAt)}</span>
                 </div>
               )}
@@ -2206,11 +2191,11 @@ function ProfilePageContent({
 
             {/* Contact Information */}
             <div className="mb-6">
-              <h4 className="font-medium text-gray-900 mb-2">Contact Information</h4>
+              <h4 className="font-medium text-gray-900 mb-2">Thông tin liên hệ</h4>
               <div className="bg-gray-50 rounded-lg p-4">
                 {selectedTicket.name && (
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-600">Name:</span>
+                    <span className="text-gray-600">Họ tên:</span>
                     <span className="font-medium">{selectedTicket.name}</span>
                   </div>
                 )}
@@ -2222,7 +2207,7 @@ function ProfilePageContent({
                 )}
                 {selectedTicket.phone && (
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Phone:</span>
+                    <span className="text-gray-600">Số điện thoại:</span>
                     <span className="font-medium">{selectedTicket.phone}</span>
                   </div>
                 )}
@@ -2231,12 +2216,12 @@ function ProfilePageContent({
 
             {/* Ticket Subject & Message */}
             <div className="mb-6">
-              <h4 className="font-medium text-gray-900 mb-2">Subject</h4>
+              <h4 className="font-medium text-gray-900 mb-2">Tiêu đề</h4>
               <div className="bg-gray-50 rounded-lg p-4 mb-4">
                 <p className="text-gray-700 font-medium">{selectedTicket.subject}</p>
               </div>
-              
-              <h4 className="font-medium text-gray-900 mb-2">Message</h4>
+
+              <h4 className="font-medium text-gray-900 mb-2">Nội dung</h4>
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-gray-700">{selectedTicket.message}</p>
               </div>
@@ -2244,7 +2229,7 @@ function ProfilePageContent({
             {/* Attachments */}
             {selectedTicket.attachments && selectedTicket.attachments.length > 0 && (
               <div className="mb-6">
-                <h4 className="font-medium text-gray-900 mb-2">Attachments</h4>
+                <h4 className="font-medium text-gray-900 mb-2">Tệp đính kèm</h4>
                 <div className="grid grid-cols-2 gap-2">
                   {selectedTicket.attachments.map((attachment, index) => (
                     <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
@@ -2264,17 +2249,17 @@ function ProfilePageContent({
             {/* Admin Response */}
             {selectedTicket.response && (
               <div className="mb-6">
-                <h4 className="font-medium text-gray-900 mb-2">Admin Response</h4>
+                <h4 className="font-medium text-gray-900 mb-2">Phản hồi từ quản trị</h4>
                 <div className="bg-gray-50 rounded-lg p-4">
                   <p className="text-gray-700">{selectedTicket.response}</p>
                 </div>
               </div>
             )}
 
-          {/* Attachments ADMIn */}
-          {selectedTicket.imagesByAdmin && selectedTicket.imagesByAdmin.length > 0 && (
+            {/* Attachments ADMIn */}
+            {selectedTicket.imagesByAdmin && selectedTicket.imagesByAdmin.length > 0 && (
               <div className="mb-6">
-                <h4 className="font-medium text-gray-900 mb-2">Attachments</h4>
+                <h4 className="font-medium text-gray-900 mb-2">Tệp đính kèm từ quản trị</h4>
                 <div className="grid grid-cols-2 gap-2">
                   {selectedTicket.imagesByAdmin.map((attachment, index) => (
                     <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
@@ -2300,7 +2285,7 @@ function ProfilePageContent({
                 }}
                 className="bg-gray-200 hover:bg-gray-300 text-gray-800"
               >
-                Close
+                Đóng
               </Button>
             </div>
           </div>

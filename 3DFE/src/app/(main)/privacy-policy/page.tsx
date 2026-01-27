@@ -34,7 +34,7 @@ const PrivacyPolicyPage = () => {
   return (
     <Container className="py-10">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Privacy Policy</h1>
+        <h1 className="text-3xl font-bold mb-6">Chính sách bảo mật</h1>
 
         {isLoading ? (
           <div className="flex justify-center py-20">
@@ -46,7 +46,7 @@ const PrivacyPolicyPage = () => {
             dangerouslySetInnerHTML={{ __html: content }}
           />
         ) : (
-          <p>Privacy Policy content is not available at this time.</p>
+          <p>Nội dung Chính sách bảo mật chưa có sẵn vào lúc này.</p>
         )}
       </div>
     </Container>

@@ -23,21 +23,21 @@ export default function LoadingDemo() {
   return (
     <div className="p-6 space-y-8">
       <div>
-        <h2 className="text-2xl font-bold mb-4">Loading Components</h2>
+        <h2 className="text-2xl font-bold mb-4">Các thành phần Loading</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="border p-4 rounded-lg flex flex-col items-center justify-center h-40">
             <h3 className="font-medium mb-4">Spinner</h3>
-            <Loading variant="spinner" text="Loading..." />
+            <Loading variant="spinner" text="Đang tải..." />
           </div>
 
           <div className="border p-4 rounded-lg flex flex-col items-center justify-center h-40">
             <h3 className="font-medium mb-4">Dots</h3>
-            <Loading variant="dots" text="Loading..." />
+            <Loading variant="dots" text="Đang tải..." />
           </div>
 
           <div className="border p-4 rounded-lg flex flex-col items-center justify-center h-40">
             <h3 className="font-medium mb-4">Progress</h3>
-            <Loading variant="progress" text="Loading..." />
+            <Loading variant="progress" text="Đang tải..." />
           </div>
 
           <div className="border p-4 rounded-lg flex flex-col items-center justify-center h-40">
@@ -48,23 +48,23 @@ export default function LoadingDemo() {
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold mb-4">Loading Button</h2>
+        <h2 className="text-2xl font-bold mb-4">Nút Loading</h2>
         <div className="flex flex-wrap gap-4">
           <LoadingButton
             isLoading={isLoading}
-            loadingText="Loading..."
+            loadingText="Đang tải..."
             onClick={simulateLoading}
           >
-            Default Button
+            Nút mặc định
           </LoadingButton>
 
           <LoadingButton
             variant="secondary"
             isLoading={isLoading}
-            loadingText="Saving..."
+            loadingText="Đang lưu..."
             onClick={simulateLoading}
           >
-            Secondary Button
+            Nút phụ
           </LoadingButton>
 
           <LoadingButton
@@ -72,34 +72,33 @@ export default function LoadingDemo() {
             isLoading={isLoading}
             onClick={simulateLoading}
           >
-            Destructive Button
+            Nút hủy
           </LoadingButton>
 
           <LoadingButton
             variant="outline"
             isLoading={isLoading}
-            loadingText="Processing..."
+            loadingText="Đang xử lý..."
             onClick={simulateLoading}
           >
-            Outline Button
+            Nút viền
           </LoadingButton>
         </div>
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold mb-4">Loading Overlay</h2>
+        <h2 className="text-2xl font-bold mb-4">Lớp phủ Loading</h2>
         <LoadingOverlay
           isLoading={isOverlayLoading}
-          loadingText="Loading content..."
+          loadingText="Đang tải nội dung..."
         >
           <div className="border p-6 rounded-lg">
-            <h3 className="font-medium mb-4">Content with Overlay</h3>
+            <h3 className="font-medium mb-4">Nội dung với lớp phủ</h3>
             <p className="mb-4">
-              This content will be covered by a loading overlay when the button
-              is clicked.
+              Nội dung này sẽ bị che phủ bởi lớp phủ loading khi nhấn nút.
             </p>
             <Button onClick={simulateOverlayLoading}>
-              Show Loading Overlay
+              Hiện lớp phủ Loading
             </Button>
           </div>
         </LoadingOverlay>

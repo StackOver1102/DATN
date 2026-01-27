@@ -15,19 +15,19 @@ const Footer = () => {
                 href="/terms"
                 className="text-gray-300 hover:text-white text-sm transition-colors"
               >
-                Terms Of Use
+                Điều khoản sử dụng
               </Link>
               <Link
                 href="/privacy"
                 className="text-gray-300 hover:text-white text-sm transition-colors"
               >
-                Privacy Policy
+                Chính sách bảo mật
               </Link>
               <Link
                 href="/contact"
                 className="text-gray-300 hover:text-white text-sm transition-colors"
               >
-                Contact Us
+                Liên hệ
               </Link>
             </div>
 
@@ -109,10 +109,10 @@ const Footer = () => {
               {/* Contact Info */}
               < div className="text-center md:text-right text-xs " >
                 <div>
-                  © model3dvn.org, {new Date().getFullYear()} Specializing in
-                  providing providing 3dsmax models
+                  © model3dvn.org, {new Date().getFullYear()} Chuyên cung cấp
+                  mô hình 3dsmax
                 </div>
-                <div>📍 Ho Chi Minh City, VIET NAM</div>
+                <div>📍 Hà Nội, VIỆT NAM</div>
               </div >
             </div >
           </div >

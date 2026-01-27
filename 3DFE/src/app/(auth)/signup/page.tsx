@@ -10,15 +10,15 @@ import { z } from "zod";
 import { useRegister } from "@/lib/hooks/useAuth";
 import { Loading } from "@/components/ui/loading";
 import { toast } from "sonner";
-import { Turnstile } from "@marsidev/react-turnstile";
+
 
 // Define validation schema with Zod
 const signupSchema = z.object({
-  fullName: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  fullName: z.string().min(2, "Tên phải có ít nhất 2 ký tự"),
+  email: z.string().email("Địa chỉ email không hợp lệ"),
+  password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
   agreeToTerms: z.boolean().refine((val) => val === true, {
-    message: "You must agree to the terms and policies",
+    message: "Bạn phải đồng ý với điều khoản và chính sách",
   }),
 });
 
@@ -28,7 +28,7 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 function SignUpForm() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState<string>("");
+
 
   // Initialize React Hook Form with Zod resolver
   const {
@@ -48,15 +48,10 @@ function SignUpForm() {
   const { mutate: registerAccount, isSuccess, isPending } = useRegister();
   // Handle registration
   const onSubmit = async (data: SignupFormValues) => {
-    // Validate CAPTCHA
-    if (!captchaToken) {
-      toast.error("Please complete the CAPTCHA verification");
-      return;
-    }
 
     setLoading(true);
 
-    registerAccount({ ...data, captchaToken }, {
+    registerAccount({ ...data, captchaToken: "" }, {
       onSuccess: () => {
         // Redirect is handled in useRegister hook
       },
@@ -69,12 +64,12 @@ function SignUpForm() {
 
   if (isPending) {
     return (
-      <Loading variant="spinner" size="lg" text="Processing..." fullScreen />
+      <Loading variant="spinner" size="lg" text="Đang xử lý..." fullScreen />
     );
   }
 
   if (isSuccess) {
-    toast.success("Account created successfully, please log in");
+    toast.success("Tạo tài khoản thành công, vui lòng đăng nhập");
   }
 
   return (
@@ -83,21 +78,21 @@ function SignUpForm() {
       <div className="w-full flex items-center justify-center px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-md space-y-8 py-12 px-6 sm:px-8 bg-white rounded-lg shadow-md">
           <div className="text-center">
-            <h2 className="text-3xl font-medium mb-2">Get Started Now</h2>
+            <h2 className="text-3xl font-medium mb-2">Bắt đầu ngay</h2>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Name field */}
             <div className="space-y-2">
               <label htmlFor="fullName" className="block text-sm font-medium">
-                Name
+                Tên
               </label>
               <div className="relative">
                 <Input
                   id="fullName"
                   type="text"
                   autoComplete="fullName"
-                  placeholder="Enter your name"
+                  placeholder="Nhập tên của bạn"
                   className={`h-12 w-full rounded-lg border px-4 ${errors.fullName ? "border-red-500" : ""
                     }`}
                   {...register("fullName")}
@@ -113,14 +108,14 @@ function SignUpForm() {
             {/* Email field */}
             <div className="space-y-2">
               <label htmlFor="email" className="block text-sm font-medium">
-                Email address
+                Địa chỉ email
               </label>
               <div className="relative">
                 <Input
                   id="email"
                   type="email"
                   autoComplete="email"
-                  placeholder="Enter your email"
+                  placeholder="Nhập email của bạn"
                   className={`h-12 w-full rounded-lg border px-4 ${errors.email ? "border-red-500" : ""
                     }`}
                   {...register("email")}
@@ -136,7 +131,7 @@ function SignUpForm() {
             {/* Password field */}
             <div className="space-y-2">
               <label htmlFor="password" className="block text-sm font-medium">
-                Password
+                Mật khẩu
               </label>
               <div className="relative">
                 <Input
@@ -203,7 +198,7 @@ function SignUpForm() {
               </div>
               <div className="ml-3 text-sm">
                 <label htmlFor="agreeToTerms" className="text-xs font-medium">
-                  I agree to the terms & policy
+                  Tôi đồng ý với điều khoản & chính sách
                 </label>
                 {errors.agreeToTerms && (
                   <p className="text-xs text-red-500">
@@ -213,32 +208,15 @@ function SignUpForm() {
               </div>
             </div>
 
-            {/* Cloudflare Turnstile CAPTCHA */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium">
-                Security Verification
-              </label>
-              <Turnstile
-                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
-                onSuccess={(token: string) => setCaptchaToken(token)}
-                onError={() => {
-                  setCaptchaToken("");
-                  toast.error("CAPTCHA verification failed. Please try again.");
-                }}
-                onExpire={() => {
-                  setCaptchaToken("");
-                  toast.warning("CAPTCHA expired. Please verify again.");
-                }}
-              />
-            </div>
+
 
             {/* Signup button */}
             <Button
               type="submit"
-              disabled={loading || !captchaToken}
+              disabled={loading}
               className="w-full h-12 bg-black hover:bg-gray-800 text-yellow-400 rounded-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Creating account..." : "Signup"}
+              {loading ? "Đang tạo tài khoản..." : "Đăng ký"}
             </Button>
           </form >
 
@@ -248,18 +226,18 @@ function SignUpForm() {
               <div className="w-full border-t border-gray-200"></div>
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="px-2 bg-white text-gray-500">Or</span>
+              <span className="px-2 bg-white text-gray-500">Hoặc</span>
             </div>
           </div >
 
           <div className="text-center mt-6">
             <p className="text-sm">
-              Have an account?{" "}
+              Bạn đã có tài khoản?{" "}
               <Link
                 href="/signin"
                 className="font-medium text-black hover:underline"
               >
-                Sign In
+                Đăng nhập
               </Link>
             </p>
           </div>
@@ -277,7 +255,7 @@ function SignUpForm() {
               >
                 <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
               </svg>
-              Back to Home
+              Về trang chủ
             </Link>
           </div>
         </div >

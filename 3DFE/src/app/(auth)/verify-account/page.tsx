@@ -29,7 +29,7 @@ function VerifyAccountContent() {
       if (!token) {
         setIsVerifying(false);
         setErrorMessage(
-          "Verification token not found. Please check the link in your email."
+          "Không tìm thấy mã xác thực. Vui lòng kiểm tra liên kết trong email của bạn."
         );
         return;
       }
@@ -45,12 +45,12 @@ function VerifyAccountContent() {
           }, 3000);
         } else {
           setErrorMessage(
-            response.message || "Account verification failed. Please try again."
+            response.message || "Xác thực tài khoản thất bại. Vui lòng thử lại."
           );
         }
       } catch (error) {
         setErrorMessage(
-          "An error occurred during account verification. Please try again later."
+          "Đã xảy ra lỗi trong quá trình xác thực tài khoản. Vui lòng thử lại sau."
         );
         console.error("Verification error:", error);
       } finally {
@@ -66,14 +66,14 @@ function VerifyAccountContent() {
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">
-            Account Verification
+            Xác thực tài khoản
           </CardTitle>
           <CardDescription>
             {isVerifying
-              ? "Verifying your account..."
+              ? "Đang xác thực tài khoản của bạn..."
               : isSuccess
-              ? "Your account has been successfully verified!"
-              : "Account verification failed"}
+                ? "Tài khoản của bạn đã được xác thực thành công!"
+                : "Xác thực tài khoản thất bại"}
           </CardDescription>
         </CardHeader>
 
@@ -82,15 +82,14 @@ function VerifyAccountContent() {
             <div className="flex flex-col items-center space-y-4">
               <Loader2 className="h-16 w-16 text-primary animate-spin" />
               <p className="text-center text-gray-600">
-                Please wait while we verify your account...
+                Vui lòng đợi trong khi chúng tôi xác thực tài khoản của bạn...
               </p>
             </div>
           ) : isSuccess ? (
             <div className="flex flex-col items-center space-y-4">
               <CheckCircle className="h-16 w-16 text-green-500" />
               <p className="text-center text-gray-600">
-                Your account has been successfully verified. You will be
-                redirected to the login page in a few seconds.
+                Tài khoản của bạn đã được xác thực thành công. Bạn sẽ được chuyển hướng đến trang đăng nhập trong vài giây.
               </p>
             </div>
           ) : (
@@ -105,15 +104,15 @@ function VerifyAccountContent() {
           {!isVerifying &&
             (isSuccess ? (
               <Button asChild>
-                <Link href="/signin">Login Now</Link>
+                <Link href="/signin">Đăng nhập ngay</Link>
               </Button>
             ) : (
               <div className="flex flex-col space-y-2 w-full">
                 <Button asChild variant="outline">
-                  <Link href="/signin">Login</Link>
+                  <Link href="/signin">Đăng nhập</Link>
                 </Button>
                 <Button asChild>
-                  <Link href="/signup">Register New Account</Link>
+                  <Link href="/signup">Đăng ký tài khoản mới</Link>
                 </Button>
               </div>
             ))}
@@ -131,13 +130,13 @@ export default function VerifyAccountPage() {
           <Card className="w-full max-w-md shadow-lg">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl font-bold">
-                Account Verification
+                Xác thực tài khoản
               </CardTitle>
-              <CardDescription>Loading verification page...</CardDescription>
+              <CardDescription>Đang tải trang xác thực...</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center justify-center p-6">
               <Loader2 className="h-16 w-16 text-primary animate-spin" />
-              <p className="text-center text-gray-600 mt-4">Please wait...</p>
+              <p className="text-center text-gray-600 mt-4">Vui lòng đợi...</p>
             </CardContent>
           </Card>
         </div>

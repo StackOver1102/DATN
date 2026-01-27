@@ -71,6 +71,7 @@ const authOptions: NextAuthOptions = {
 
           // Get the response data
           const nestResponse: ApiResponse<LoginResponse> = await response.json();
+          // console.log(nestResponse);
           // If the response is not successful, return error with the message from the backend
           if (!response.ok) {
             console.error("Authentication failed:", nestResponse.message || "Authentication failed");

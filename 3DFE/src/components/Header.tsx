@@ -101,7 +101,7 @@ export default function Header() {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+      alert('Vui lòng chọn một file hình ảnh');
       return;
     }
 
@@ -120,7 +120,7 @@ export default function Header() {
       );
 
       if (!response.ok) {
-        throw new Error('Search failed');
+        throw new Error('Tìm kiếm thất bại');
       }
 
       const data = await response.json();
@@ -146,7 +146,7 @@ export default function Header() {
       router.push(`/models?searchType=image&t=${timestamp}`);
     } catch (error) {
       console.error('Image search error:', error);
-      alert('Search failed. Please try again.');
+      alert('Tìm kiếm thất bại. Vui lòng thử lại.');
     } finally {
       setImageSearching(false);
       // Clear file input
@@ -169,7 +169,7 @@ export default function Header() {
   // Display full screen loading when signing out
   if (isLoggingOut) {
     return (
-      <Loading variant="spinner" size="sm" text="Signing out..." fullScreen />
+      <Loading variant="spinner" size="sm" text="Đang đăng xuất..." fullScreen />
     );
   }
 
@@ -201,19 +201,19 @@ export default function Header() {
                 href="/models"
                 className="text-sm hover:text-gray-300 transition-colors"
               >
-                3D Models
+                Mô Hình 3D
               </Link>
               <Link
                 href="/deposit"
                 className="text-sm hover:text-gray-300 transition-colors"
               >
-                Buy
+                Nạp Xu
               </Link>
               <Link
                 href="/support"
                 className="text-sm hover:text-gray-300 transition-colors"
               >
-                Support
+                Hỗ Trợ
               </Link>
               {/* <Link
                 href="/help"
@@ -301,14 +301,14 @@ export default function Header() {
                         </div>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuLabel>Account</DropdownMenuLabel>
+                        <DropdownMenuLabel>Tài khoản</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
                           <Link
                             href="/profile"
                             className="cursor-pointer w-full"
                           >
-                            Personal Profile
+                            Thông tin cá nhân
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
@@ -316,7 +316,7 @@ export default function Header() {
                             href="/profile?tab=purchases"
                             className="cursor-pointer w-full flex items-center justify-between"
                           >
-                            <span>Purchase History</span>
+                            <span>Lịch sử mua hàng</span>
                             {orderNotificationCount > 0 && (
                               <span className="bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                                 {orderNotificationCount}
@@ -329,7 +329,7 @@ export default function Header() {
                             href="/profile?tab=refunds"
                             className="cursor-pointer w-full flex items-center justify-between"
                           >
-                            <span>Refund Requests</span>
+                            <span>Yêu cầu hoàn tiền</span>
                             {refundNotificationCount > 0 && (
                               <span className="bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                                 {refundNotificationCount}
@@ -342,7 +342,7 @@ export default function Header() {
                             href="/profile?tab=support"
                             className="cursor-pointer w-full flex items-center justify-between"
                           >
-                            <span>Support Tickets</span>
+                            <span>Yêu cầu hỗ trợ</span>
                             {supportNotificationCount > 0 && (
                               <span className="bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                                 {supportNotificationCount}
@@ -355,7 +355,7 @@ export default function Header() {
                           onClick={handleSignOut}
                           className="cursor-pointer"
                         >
-                          Sign out
+                          Đăng xuất
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -366,7 +366,7 @@ export default function Header() {
                       href="/signup"
                       className="text-blue-600 transition-colors text-xs"
                     >
-                      Join
+                      Đăng ký
                     </Link>
                     <Link
                       href="/signin"
@@ -379,7 +379,7 @@ export default function Header() {
                         height={12}
                         className="mr-1"
                       />
-                      Sign in
+                      Đăng nhập
                     </Link>
                   </>
                 )}
@@ -391,7 +391,7 @@ export default function Header() {
               <form onSubmit={handleSearch} className="relative">
                 <Input
                   type="text"
-                  placeholder="Search 3D models..."
+                  placeholder="Tìm kiếm mô hình 3D..."
                   className="w-full px-4 py-3 pl-4 pr-12 text-sm border border-gray-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-[#e7e6e5]"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -437,7 +437,7 @@ export default function Header() {
                 <form onSubmit={handleSearch} className="relative mt-3.5">
                   <Input
                     type="text"
-                    placeholder="Search 3D models, textures, materials..."
+                    placeholder="Tìm kiếm mô hình 3D, texture, vật liệu..."
                     className="w-full px-4 py-5 pl-4 pr-20 bg-white text-sm border border-gray-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent  hover:bg-white"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -568,11 +568,11 @@ export default function Header() {
                       </div>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56">
-                      <DropdownMenuLabel>Your Account</DropdownMenuLabel>
+                      <DropdownMenuLabel>Tài khoản của bạn</DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
                         <Link href="/profile" className="cursor-pointer w-full">
-                          Personal Profile
+                          Thông tin cá nhân
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
@@ -580,7 +580,7 @@ export default function Header() {
                           href="/profile?tab=purchases"
                           className="cursor-pointer w-full flex items-center justify-between"
                         >
-                          <span>Purchase History</span>
+                          <span>Lịch sử mua hàng</span>
                           {orderNotificationCount > 0 && (
                             <span className="bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                               {orderNotificationCount}
@@ -594,7 +594,7 @@ export default function Header() {
                           href="/profile?tab=refunds"
                           className="cursor-pointer w-full flex items-center justify-between"
                         >
-                          <span>Refund Requests</span>
+                          <span>Yêu cầu hoàn tiền</span>
                           {refundNotificationCount > 0 && (
                             <span className="bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                               {refundNotificationCount}
@@ -608,7 +608,7 @@ export default function Header() {
                           href="/profile?tab=support"
                           className="cursor-pointer w-full flex items-center justify-between"
                         >
-                          <span>Support Tickets</span>
+                          <span>Yêu cầu hỗ trợ</span>
                           {supportNotificationCount > 0 && (
                             <span className="bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                               {supportNotificationCount}
@@ -622,7 +622,7 @@ export default function Header() {
                         onClick={handleSignOut}
                         className="cursor-pointer text-red-500 focus:text-red-500"
                       >
-                        Sign out
+                        Đăng xuất
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -633,7 +633,7 @@ export default function Header() {
                     href="/signup"
                     className="text-blue-600 transition-colors text-base font-medium"
                   >
-                    Join
+                    Đăng ký
                   </Link>
                   <Link
                     href="/signin"
@@ -646,7 +646,7 @@ export default function Header() {
                       height={24}
                       className="mr-1 "
                     />
-                    Sign in
+                    Đăng nhập
                   </Link>
                 </>
               )}

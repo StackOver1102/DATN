@@ -39,7 +39,7 @@ export default function ProductCard({
         <div className="relative aspect-square bg-gray-50 flex-shrink-0">
           <Image
             src={image}
-            alt={name || "Product Image"}
+            alt={name || "Hình ảnh sản phẩm"}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
@@ -49,7 +49,7 @@ export default function ProductCard({
             </div>
           ) : (
             <div className="absolute top-2 right-2 bg-black text-yellow-400 px-2 py-1 text-xs font-bold rounded">
-              FREE
+              MIỄN PHÍ
             </div>
           )}
         </div>
@@ -69,7 +69,7 @@ export default function ProductCard({
             <div className="flex items-center gap-1">
               {downloads !== undefined ? (
                 <>
-                  <span>Downloads: {downloads}</span>
+                  <span>Lượt tải: {downloads}</span>
                   {rating && <span className="ml-2">★ {rating}</span>}
                 </>
               ) : (

@@ -438,11 +438,11 @@ export default function ClientSideModelsPage({
                   className="flex items-center gap-2"
                 >
                   <SlidersHorizontal className="w-4 h-4" />
-                  {showFilters ? "Hide Filters" : "Show Filters"}
+                  {showFilters ? "Ẩn bộ lọc" : "Hiện bộ lọc"}
                 </Button>
 
                 <span className="text-sm text-gray-600">
-                  {count} models found
+                  {count} mô hình
                 </span>
 
                 {/* Show current search query or image search indicator */}
@@ -450,7 +450,7 @@ export default function ClientSideModelsPage({
                   searchParams.get("q") ? (
                     <div className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-full">
                       <span className="text-sm text-gray-700">
-                        Search: <span className="font-medium">{searchParams.get("q")}</span>
+                        Tìm kiếm: <span className="font-medium">{searchParams.get("q")}</span>
                       </span>
                       <button
                         onClick={() => {
@@ -461,7 +461,7 @@ export default function ClientSideModelsPage({
                           router.push(`?${params.toString()}`, { scroll: false });
                         }}
                         className="text-gray-500 hover:text-gray-700 transition-colors"
-                        title="Clear search"
+                        title="Xóa tìm kiếm"
                       >
                         <svg
                           className="w-4 h-4"
@@ -485,7 +485,7 @@ export default function ClientSideModelsPage({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                       <span className="text-sm text-purple-700">
-                        <span className="font-medium">Image Search Results</span>
+                        <span className="font-medium">Kết quả tìm kiếm hình ảnh</span>
                       </span>
                       <button
                         onClick={() => {
@@ -499,7 +499,7 @@ export default function ClientSideModelsPage({
                           window.location.href = '/models';
                         }}
                         className="text-purple-500 hover:text-purple-700 transition-colors"
-                        title="Clear image search"
+                        title="Xóa tìm kiếm bằng hình ảnh"
                       >
                         <svg
                           className="w-4 h-4"
@@ -528,7 +528,7 @@ export default function ClientSideModelsPage({
                       } rounded-l-lg transition-colors`}
                     onClick={() => handleTabChange("all")}
                   >
-                    All
+                    Tất cả
                   </button>
                   <button
                     className={`px-4 py-1 text-sm ${activeTab === "pro"
@@ -546,7 +546,7 @@ export default function ClientSideModelsPage({
                       } rounded-r-lg transition-colors`}
                     onClick={() => handleTabChange("free")}
                   >
-                    Free
+                    Miễn phí
                   </button>
                 </div>
               </div >
@@ -631,7 +631,7 @@ export default function ClientSideModelsPage({
                                   </h3>
                                   <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
                                     <span>
-                                      Downloads: {model.downloads || 0}
+                                      Lượt tải: {model.downloads || 0}
                                     </span>
                                     <span>★ {model.rating || 0}</span>
                                     <span>
@@ -661,7 +661,7 @@ export default function ClientSideModelsPage({
                                   )}
                                   <span className="font-bold text-blue-600 text-lg">
                                     {model.price === 0
-                                      ? "Free"
+                                      ? "Miễn phí"
                                       : `$${model.price}`}
                                   </span>
                                 </div>
@@ -676,10 +676,10 @@ export default function ClientSideModelsPage({
               ) : (
                 <div className="flex flex-col items-center justify-center py-20">
                   <div className="text-gray-500 text-lg mb-4">
-                    No products found
+                    Không tìm thấy sản phẩm nào
                   </div>
                   <p className="text-gray-400">
-                    Please try searching with different filters
+                    Vui lòng thử tìm kiếm với các bộ lọc khác
                   </p>
                 </div>
               )}

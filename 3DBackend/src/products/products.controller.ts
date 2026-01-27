@@ -125,9 +125,10 @@ export class ProductsController {
 
   @Public()
   @Get(':id/similar')
-  @ApiOperation({ summary: 'Get similar products by category' })
+  @ApiOperation({ summary: 'Get similar products (AI Powered)' })
   findSimilar(@Param('id') id: string, @Query('limit') limit?: number) {
-    return this.productsService.findSimilarByCategory(id, limit || 10);
+    // Upgraded to use AI Visual Recommendation
+    return this.productsService.getRecommendedProducts(id, limit || 10);
   }
 
   @Patch(':id')

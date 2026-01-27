@@ -280,6 +280,33 @@ export class ImageSearchService {
   }
 
   /**
+   * Gợi ý sản phẩm tương tự (Recommendation)
+   */
+  async getRecommendations(
+    productId: string,
+    limit: number = 10,
+  ): Promise<any> {
+    try {
+      const response = await axios.post(
+        `${this.searchServiceUrl}/recommend`,
+        {
+          product_id: productId,
+          top_k: limit,
+        },
+        { timeout: 10000 },
+      );
+      return response.data;
+    } catch (error) {
+      this.logger.error(
+        `Failed to get recommendations for ${productId}`,
+        error.message,
+      );
+      // Return empty structure on error to not break frontend
+      return { recommendations: [] };
+    }
+  }
+
+  /**
    * Kiểm tra trạng thái service
    */
   async getStatus(): Promise<any> {

@@ -80,8 +80,8 @@ export interface Product {
   updatedAt?: string;
   platform?: string;
 
-  categoryId?:string
-  categoryName?:string;
-  rootCategoryId?:string;
-  categoryPath?:string;
+  categoryId?: string
+  categoryName?: string;
+  rootCategoryId?: string;
+  categoryPath?: string;
 }

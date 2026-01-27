@@ -26,8 +26,32 @@ export class RefundService {
     private transactionsService: TransactionsService,
     private notificationsService: NotificationsService,
     private filterService: FilterService,
-  ) {}
+  ) { }
 
+  /**
+   * Tạo yêu cầu hoàn tiền cho đơn hàng.
+   * - Kiểm tra đơn hàng có tồn tại và thuộc về user không.
+   * - Kiểm tra trạng thái đơn hàng (chưa hoàn tiền, chưa hủy).
+   * - Đảm bảo chưa có yêu cầu hoàn tiền nào đang pending.
+   * 
+   * @param {CreateRefundDto} createRefundDto - Thông tin yêu cầu hoàn tiền.
+   * @param {string} createRefundDto.orderId - ID đơn hàng cần hoàn tiền.
+   * @param {string} [createRefundDto.reason] - Lý do yêu cầu hoàn tiền.
+   * @param {string} userId - ID người dùng tạo yêu cầu.
+   * @returns {Promise<RefundDocument>} - Yêu cầu hoàn tiền đã tạo.
+   * @throws {NotFoundException} - Nếu đơn hàng không tồn tại.
+   * @throws {BadRequestException} - Nếu không đủ điều kiện hoàn tiền.
+   * 
+   * @example
+   * // Đầu vào:
+   * const dto = { orderId: "orderId123", reason: "Sản phẩm lỗi" };
+   * 
+   * // Gọi hàm:
+   * const refund = await refundService.create(dto, "userId");
+   * 
+   * // Đầu ra:
+   * // { _id: "...", orderId: "...", userId: "...", status: "PENDING", amount: 100000 }
+   */
   async create(
     createRefundDto: CreateRefundDto,
     userId: string,
@@ -69,11 +93,12 @@ export class RefundService {
       ...createRefundDto,
       userId: new Types.ObjectId(userId),
       orderId: new Types.ObjectId(createRefundDto.orderId),
-      amount: order.totalAmount,
+      amount: order.totalAmount, // Hoàn lại toàn bộ số tiền
     });
 
     const savedRefund: RefundDocument = await refund.save();
 
+    // Thông báo cho hệ thống
     if (savedRefund) {
       await this.notificationsService.create({
         message: `New refund request from ${NotificationType.REFUND}`,
@@ -86,6 +111,15 @@ export class RefundService {
     return savedRefund;
   }
 
+  /**
+   * Lấy tất cả yêu cầu hoàn tiền (Admin).
+   * - Populate thông tin User, Order, Product để hiển thị đầy đủ.
+   * 
+   * @returns {Promise<Refund[]>}
+   * 
+   * @example
+   * const allRefunds = await refundService.findAll();
+   */
   async findAll(): Promise<Refund[]> {
     return this.refundModel
       .find()
@@ -103,6 +137,16 @@ export class RefundService {
       .exec();
   }
 
+  /**
+   * Lấy danh sách yêu cầu hoàn tiền của User.
+   * 
+   * @param {string} userId - ID người dùng.
+   * @param {FilterDto} filterDto - Tham số phân trang.
+   * @returns {Promise<PaginatedResult<RefundDocument>>}
+   * 
+   * @example
+   * const myRefunds = await refundService.findByUserId("userId", { page: 1, limit: 10 });
+   */
   async findByUserId(
     userId: string,
     filterDto: FilterDto,
@@ -143,6 +187,16 @@ export class RefundService {
     return result;
   }
 
+  /**
+   * Lấy chi tiết một yêu cầu hoàn tiền.
+   * 
+   * @param {string} id - ID yêu cầu hoàn tiền.
+   * @returns {Promise<RefundDocument>}
+   * @throws {NotFoundException}
+   * 
+   * @example
+   * const refund = await refundService.findOne("refundId");
+   */
   async findOne(id: string): Promise<RefundDocument> {
     const refund = await this.refundModel
       .findById(id)
@@ -167,14 +221,30 @@ export class RefundService {
     return refund;
   }
 
+  /**
+   * Cập nhật trạng thái yêu cầu hoàn tiền (Admin).
+   * - Nếu duyệt (APPROVED): Thực hiện hoàn tiền (cộng tiền ví).
+   * - Nếu hoàn tất (COMPLETED): Cập nhật trạng thái đơn hàng thành REFUNDED.
+   * 
+   * @param {string} id - ID yêu cầu hoàn tiền.
+   * @param {UpdateRefundDto} updateRefundDto - Các trường cần cập nhật.
+   * @param {RefundStatus} updateRefundDto.status - Trạng thái mới (APPROVED, REJECTED, COMPLETED).
+   * @returns {Promise<Refund>}
+   * 
+   * @example
+   * // Duyệt yêu cầu (tiền sẽ được cộng vào ví user):
+   * await refundService.update("refundId", { status: RefundStatus.APPROVED });
+   * 
+   * // Hoàn tất (đơn hàng sẽ chuyển sang REFUNDED):
+   * await refundService.update("refundId", { status: RefundStatus.COMPLETED });
+   */
   async update(id: string, updateRefundDto: UpdateRefundDto): Promise<Refund> {
-    // console.log(id)
     const refund: RefundDocument | null = await this.refundModel
       .findById({ _id: new Types.ObjectId(id) })
       .exec();
 
     console.log(refund);
-    // If status is being updated to APPROVED, process the refund
+    // Nếu status được update sang APPROVED -> Xử lý hoàn tiền
     if (
       refund &&
       updateRefundDto.status === RefundStatus.APPROVED &&
@@ -183,7 +253,7 @@ export class RefundService {
       await this.processRefund(refund);
     }
 
-    // If status is being updated to COMPLETED, mark the order as refunded
+    // Nếu status được update sang COMPLETED -> Update đơn hàng
     if (
       refund &&
       updateRefundDto.status === RefundStatus.COMPLETED &&
@@ -194,7 +264,7 @@ export class RefundService {
       });
     }
 
-    // Update the refund
+    // Update the refund document
     const updatedRefund = await this.refundModel
       .findByIdAndUpdate(
         id,
@@ -215,6 +285,18 @@ export class RefundService {
     return updatedRefund;
   }
 
+  /**
+   * Xử lý hoàn tiền vào ví người dùng (Logic nghiệp vụ).
+   * - Tạo giao dịch loại REFUND, method WALLET, status SUCCESS.
+   * - Tiền sẽ tự động được cộng vào balance user thông qua TransactionsService.
+   * 
+   * @param {RefundDocument} refund - Document yêu cầu hoàn tiền.
+   * @returns {Promise<void>}
+   * 
+   * @example
+   * // Được gọi nội bộ bởi update() khi status = APPROVED
+   * await this.processRefund(refund);
+   */
   async processRefund(refund: RefundDocument): Promise<void> {
     // Create refund transaction
     const transaction = await this.transactionsService.create(
@@ -234,6 +316,16 @@ export class RefundService {
     });
   }
 
+  /**
+   * Xóa yêu cầu hoàn tiền (Chỉ cho phép khi đang PENDING).
+   * 
+   * @param {string} id - ID yêu cầu hoàn tiền.
+   * @returns {Promise<Refund>}
+   * @throws {BadRequestException} - Nếu yêu cầu không ở trạng thái PENDING.
+   * 
+   * @example
+   * await refundService.remove("refundId");
+   */
   async remove(id: string): Promise<Refund> {
     const refund = await this.findOne(id);
 

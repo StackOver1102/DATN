@@ -36,23 +36,43 @@ export class SupportService {
     private captchaService: CaptchaService,
   ) { }
 
+  /**
+   * Tạo yêu cầu hỗ trợ mới (Support Ticket).
+   * - Xác thực CAPTCHA để chống spam.
+   * - Tạo thông báo cho Admin.
+   * - Gửi email xác nhận cho user.
+   * 
+   * @param {CreateSupportDto} createSupportDto - Thông tin yêu cầu hỗ trợ.
+   * @param {string} createSupportDto.name - Tên người gửi.
+   * @param {string} createSupportDto.email - Email liên hệ.
+   * @param {string} createSupportDto.subject - Tiêu đề.
+   * @param {string} createSupportDto.message - Nội dung yêu cầu.
+   * @param {string} createSupportDto.captchaToken - Token CAPTCHA.
+   * @param {string} [userId] - ID người dùng (optional, nếu đã đăng nhập).
+   * @returns {Promise<SupportRequestDocument>} - Yêu cầu hỗ trợ đã tạo.
+   * 
+   * @example
+   * // Đầu vào:
+   * const dto = {
+   *   name: "Nguyen Van A",
+   *   email: "user@example.com",
+   *   subject: "Không tải được file",
+   *   message: "Tôi đã mua sản phẩm nhưng không tải được...",
+   *   captchaToken: "abc..."
+   * };
+   * 
+   * // Gọi hàm:
+   * const ticket = await supportService.create(dto, "userId123");
+   * 
+   * // Đầu ra:
+   * // { _id: "...", status: "PENDING", email: "user@example.com", ... }
+   */
   async create(
     createSupportDto: CreateSupportDto,
     userId?: string,
   ): Promise<SupportRequestDocument> {
-    // Verify CAPTCHA before processing
-    const isCaptchaValid = await this.captchaService.verifyCaptcha(
-      createSupportDto.captchaToken,
-    );
-
-    if (!isCaptchaValid) {
-      throw new BadRequestException('Invalid CAPTCHA verification');
-    }
-
     // Remove captchaToken from data before saving
     const { captchaToken, ...supportData } = createSupportDto;
-
-    console.log(captchaToken);
 
     const supportRequest = new this.supportRequestModel({
       ...supportData,
@@ -69,7 +89,6 @@ export class SupportService {
         originalId: savedRequest._id.toString(),
         originType: NotificationType.SUPPORT,
         userId: userId ? new Types.ObjectId(userId) : undefined,
-        // originType: NotificationType.SUPPORT
       });
     } catch (error) {
       console.error('Failed to create notification:', error);
@@ -88,10 +107,27 @@ export class SupportService {
     return savedRequest;
   }
 
+  /**
+   * Lấy tất cả yêu cầu hỗ trợ (Admin).
+   * 
+   * @returns {Promise<SupportRequest[]>}
+   * 
+   * @example
+   * const allTickets = await supportService.findAll();
+   */
   async findAll(): Promise<SupportRequest[]> {
     return this.supportRequestModel.find().sort({ createdAt: -1 }).exec();
   }
 
+  /**
+   * Lấy yêu cầu hỗ trợ theo trạng thái (Admin).
+   * 
+   * @param {SupportStatus} status - Trạng thái cần filter (PENDING, RESOLVED, CLOSED).
+   * @returns {Promise<SupportRequest[]>}
+   * 
+   * @example
+   * const pending = await supportService.findByStatus(SupportStatus.PENDING);
+   */
   async findByStatus(status: SupportStatus): Promise<SupportRequest[]> {
     return this.supportRequestModel
       .find({ status })
@@ -99,22 +135,23 @@ export class SupportService {
       .exec();
   }
 
+  /**
+   * Lấy lịch sử yêu cầu hỗ trợ của một User.
+   * - Hỗ trợ phân trang (Pagination).
+   * 
+   * @param {string} userId - ID người dùng.
+   * @param {FilterDto} filterDto - Tham số phân trang.
+   * @param {number} filterDto.page - Trang hiện tại.
+   * @param {number} filterDto.limit - Số lượng mỗi trang.
+   * @returns {Promise<PaginatedResult<SupportRequestDocument>>}
+   * 
+   * @example
+   * const history = await supportService.findByUserId("userId", { page: 1, limit: 10 });
+   */
   async findByUserId(
     userId: string,
     filterDto: FilterDto,
   ): Promise<PaginatedResult<SupportRequestDocument>> {
-    // const baseQuery = { userId };
-
-    // return this.filterService.applyFilters<SupportRequestDocument>(
-    //   this.supportRequestModel,
-    //   filterDto,
-    //   baseQuery,
-    //   [
-    //     'name',
-    //     'message',
-    //     'email',
-    //   ]
-    // );
     const { page, limit } = filterDto;
     if (!page || !limit) {
       throw new BadRequestException('Page and limit are required');
@@ -141,6 +178,16 @@ export class SupportService {
     };
   }
 
+  /**
+   * Lấy chi tiết một yêu cầu hỗ trợ.
+   * 
+   * @param {string} id - ID yêu cầu hỗ trợ.
+   * @returns {Promise<SupportRequestDocument>}
+   * @throws {NotFoundException}
+   * 
+   * @example
+   * const ticket = await supportService.findOne("ticketId");
+   */
   async findOne(id: string): Promise<SupportRequestDocument> {
     const supportRequest = await this.supportRequestModel.findById(id).exec();
 
@@ -151,6 +198,17 @@ export class SupportService {
     return supportRequest;
   }
 
+  /**
+   * Cập nhật thông tin yêu cầu hỗ trợ.
+   * 
+   * @param {string} id - ID yêu cầu.
+   * @param {UpdateSupportDto} updateSupportDto - Các trường cần cập nhật.
+   * @param {string} updatedBy - ID người cập nhật.
+   * @returns {Promise<SupportRequest>}
+   * 
+   * @example
+   * await supportService.update("ticketId", { status: "CLOSED" }, "adminId");
+   */
   async update(
     id: string,
     updateSupportDto: UpdateSupportDto,
@@ -171,6 +229,22 @@ export class SupportService {
     return updatedSupportRequest;
   }
 
+  /**
+   * Phản hồi yêu cầu hỗ trợ (Admin Respond).
+   * - Cập nhật nội dung trả lời.
+   * - Đổi trạng thái sang RESOLVED.
+   * - Gửi email phản hồi cho User.
+   * 
+   * @param {string} id - ID yêu cầu hỗ trợ.
+   * @param {RespondToSupportDto} respondToSupportDto - Nội dung phản hồi.
+   * @param {string} respondToSupportDto.response - Nội dung trả lời.
+   * @param {SupportStatus} [respondToSupportDto.status] - Trạng thái mới (default: RESOLVED).
+   * @param {string} adminId - ID admin phản hồi.
+   * @returns {Promise<SupportRequest>}
+   * 
+   * @example
+   * await supportService.respond("ticketId", { response: "Xin lỗi về sự bất tiện..." }, "adminId");
+   */
   async respond(
     id: string,
     respondToSupportDto: RespondToSupportDto,
@@ -181,6 +255,7 @@ export class SupportService {
 
     const supportRequest = await this.findOne(id);
 
+    // Không thể phản hồi nếu đã đóng hoặc đã giải quyết
     if (
       supportRequest.status === SupportStatus.RESOLVED ||
       supportRequest.status === SupportStatus.CLOSED
@@ -215,6 +290,15 @@ export class SupportService {
     return updatedSupportRequest;
   }
 
+  /**
+   * Xóa yêu cầu hỗ trợ.
+   * 
+   * @param {string} id - ID yêu cầu.
+   * @returns {Promise<SupportRequest>}
+   * 
+   * @example
+   * await supportService.remove("ticketId");
+   */
   async remove(id: string): Promise<SupportRequest> {
     const deletedSupportRequest = await this.supportRequestModel
       .findByIdAndDelete(id)

@@ -10,13 +10,14 @@ export class MailService {
   constructor(private mailerService: MailerService) { }
 
   /**
-   * Send welcome email to new user
+   * Gửi email chào mừng thành viên mới (Welcome).
+   * - Được gọi ngay sau khi đăng ký (hoặc xác thực) thành công.
    */
   async sendWelcomeEmail(user: UserDocument): Promise<void> {
     await this.mailerService.sendMail({
       to: user.email,
       subject: 'Welcome to 3DVN',
-      template: './welcome',
+      template: './welcome', // Sử dụng template handlebars 'welcome.hbs'
       context: {
         name: user.fullName || user.email,
         email: user.email,
@@ -27,9 +28,9 @@ export class MailService {
   }
 
   /**
-   * Send password reset email
+   * Gửi email xác thực mật khẩu (đã cũ, nên dùng sendResetPasswordEmail).
    */
-  async sendPasswordResetEmail(email: string, token: string): Promise<void> {
+  async sendPasswordResetEmail_Old(email: string, token: string): Promise<void> {
     const resetUrl = `${process.env.FRONTEND_URL || 'https://3dvn.org'}/reset-password?token=${token}`;
 
     await this.mailerService.sendMail({
@@ -46,7 +47,7 @@ export class MailService {
   }
 
   /**
-   * Send email confirmation
+   * Gửi email xác nhận (đã cũ).
    */
   async sendEmailConfirmation(email: string, token: string): Promise<void> {
     const confirmUrl = `${process.env.FRONTEND_URL || 'https://3dvn.org'}/confirm-email?token=${token}`;
@@ -65,7 +66,8 @@ export class MailService {
   }
 
   /**
-   * Send support request confirmation to user
+   * Xác nhận yêu cầu hỗ trợ (Support Request Confirmation).
+   * - Gửi cho user để báo là hệ thống đã nhận được yêu cầu support.
    */
   async sendSupportRequestConfirmation(
     supportRequest: SupportRequestDocument,
@@ -86,7 +88,8 @@ export class MailService {
   }
 
   /**
-   * Send support response to user
+   * Gửi phản hồi hỗ trợ từ Admin (Support Response).
+   * - Được gọi khi Admin trả lời ticket support.
    */
   async sendSupportResponse(
     supportRequest: SupportRequestDocument,
@@ -108,7 +111,8 @@ export class MailService {
   }
 
   /**
-   * Send order confirmation
+   * Xác nhận đơn hàng thành công (Order Confirmation).
+   * - Gửi cho khách hàng sau khi thanh toán thành công.
    */
   async sendOrderConfirmation(
     order: OrderDocument,
@@ -131,7 +135,7 @@ export class MailService {
   }
 
   /**
-   * Send order status update
+   * Cập nhật trạng thái đơn hàng (Order Status Update).
    */
   async sendOrderStatusUpdate(
     order: OrderDocument,
@@ -154,7 +158,8 @@ export class MailService {
   }
 
   /**
-   * Send refund request confirmation
+   * Xác nhận yêu cầu hoàn tiền (Refund Request Confirmation).
+   * - Gửi cho user khi họ vừa gửi yêu cầu hoàn tiền.
    */
   async sendRefundRequestConfirmation(
     refund: RefundDocument,
@@ -178,7 +183,8 @@ export class MailService {
   }
 
   /**
-   * Send refund status update
+   * Cập nhật trạng thái yêu cầu hoàn tiền (Refund Status Update).
+   * - Được gọi khi Admin chấp nhận hoặc từ chối hoàn tiền.
    */
   async sendRefundStatusUpdate(
     refund: RefundDocument,
@@ -202,7 +208,8 @@ export class MailService {
   }
 
   /**
-   * Send new user credentials to user created from dashboard
+   * Gửi thông tin tài khoản mới (cho User tạo từ Dashboard).
+   * - Chứa email và mật khẩu (nếu random).
    */
   async sendNewUserCredentials(
     user: UserDocument,
@@ -222,7 +229,10 @@ export class MailService {
     });
   }
 
-
+  /**
+   * Gửi email đặt lại mật khẩu (Reset Password).
+   * - Chứa link kèm token để user click vào đổi pass mới.
+   */
   async sendResetPasswordEmail(user: UserDocument, token: string): Promise<void> {
     const resetUrl = `${process.env.FRONTEND_URL || 'https://3dvn.org'}/reset-password?token=${token}`;
 
@@ -242,7 +252,8 @@ export class MailService {
   }
 
   /**
-   * Send account verification email
+   * Gửi email xác thực tài khoản (Account Verification).
+   * - Chứa link verify account.
    */
   async sendAccountVerificationEmail(user: UserDocument, token: string): Promise<void> {
     const verificationLink = `${process.env.FRONTEND_URL || 'https://3dvn.org'}/verify-account?token=${token}`;

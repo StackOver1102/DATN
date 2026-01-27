@@ -25,6 +25,7 @@ import { VqrModule } from './vqr/vqr.module';
 import { ScheduleModule } from './schedule/schedule.module';
 import { InitmodalModule } from './initmodal/initmodal.module';
 import * as Joi from 'joi';
+import { VnpayModule } from './vnpay/vnpay.module';
 
 // Định nghĩa schema xác thực cho biến môi trường
 const validationSchema = Joi.object({
@@ -74,6 +75,7 @@ const validationSchema = Joi.object({
     VqrModule,
     ScheduleModule,
     InitmodalModule,
+    VnpayModule
   ],
   controllers: [],
   providers: [

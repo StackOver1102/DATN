@@ -39,9 +39,9 @@ const ModelGrid: React.FC<ModelGridProps> = ({ products = [] }) => {
         if (response.success && response.data) {
           // Add "All" category at the beginning
           const allCategories = [
-            { _id: "all", name: "All", icon: "🏠", isActive: true, parentId: null }
+            { _id: "all", name: "Tất cả", icon: "🏠", isActive: true, parentId: null }
           ];
-          
+
           // Ensure response.data is an array before spreading
           if (Array.isArray(response.data)) {
             setCategories([...allCategories, ...response.data]);
@@ -65,8 +65,8 @@ const ModelGrid: React.FC<ModelGridProps> = ({ products = [] }) => {
       setFilteredProducts(products);
     } else {
       // Filter products by category ID
-      const filtered = products.filter(product => 
-        product.categoryId === selectedCategory || 
+      const filtered = products.filter(product =>
+        product.categoryId === selectedCategory ||
         product.rootCategoryId === selectedCategory
       );
       setFilteredProducts(filtered);
@@ -79,8 +79,8 @@ const ModelGrid: React.FC<ModelGridProps> = ({ products = [] }) => {
   };
 
   // Use filtered products or all products if none are filtered
-  const displayProducts = filteredProducts.length > 0 || selectedCategory !== "all" 
-    ? filteredProducts 
+  const displayProducts = filteredProducts.length > 0 || selectedCategory !== "all"
+    ? filteredProducts
     : products;
 
   return (
@@ -89,7 +89,7 @@ const ModelGrid: React.FC<ModelGridProps> = ({ products = [] }) => {
       <div className="mb-8">
         <div className="bg-black text-white px-6 inline-flex items-center rounded-sm">
           <span className="text-yellow-400 mr-2">🔔</span>
-          <span className="font-medium text-yellow-400">New 3D Models</span>
+          <span className="font-medium text-yellow-400">Mô hình 3D mới</span>
         </div>
         <div className="w-full h-px bg-gray-300 "></div>
       </div>
@@ -129,8 +129,8 @@ const ModelGrid: React.FC<ModelGridProps> = ({ products = [] }) => {
             // Loading skeleton for categories
             <div className="flex gap-2">
               {[1, 2, 3, 4, 5].map((i) => (
-                <div 
-                  key={i} 
+                <div
+                  key={i}
                   className="h-10 w-24 bg-gray-200 rounded-full animate-pulse"
                 ></div>
               ))}
@@ -141,11 +141,10 @@ const ModelGrid: React.FC<ModelGridProps> = ({ products = [] }) => {
               <button
                 key={category._id}
                 onClick={() => handleCategorySelect(category._id)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
-                  selectedCategory === category._id
+                className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${selectedCategory === category._id
                     ? "bg-gray-800 text-white"
                     : "bg-gray-300 text-gray-700 hover:bg-gray-300"
-                }`}
+                  }`}
               >
                 <span>{category.icon || "📁"}</span>
                 <span>{category.name}</span>

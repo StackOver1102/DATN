@@ -64,10 +64,10 @@ export default function RefundRequestsList({
           <RefreshCcw className="w-12 h-12 mx-auto text-gray-400" />
         </div>
         <h3 className="text-lg font-medium text-gray-900">
-          No refund requests
+          Không có yêu cầu hoàn tiền nào
         </h3>
         <p className="text-gray-500 mt-2">
-          You haven&apos;t made any refund requests yet.
+          Bạn chưa thực hiện bất kỳ yêu cầu hoàn tiền nào.
         </p>
       </div>
     );
@@ -90,10 +90,9 @@ export default function RefundRequestsList({
             key={index}
             className={`bg-gray-50 rounded-lg p-4 flex items-center justify-between
               ${isUnread ? "border-l-4 border-yellow-400" : ""}
-              ${
-                hasNotification
-                  ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md"
-                  : ""
+              ${hasNotification
+                ? "cursor-pointer transform transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-md"
+                : ""
               }`}
             onClick={() => {
               if (matchingNotification && isUnread) {
@@ -104,23 +103,21 @@ export default function RefundRequestsList({
             <div className="flex items-center gap-4">
               <div
                 className={`w-12 h-12 rounded-lg flex items-center justify-center relative
-                ${
-                  refund.status === "pending"
+                ${refund.status === "pending"
                     ? "bg-yellow-100"
                     : refund.status === "approved"
-                    ? "bg-green-100"
-                    : "bg-red-100"
-                }`}
+                      ? "bg-green-100"
+                      : "bg-red-100"
+                  }`}
               >
                 <RefreshCcw
                   className={`w-6 h-6 
-                  ${
-                    refund.status === "pending"
+                  ${refund.status === "pending"
                       ? "text-yellow-600"
                       : refund.status === "approved"
-                      ? "text-green-600"
-                      : "text-red-600"
-                  }`}
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}
                 />
                 {isUnread && (
                   <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -131,11 +128,11 @@ export default function RefundRequestsList({
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                  Refund Request{" "}
-                  {refund.order && `for ${refund.order.productId.name}`}
+                  Yêu cầu hoàn tiền{" "}
+                  {refund.order && `cho ${refund.order.productId.name}`}
                   {isUnread && (
                     <span className="ml-2 px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
-                      New
+                      Mới
                     </span>
                   )}
                 </h3>
@@ -150,19 +147,18 @@ export default function RefundRequestsList({
                 <div className="flex items-center gap-2 mt-1">
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-medium 
-                      ${
-                        refund.status === "pending"
-                          ? "text-yellow-600 bg-yellow-100"
-                          : refund.status === "approved"
+                      ${refund.status === "pending"
+                        ? "text-yellow-600 bg-yellow-100"
+                        : refund.status === "approved"
                           ? "text-green-600 bg-green-100"
                           : "text-red-600 bg-red-100"
                       }`}
                   >
                     {refund.status === "pending"
-                      ? "Pending"
+                      ? "Đang xử lý"
                       : refund.status === "approved"
-                      ? "Approved"
-                      : "Rejected"}
+                        ? "Đã chấp nhận"
+                        : "Đã từ chối"}
                   </span>
                 </div>
               </div>

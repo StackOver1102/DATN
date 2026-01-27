@@ -25,12 +25,28 @@ export class UsersService implements OnModuleInit {
     @Inject(forwardRef(() => MailService)) private mailService: MailService,
     @Inject(forwardRef(() => TransactionsService))
     private transactionsService: TransactionsService,
-  ) {}
+  ) { }
 
+  /**
+   * Phương thức được gọi khi module khởi tạo.
+   * Dùng để kiểm tra và tạo tài khoản Admin mặc định nếu chưa tồn tại.
+   * 
+   * @returns {Promise<void>}
+   */
   async onModuleInit() {
     await this.createAdminIfNotExists();
   }
 
+  /**
+   * Tạo tài khoản Admin mặc định nếu trong hệ thống chưa có.
+   * Thông tin mặc định: email: admin@gmail.com / pass: admin123
+   * 
+   * @returns {Promise<void>}
+   * 
+   * @example
+   * // Được gọi tự động khi khởi động app
+   * await usersService.createAdminIfNotExists();
+   */
   async createAdminIfNotExists() {
     try {
       const adminExists = await this.userModel.findOne({
@@ -44,7 +60,7 @@ export class UsersService implements OnModuleInit {
           password: adminPassword,
           role: UserRole.ADMIN,
         });
-        
+
       } else {
         console.log('Admin user already exists');
       }
@@ -53,6 +69,32 @@ export class UsersService implements OnModuleInit {
     }
   }
 
+  /**
+   * Đăng ký người dùng mới tiêu chuẩn.
+   * - Kiểm tra email trùng lặp.
+   * - Mã hóa mật khẩu trước khi lưu.
+   * 
+   * @param {CreateUserDto} createUserDto - Thông tin người dùng mới.
+   * @param {string} createUserDto.email - Email đăng ký.
+   * @param {string} createUserDto.password - Mật khẩu (plain text, sẽ được hash).
+   * @param {string} [createUserDto.fullName] - Họ tên.
+   * @returns {Promise<UserDocument>} - User đã được tạo.
+   * @throws {BadRequestException} - Nếu email đã tồn tại.
+   * 
+   * @example
+   * // Đầu vào:
+   * const createUserDto = {
+   *   email: "user@example.com",
+   *   password: "mypassword123",
+   *   fullName: "Nguyen Van A"
+   * };
+   * 
+   * // Gọi hàm:
+   * const user = await usersService.create(createUserDto);
+   * 
+   * // Đầu ra:
+   * // { _id: "...", email: "user@example.com", fullName: "Nguyen Van A", balance: 0, ... }
+   */
   async create(createUserDto: CreateUserDto): Promise<UserDocument> {
     const { email, password } = createUserDto;
 
@@ -62,7 +104,7 @@ export class UsersService implements OnModuleInit {
       throw new BadRequestException('User already exists');
     }
 
-    // Hash the password before saving
+    // Hash the password before saving (Mã hóa mật khẩu)
     if (password) {
       const hashedPassword = await bcrypt.hash(password, 10);
       createUserDto.password = hashedPassword;
@@ -73,8 +115,25 @@ export class UsersService implements OnModuleInit {
   }
 
   /**
-   * Create a user from dashboard with optional password
-   * If password is not provided, a random one will be generated
+   * Tạo người dùng từ trang Dashboard quản trị.
+   * - Nếu không cung cấp mật khẩu, tự động sinh mật khẩu ngẫu nhiên.
+   * - Có tùy chọn gửi email thông báo tài khoản mới cho người dùng.
+   * 
+   * @param {CreateDashboardUserDto} createDashboardUserDto - Thông tin người dùng.
+   * @param {string} createDashboardUserDto.email - Email.
+   * @param {string} [createDashboardUserDto.password] - Mật khẩu (optional, sẽ tự generate nếu không có).
+   * @param {boolean} [createDashboardUserDto.sendWelcomeEmail=true] - Có gửi email không.
+   * @returns {Promise<{user: UserDocument, generatedPassword?: string}>} - User và password (nếu tự sinh).
+   * 
+   * @example
+   * // Đầu vào (không có password):
+   * const dto = { email: "newuser@example.com", sendWelcomeEmail: true };
+   * 
+   * // Gọi hàm:
+   * const result = await usersService.createFromDashboard(dto);
+   * 
+   * // Đầu ra:
+   * // { user: {...}, generatedPassword: "a1b2c3d4e5f6" }
    */
   async createFromDashboard(
     createDashboardUserDto: CreateDashboardUserDto,
@@ -90,27 +149,27 @@ export class UsersService implements OnModuleInit {
     let generatedPassword: string | undefined;
     const userData = { ...createDashboardUserDto };
 
-    // If no password provided, generate a random one
+    // Nếu không có password, tạo password ngẫu nhiên 8 ký tự
     if (!password) {
       generatedPassword = randomBytes(8).toString('hex');
       userData.password = await bcrypt.hash(generatedPassword, 10);
     } else {
-      // Hash the provided password
+      // Hash password được cung cấp
       userData.password = await bcrypt.hash(password, 10);
     }
 
-    // Remove sendWelcomeEmail field as it's not part of the User entity
+    // Xóa trường sendWelcomeEmail vì nó không thuộc User entity
     delete userData.sendWelcomeEmail;
 
     const user = await this.userModel.create(userData);
 
-    // Send email with credentials to the user if requested
+    // Gửi email chứa thông tin đăng nhập nếu được yêu cầu
     if (sendWelcomeEmail) {
       try {
         await this.mailService.sendNewUserCredentials(user, generatedPassword);
       } catch (error) {
         console.error(`Failed to send credentials email to ${email}:`, error);
-        // Don't fail the user creation if email sending fails
+        // Không throw lỗi để admin vẫn tạo được user dù gửi mail thất bại
       }
     }
 
@@ -120,21 +179,54 @@ export class UsersService implements OnModuleInit {
     };
   }
 
+  /**
+   * Tìm người dùng theo Email.
+   * 
+   * @param {string} email - Email cần tìm.
+   * @returns {Promise<UserDocument | null>} - User hoặc null.
+   * 
+   * @example
+   * const user = await usersService.findByEmail("user@example.com");
+   */
   async findByEmail(email: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ email });
   }
 
+  /**
+   * Tìm người dùng theo ID.
+   * 
+   * @param {string} id - MongoDB ObjectId.
+   * @returns {Promise<UserDocument | null>}
+   * 
+   * @example
+   * const user = await usersService.findById("507f1f77bcf86cd799439011");
+   */
   async findById(id: string) {
     return this.userModel.findById(id);
   }
 
+  /**
+   * Lấy danh sách tất cả người dùng (cơ bản).
+   * 
+   * @returns {Promise<UserDocument[]>}
+   * 
+   * @example
+   * const allUsers = await usersService.findAll();
+   */
   async findAll() {
     return this.userModel.find();
   }
 
   /**
-   * Lấy danh sách tất cả người dùng kèm theo số tiền đã tiêu
-   * @returns Danh sách người dùng và số tiền đã tiêu
+   * Lấy danh sách tất cả người dùng kèm theo tổng số tiền họ đã chi tiêu.
+   * - Loại bỏ trường password trong kết quả trả về.
+   * - Dùng TransactionsService để tính tổng tiền.
+   * 
+   * @returns {Promise<Array<UserDocument & {totalSpent: number}>>}
+   * 
+   * @example
+   * const users = await usersService.findAllWithSpentAmount();
+   * // => [{ email: "...", fullName: "...", totalSpent: 500000 }, ...]
    */
   async findAllWithSpentAmount() {
     const users = await this.userModel.find().select('-password');
@@ -153,6 +245,18 @@ export class UsersService implements OnModuleInit {
     return usersWithSpent;
   }
 
+  /**
+   * Lấy chi tiết một người dùng.
+   * 
+   * @param {string} id - ID người dùng.
+   * @param {boolean} [isSelectPassword=false] - Có trả về password không (default: false).
+   * @returns {Promise<UserDocument>}
+   * @throws {NotFoundException} - Nếu không tìm thấy.
+   * 
+   * @example
+   * const user = await usersService.findOne("userId");
+   * // => { _id: "...", email: "...", fullName: "...", balance: 100 }
+   */
   async findOne(id: string, isSelectPassword = false) {
     const user = await this.userModel.findOne(
       { _id: id },
@@ -165,9 +269,14 @@ export class UsersService implements OnModuleInit {
   }
 
   /**
-   * Lấy thông tin người dùng kèm theo số tiền đã tiêu
-   * @param id ID của người dùng
-   * @returns Thông tin người dùng và số tiền đã tiêu
+   * Lấy thông tin chi tiết người dùng kèm tổng số tiền đã tiêu.
+   * 
+   * @param {string} id - ID người dùng.
+   * @returns {Promise<UserDocument & {totalSpent: number}>}
+   * 
+   * @example
+   * const user = await usersService.getUserWithSpentAmount("userId");
+   * // => { email: "...", balance: 100, totalSpent: 500000 }
    */
   async getUserWithSpentAmount(id: string) {
     const user = await this.findOne(id);
@@ -179,8 +288,21 @@ export class UsersService implements OnModuleInit {
     };
   }
 
+  /**
+   * Cập nhật thông tin người dùng (cho user tự cập nhật).
+   * - Không cho phép cập nhật role hoặc số dư (balance) qua hàm này.
+   * 
+   * @param {string} id - ID người dùng.
+   * @param {UpdateUserDto} updateUserDto - Các trường cần cập nhật.
+   * @param {string} [updateUserDto.fullName] - Họ tên mới.
+   * @param {string} [updateUserDto.phone] - Số điện thoại mới.
+   * @returns {Promise<UserDocument>}
+   * 
+   * @example
+   * const updated = await usersService.update("userId", { fullName: "Nguyen Van B" });
+   */
   async update(id: string, updateUserDto: UpdateUserDto) {
-    // Make sure user can't update role or balance through this method
+    // Chỉ cập nhật các field được phép trong DTO
     const { ...updateData } = updateUserDto;
 
     const updatedUser = await this.userModel.findByIdAndUpdate(id, updateData, {
@@ -194,6 +316,17 @@ export class UsersService implements OnModuleInit {
     return updatedUser;
   }
 
+  /**
+   * Cập nhật thông tin người dùng (cho Admin).
+   * - Admin có thể cập nhật mọi thông tin bao gồm role, balance.
+   * 
+   * @param {string} id - ID người dùng.
+   * @param {any} adminUpdateUserDto - Các trường cần cập nhật (không giới hạn).
+   * @returns {Promise<UserDocument>}
+   * 
+   * @example
+   * const updated = await usersService.adminUpdate("userId", { role: "admin", balance: 1000 });
+   */
   async adminUpdate(id: string, adminUpdateUserDto: any) {
     const updatedUser = await this.userModel.findByIdAndUpdate(
       id,
@@ -208,6 +341,19 @@ export class UsersService implements OnModuleInit {
     return updatedUser;
   }
 
+  /**
+   * Cập nhật số dư tài khoản người dùng.
+   * - Thường được gọi sau khi nạp tiền hoặc mua hàng thành công.
+   * 
+   * @param {string} id - ID người dùng.
+   * @param {number} newBalance - Số dư mới (không được âm).
+   * @returns {Promise<UserDocument>}
+   * @throws {BadRequestException} - Nếu balance < 0.
+   * 
+   * @example
+   * // Cập nhật balance về 500k
+   * await usersService.updateBalance("userId", 500000);
+   */
   async updateBalance(id: string, newBalance: number) {
     if (newBalance < 0) {
       throw new BadRequestException('Balance cannot be negative');
@@ -226,6 +372,15 @@ export class UsersService implements OnModuleInit {
     return updatedUser;
   }
 
+  /**
+   * Xóa vĩnh viễn người dùng khỏi hệ thống.
+   * 
+   * @param {string} id - ID người dùng.
+   * @returns {Promise<UserDocument>} - User đã xóa.
+   * 
+   * @example
+   * const deleted = await usersService.remove("userId");
+   */
   async remove(id: string) {
     const deletedUser = await this.userModel.findByIdAndDelete(id);
     if (!deletedUser) {
@@ -234,6 +389,19 @@ export class UsersService implements OnModuleInit {
     return deletedUser;
   }
 
+  /**
+   * Đổi mật khẩu (Người dùng tự đổi).
+   * - Yêu cầu nhập đúng mật khẩu cũ.
+   * 
+   * @param {string} oldPassword - Mật khẩu cũ (plain text).
+   * @param {string} newPassword - Mật khẩu mới (plain text, sẽ được hash).
+   * @param {string} userId - ID người dùng.
+   * @returns {Promise<void>}
+   * @throws {BadRequestException} - Nếu mật khẩu cũ sai.
+   * 
+   * @example
+   * await usersService.changePassword("oldpass123", "newpass456", "userId");
+   */
   async changePassword(
     oldPassword: string,
     newPassword: string,
@@ -253,35 +421,58 @@ export class UsersService implements OnModuleInit {
   }
 
   /**
-   * Update user password without requiring old password
-   * Used for password reset functionality
+   * Cập nhật mật khẩu mới mà không cần mật khẩu cũ.
+   * - Dùng cho tính năng "Quên mật khẩu" (Reset Password).
+   * 
+   * @param {string} userId - ID người dùng.
+   * @param {string} newHashedPassword - Mật khẩu đã được mã hóa từ controller/auth service.
+   * @returns {Promise<{message: string}>}
+   * 
+   * @example
+   * const hashed = await bcrypt.hash("newpassword", 10);
+   * await usersService.updatePassword("userId", hashed);
    */
   async updatePassword(userId: string, newHashedPassword: string) {
     const user = await this.userModel.findById(userId);
     if (!user) {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
-    
+
     user.password = newHashedPassword;
     await user.save();
     return { message: 'Password updated successfully' };
   }
-  
+
   /**
-   * Update user verification status
-   * Used for email verification functionality
+   * Xác thực người dùng (đánh dấu email đã verify).
+   * 
+   * @param {string} userId - ID người dùng.
+   * @returns {Promise<{message: string}>}
+   * 
+   * @example
+   * await usersService.verifyUser("userId");
+   * // User.isVerified = true
    */
   async verifyUser(userId: string) {
     const user = await this.userModel.findById(userId);
     if (!user) {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
-    
+
     user.isVerified = true;
     await user.save();
     return { message: 'User verified successfully' };
   }
 
+  /**
+   * Tìm Admin theo email (Dùng đặc biệt cho đăng nhập trang Admin).
+   * 
+   * @param {string} email - Email của admin.
+   * @returns {Promise<UserDocument | null>}
+   * 
+   * @example
+   * const admin = await usersService.findByEmailAndRole("admin@example.com");
+   */
   async findByEmailAndRole(email: string) {
     return this.userModel.findOne({ email, role: UserRole.ADMIN });
   }

@@ -431,6 +431,75 @@ def search_product():
             except:
                 pass
 
+@app.route('/recommend', methods=['POST'])
+def recommend_product():
+    """
+    Gợi ý sản phẩm tương tự dựa trên product_id hoặc tên file ảnh đang có
+    """
+    start_time = time.time()
+    
+    data = request.get_json()
+    product_id = data.get('product_id')
+    filename = data.get('filename') 
+    top_k = int(data.get('top_k', 10))
+    
+    if not product_id and not filename:
+        return jsonify({"error": "Cần cung cấp product_id hoặc filename"}), 400
+
+    # 1. Tìm đường dẫn ảnh của sản phẩm mục tiêu
+    target_path = None
+    
+    # Cách đơn giản: Tìm trong product_metadata
+    for path, meta in product_metadata.items():
+        if (product_id and meta.get('product_id') == product_id) or \
+           (filename and os.path.basename(path) == filename):
+            target_path = path
+            break
+            
+    if not target_path or not os.path.exists(target_path):
+        return jsonify({"error": "Không tìm thấy sản phẩm trong cơ sở dữ liệu"}), 404
+
+    try:
+        # 2. Lấy vector của sản phẩm mục tiêu
+        vec = extract_feature_clip(target_path).astype("float32").reshape(1, -1)
+        
+        # 3. Search 
+        k = min(top_k + 1, index.ntotal)
+        D, I = index.search(vec, k=k)
+        
+        results = []
+        for i, score in zip(I[0], D[0]):
+            if i >= len(image_paths):
+                continue
+                
+            img_path = image_paths[i]
+            
+            # Bỏ qua chính sản phẩm đang query
+            if img_path == target_path:
+                continue
+                
+            metadata = product_metadata.get(img_path, {})
+            
+            results.append({
+                "path": img_path,
+                "score": float(score),
+                "metadata": metadata
+            })
+            
+            if len(results) >= top_k:
+                break
+        
+        elapsed = time.time() - start_time
+        return jsonify({
+            "source_product": product_metadata.get(target_path),
+            "recommendations": results,
+            "time": elapsed
+        })
+        
+    except Exception as e:
+        print(f"❌ Lỗi recommend: {e}")
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/search-by-text', methods=['POST'])
 def search_by_text():
     """
@@ -568,6 +637,304 @@ def reset_index():
     product_metadata = {}
     
     return jsonify({"message": "Đã reset toàn bộ hệ thống (CLIP ready)"})
+
+# ============================================================
+# 📊 EVALUATION METRICS - Thống kê đánh giá cho báo cáo
+# ============================================================
+
+# Global tracking variables
+search_stats = {
+    "total_searches": 0,
+    "total_latency_ms": 0,
+    "latencies": [],  # Keep last 100 latencies
+    "score_distribution": {"0.9+": 0, "0.8-0.9": 0, "0.7-0.8": 0, "0.6-0.7": 0, "<0.6": 0},
+    "results_count": [],  # Number of results per search
+}
+
+def update_search_stats(latency_ms, scores):
+    """Cập nhật thống kê search"""
+    global search_stats
+    search_stats["total_searches"] += 1
+    search_stats["total_latency_ms"] += latency_ms
+    search_stats["latencies"].append(latency_ms)
+    if len(search_stats["latencies"]) > 100:
+        search_stats["latencies"] = search_stats["latencies"][-100:]
+    
+    search_stats["results_count"].append(len(scores))
+    if len(search_stats["results_count"]) > 100:
+        search_stats["results_count"] = search_stats["results_count"][-100:]
+    
+    # Update score distribution
+    for score in scores:
+        if score >= 0.9:
+            search_stats["score_distribution"]["0.9+"] += 1
+        elif score >= 0.8:
+            search_stats["score_distribution"]["0.8-0.9"] += 1
+        elif score >= 0.7:
+            search_stats["score_distribution"]["0.7-0.8"] += 1
+        elif score >= 0.6:
+            search_stats["score_distribution"]["0.6-0.7"] += 1
+        else:
+            search_stats["score_distribution"]["<0.6"] += 1
+
+@app.route('/stats', methods=['GET'])
+def get_stats():
+    """
+    📊 API lấy thống kê hệ thống cho báo cáo
+    Metrics: latency, throughput, score distribution, index info
+    """
+    latencies = search_stats["latencies"]
+    results_counts = search_stats["results_count"]
+    
+    # Calculate latency statistics
+    if latencies:
+        avg_latency = np.mean(latencies)
+        p50_latency = np.percentile(latencies, 50)
+        p95_latency = np.percentile(latencies, 95)
+        p99_latency = np.percentile(latencies, 99)
+        min_latency = np.min(latencies)
+        max_latency = np.max(latencies)
+    else:
+        avg_latency = p50_latency = p95_latency = p99_latency = min_latency = max_latency = 0
+    
+    # Calculate average results per search
+    avg_results = np.mean(results_counts) if results_counts else 0
+    
+    # Memory usage
+    if torch.cuda.is_available():
+        gpu_memory = torch.cuda.memory_allocated() / 1024**2
+        gpu_memory_max = torch.cuda.max_memory_allocated() / 1024**2
+    else:
+        gpu_memory = gpu_memory_max = 0
+    
+    # Index statistics
+    index_type = "IndexIVFFlat" if isinstance(index, faiss.IndexIVFFlat) else "IndexFlatIP"
+    
+    return jsonify({
+        "model_info": {
+            "name": "CLIP ViT-B/32",
+            "feature_dimension": 512,
+            "input_resolution": "224x224",
+            "similarity_metric": "Cosine Similarity (Inner Product)",
+            "device": str(DEVICE),
+        },
+        "index_info": {
+            "type": index_type,
+            "total_vectors": index.ntotal,
+            "total_products": len(image_paths),
+            "dimension": 512,
+        },
+        "search_performance": {
+            "total_searches": search_stats["total_searches"],
+            "latency_ms": {
+                "average": round(avg_latency, 2),
+                "median_p50": round(p50_latency, 2),
+                "p95": round(p95_latency, 2),
+                "p99": round(p99_latency, 2),
+                "min": round(min_latency, 2),
+                "max": round(max_latency, 2),
+            },
+            "avg_results_per_search": round(avg_results, 2),
+            "throughput_qps": round(1000 / avg_latency, 2) if avg_latency > 0 else 0,
+        },
+        "score_distribution": search_stats["score_distribution"],
+        "memory_usage": {
+            "gpu_current_mb": round(gpu_memory, 2),
+            "gpu_peak_mb": round(gpu_memory_max, 2),
+            "cache_size": extract_feature_clip.cache_info().currsize if hasattr(extract_feature_clip, 'cache_info') else 0,
+        }
+    })
+
+@app.route('/benchmark', methods=['POST'])
+def run_benchmark():
+    """
+    🧪 Chạy benchmark đánh giá hiệu năng
+    Body JSON:
+    - num_queries: số query thử nghiệm (default: 10)
+    - top_k: số kết quả mỗi query (default: 10)
+    """
+    data = request.get_json() or {}
+    num_queries = int(data.get('num_queries', 10))
+    top_k = int(data.get('top_k', 10))
+    
+    if index.ntotal < 5:
+        return jsonify({"error": "Cần ít nhất 5 sản phẩm trong index để benchmark"}), 400
+    
+    # Random sample queries from existing products
+    sample_size = min(num_queries, len(image_paths))
+    sample_indices = np.random.choice(len(image_paths), sample_size, replace=False)
+    
+    latencies = []
+    all_scores = []
+    precision_at_k = []
+    recall_results = []
+    
+    for idx in sample_indices:
+        query_path = image_paths[idx]
+        query_metadata = product_metadata.get(query_path, {})
+        query_category = query_metadata.get('category', '')
+        
+        start_time = time.time()
+        
+        # Extract features and search
+        vec = extract_feature_clip(query_path).astype("float32").reshape(1, -1)
+        k = min(top_k + 1, index.ntotal)
+        D, I = index.search(vec, k=k)
+        
+        elapsed_ms = (time.time() - start_time) * 1000
+        latencies.append(elapsed_ms)
+        
+        # Collect scores (excluding self)
+        scores = []
+        same_category_count = 0
+        for i, score in zip(I[0], D[0]):
+            if i >= len(image_paths):
+                continue
+            if image_paths[i] == query_path:
+                continue
+            scores.append(float(score))
+            
+            # Check if same category (for Precision calculation)
+            result_meta = product_metadata.get(image_paths[i], {})
+            if result_meta.get('category', '') == query_category and query_category:
+                same_category_count += 1
+        
+        all_scores.extend(scores[:top_k])
+        
+        # Precision@K = relevant / retrieved
+        if query_category:
+            precision = same_category_count / min(top_k, len(scores)) if scores else 0
+            precision_at_k.append(precision)
+        
+        recall_results.append(len(scores))
+    
+    # Calculate statistics
+    avg_latency = np.mean(latencies)
+    p50_latency = np.percentile(latencies, 50)
+    p95_latency = np.percentile(latencies, 95)
+    
+    avg_score = np.mean(all_scores) if all_scores else 0
+    score_std = np.std(all_scores) if all_scores else 0
+    
+    avg_precision = np.mean(precision_at_k) if precision_at_k else None
+    
+    return jsonify({
+        "benchmark_config": {
+            "num_queries": sample_size,
+            "top_k": top_k,
+            "index_size": index.ntotal,
+        },
+        "latency_results": {
+            "average_ms": round(avg_latency, 2),
+            "median_p50_ms": round(p50_latency, 2),
+            "p95_ms": round(p95_latency, 2),
+            "min_ms": round(min(latencies), 2),
+            "max_ms": round(max(latencies), 2),
+            "throughput_qps": round(1000 / avg_latency, 2) if avg_latency > 0 else 0,
+        },
+        "similarity_results": {
+            "average_score": round(avg_score, 4),
+            "score_std": round(score_std, 4),
+            "score_min": round(min(all_scores), 4) if all_scores else 0,
+            "score_max": round(max(all_scores), 4) if all_scores else 0,
+        },
+        "retrieval_quality": {
+            "precision_at_k": round(avg_precision, 4) if avg_precision else "N/A (no category data)",
+            "avg_results_returned": round(np.mean(recall_results), 2),
+        },
+        "model_specs": {
+            "name": "CLIP ViT-B/32 (OpenAI)",
+            "embedding_dim": 512,
+            "similarity_metric": "Cosine Similarity",
+            "index_type": "FAISS IndexFlatIP" if isinstance(index, faiss.IndexFlatIP) else "FAISS IndexIVFFlat",
+        }
+    })
+
+@app.route('/evaluate-query', methods=['POST'])
+def evaluate_single_query():
+    """
+    🔍 Đánh giá chi tiết một query
+    Trả về: scores, latency breakdown, top matches
+    """
+    start_total = time.time()
+    
+    if 'image' not in request.files:
+        return jsonify({"error": "Thiếu file ảnh"}), 400
+    
+    file = request.files['image']
+    temp_path = f"temp_eval_{int(time.time() * 1000)}.jpg"
+    top_k = int(request.form.get('top_k', 10))
+    
+    try:
+        # Step 1: Save file
+        start_save = time.time()
+        file.save(temp_path)
+        save_time = (time.time() - start_save) * 1000
+        
+        # Step 2: Feature extraction
+        start_extract = time.time()
+        vec = extract_feature_clip(temp_path).astype("float32").reshape(1, -1)
+        extract_time = (time.time() - start_extract) * 1000
+        
+        # Step 3: FAISS search
+        start_search = time.time()
+        k = min(top_k * 3, index.ntotal)
+        D, I = index.search(vec, k=k)
+        search_time = (time.time() - start_search) * 1000
+        
+        # Step 4: Post-processing
+        start_post = time.time()
+        results = []
+        scores = []
+        for i, score in zip(I[0], D[0]):
+            if i >= len(image_paths) or len(results) >= top_k:
+                continue
+            scores.append(float(score))
+            metadata = product_metadata.get(image_paths[i], {})
+            results.append({
+                "rank": len(results) + 1,
+                "score": round(float(score), 4),
+                "path": image_paths[i],
+                "product_id": metadata.get('product_id', ''),
+                "category": metadata.get('category', ''),
+            })
+        post_time = (time.time() - start_post) * 1000
+        
+        total_time = (time.time() - start_total) * 1000
+        
+        # Update global stats
+        update_search_stats(total_time, scores)
+        
+        # Score analysis
+        score_analysis = {
+            "mean": round(np.mean(scores), 4) if scores else 0,
+            "std": round(np.std(scores), 4) if scores else 0,
+            "max": round(max(scores), 4) if scores else 0,
+            "min": round(min(scores), 4) if scores else 0,
+            "above_0.8": sum(1 for s in scores if s >= 0.8),
+            "above_0.7": sum(1 for s in scores if s >= 0.7),
+        }
+        
+        return jsonify({
+            "timing_breakdown_ms": {
+                "file_save": round(save_time, 2),
+                "feature_extraction": round(extract_time, 2),
+                "faiss_search": round(search_time, 2),
+                "post_processing": round(post_time, 2),
+                "total": round(total_time, 2),
+            },
+            "score_analysis": score_analysis,
+            "results_count": len(results),
+            "top_results": results,
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except:
+                pass
 
 if __name__ == '__main__':
     import threading

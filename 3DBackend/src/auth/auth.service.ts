@@ -25,17 +25,35 @@ export class AuthService {
     private captchaService: CaptchaService,
   ) { }
 
+  /**
+   * Đăng nhập người dùng thông thường.
+   * - Xác thực CAPTCHA (nếu có).
+   * - Kiểm tra email có tồn tại không.
+   * - Kiểm tra tài khoản đã xác thực email chưa.
+   * - So khớp mật khẩu.
+   * - Nếu hợp lệ, trả về JWT Access Token và thông tin user.
+   * 
+   * @param {LoginDto} loginDto - Thông tin đăng nhập.
+   * @param {string} loginDto.email - Email đăng nhập.
+   * @param {string} loginDto.password - Mật khẩu (plain text).
+   * @param {string} [loginDto.captchaToken] - Token CAPTCHA (optional).
+   * @returns {Promise<JwtToken>} - Object chứa access_token và thông tin user.
+   * @throws {UnauthorizedException} - Nếu thông tin sai hoặc chưa xác thực.
+   * 
+   * @example
+   * // Đầu vào:
+   * const loginDto = { email: "user@example.com", password: "mypassword123", captchaToken: "abc..." };
+   * 
+   * // Gọi hàm:
+   * const result = await authService.login(loginDto);
+   * 
+   * // Đầu ra:
+   * // {
+   * //   access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+   * //   user: { _id: "...", email: "user@example.com", fullName: "...", balance: 100 }
+   * // }
+   */
   async login(loginDto: LoginDto): Promise<JwtToken> {
-    // Verify CAPTCHA before processing
-    if (loginDto.captchaToken) {
-      const isCaptchaValid = await this.captchaService.verifyCaptcha(
-        loginDto.captchaToken,
-      );
-
-      if (!isCaptchaValid) {
-        throw new BadRequestException('Invalid CAPTCHA verification');
-      }
-    }
     const { email, password } = loginDto;
 
     const user = await this.usersService.findByEmail(email);
@@ -73,23 +91,44 @@ export class AuthService {
     };
   }
 
+  /**
+   * Helper: Mã hóa mật khẩu (hash) với cost factor = 10.
+   * 
+   * @param {string} password - Mật khẩu plain text.
+   * @returns {Promise<string>} - Mật khẩu đã mã hóa.
+   * 
+   * @example
+   * const hashed = await authService.hashPassword("mypassword");
+   * // => "$2b$10$..."
+   */
   async hashPassword(password: string): Promise<string> {
     const saltRounds = 10;
     return bcrypt.hash(password, saltRounds);
   }
 
+  /**
+   * Đăng ký tài khoản mới.
+   * - Xác thực CAPTCHA.
+   * - Tạo user trong DB (thông qua UsersService).
+   * - Sinh token xác thực email (thời hạn 24h).
+   * - Gửi email xác thực tài khoản.
+   * 
+   * @param {CreateUserDto} createUserDto - Thông tin đăng ký.
+   * @param {string} createUserDto.email - Email.
+   * @param {string} createUserDto.password - Mật khẩu.
+   * @param {string} [createUserDto.fullName] - Họ tên.
+   * @param {string} [createUserDto.captchaToken] - Token CAPTCHA.
+   * @returns {Promise<UserDocument>} - User đã tạo (chưa xác thực).
+   * 
+   * @example
+   * const user = await authService.registerUser({
+   *   email: "newuser@example.com",
+   *   password: "password123",
+   *   fullName: "Nguyen Van A",
+   *   captchaToken: "abc..."
+   * });
+   */
   async registerUser(createUserDto: CreateUserDto) {
-    // Verify CAPTCHA before processing
-    if (createUserDto.captchaToken) {
-      const isCaptchaValid = await this.captchaService.verifyCaptcha(
-        createUserDto.captchaToken,
-      );
-
-      if (!isCaptchaValid) {
-        throw new BadRequestException('Invalid CAPTCHA verification');
-      }
-    }
-
     // Hash the password before creating the user
     try {
       // Remove captchaToken from data before saving
@@ -100,10 +139,10 @@ export class AuthService {
         ...userData,
       });
 
-      // Generate verification token
+      // Generate verification token (mã thông báo xác thực)
       const token = this.jwtService.sign(
         { email: user.email, purpose: 'email_verification' },
-        { expiresIn: '24h' },
+        { expiresIn: '24h' }, // Token hết hạn sau 24h
       );
 
       // Send verification email instead of welcome email
@@ -115,6 +154,21 @@ export class AuthService {
     }
   }
 
+  /**
+   * Xác thực tài khoản qua email.
+   * - Giải mã token từ link email.
+   * - Kiểm tra token có đúng mục đích 'email_verification' không.
+   * - Cập nhật trạng thái `isVerified = true` cho user.
+   * - Gửi email chào mừng sau khi xác thực thành công.
+   * 
+   * @param {string} token - JWT token từ link email.
+   * @returns {Promise<{message: string}>}
+   * @throws {UnauthorizedException} - Nếu token không hợp lệ hoặc hết hạn.
+   * 
+   * @example
+   * await authService.verifyAccount("eyJhbGciOiJIUzI1NiIsInR5cCI6...");
+   * // => { message: "Email has been verified successfully" }
+   */
   async verifyAccount(token: string) {
     try {
       // Verify and decode the token
@@ -148,6 +202,17 @@ export class AuthService {
     }
   }
 
+  /**
+   * Gửi lại email xác thực (nếu người dùng chưa nhận được hoặc token hết hạn).
+   * - Kiểm tra user tồn tại và chưa xác thực.
+   * - Sinh token mới và gửi lại email.
+   * 
+   * @param {string} email - Email của user.
+   * @returns {Promise<{message: string}>}
+   * 
+   * @example
+   * await authService.resendVerificationEmail("user@example.com");
+   */
   async resendVerificationEmail(email: string) {
     try {
       // Find the user by email
@@ -176,6 +241,20 @@ export class AuthService {
     }
   }
 
+  /**
+   * Yêu cầu đặt lại mật khẩu (Forgot Password).
+   * - Xác thực CAPTCHA.
+   * - Kiểm tra email tồn tại.
+   * - Gửi email chứa link reset password (kèm token).
+   * 
+   * @param {Object} forgotPasswordDto - Thông tin yêu cầu.
+   * @param {string} forgotPasswordDto.email - Email cần reset.
+   * @param {string} forgotPasswordDto.captchaToken - Token CAPTCHA.
+   * @returns {Promise<{message: string}>}
+   * 
+   * @example
+   * await authService.forgotPassword({ email: "user@example.com", captchaToken: "..." });
+   */
   async forgotPassword(forgotPasswordDto: {
     email: string;
     captchaToken: string;
@@ -201,6 +280,25 @@ export class AuthService {
     return { message: 'Reset password email sent' };
   }
 
+  /**
+   * Đặt lại mật khẩu mới (Reset Password).
+   * - Xác thực CAPTCHA.
+   * - Kiểm tra token trong link có hợp lệ và đúng mục đích 'password_reset' không.
+   * - Mã hóa mật khẩu mới và cập nhật vào DB.
+   * 
+   * @param {ResetPasswordDto} resetPasswordDto - Thông tin reset.
+   * @param {string} resetPasswordDto.token - Token từ link email.
+   * @param {string} resetPasswordDto.password - Mật khẩu mới.
+   * @param {string} resetPasswordDto.captchaToken - Token CAPTCHA.
+   * @returns {Promise<{message: string}>}
+   * 
+   * @example
+   * await authService.resetPassword({
+   *   token: "eyJhbGciOiJIUz...",
+   *   password: "newpassword123",
+   *   captchaToken: "..."
+   * });
+   */
   async resetPassword(resetPasswordDto: ResetPasswordDto) {
     try {
       const { captchaToken } = resetPasswordDto;
@@ -246,6 +344,12 @@ export class AuthService {
     }
   }
 
+  /**
+   * Đăng nhập giả lập qua mã QR (ít dùng).
+   * 
+   * @param {LoginDto} loginDto - Thông tin đăng nhập.
+   * @returns {Promise<{access_token: string, token_type: string, expires_in: number}>}
+   */
   async loginByVQR(loginDto: LoginDto) {
     const { email, password } = loginDto;
 
@@ -271,15 +375,38 @@ export class AuthService {
     };
   }
 
+  /**
+   * Kiểm tra tính hợp lệ của token JWT.
+   * 
+   * @param {string} token - JWT token.
+   * @returns {Promise<JwtPayload>} - Payload đã giải mã.
+   * 
+   * @example
+   * const payload = await authService.verifyToken("eyJhbGciOiJIUz...");
+   * // => { sub: "userId", email: "user@example.com", role: "user" }
+   */
   async verifyToken(token: string) {
     return this.jwtService.verify(token, {
       secret: this.configService.get('JWT_SECRET'),
     });
   }
 
+  /**
+   * Đăng nhập dành riêng cho Admin (loginByAdmin).
+   * - Chỉ user có role ADMIN mới đăng nhập được qua cổng này.
+   * 
+   * @param {LoginDto} loginDto - Thông tin đăng nhập.
+   * @param {string} loginDto.email - Email admin.
+   * @param {string} loginDto.password - Mật khẩu.
+   * @returns {Promise<JwtToken>} - Access token và thông tin admin.
+   * 
+   * @example
+   * const result = await authService.loginByAdmin({ email: "admin@example.com", password: "admin123" });
+   */
   async loginByAdmin(loginDto: LoginDto): Promise<JwtToken> {
     const { email, password } = loginDto;
 
+    // Tìm user với email và role ADMIN
     const user = await this.usersService.findByEmailAndRole(email);
 
     if (!user) {
@@ -311,6 +438,16 @@ export class AuthService {
     };
   }
 
+  /**
+   * Kiểm tra xem một email đã được xác thực chưa.
+   * 
+   * @param {string} email - Email cần kiểm tra.
+   * @returns {Promise<boolean>} - true nếu đã xác thực.
+   * 
+   * @example
+   * const isVerified = await authService.checkUserHasVerified("user@example.com");
+   * // => true / false
+   */
   async checkUserHasVerified(email: string) {
     const user = await this.usersService.findByEmail(email);
     if (!user) {

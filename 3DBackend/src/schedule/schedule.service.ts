@@ -39,7 +39,8 @@ export class ScheduleService {
   }
 
   /**
-   * Load tasks from database and register them with the scheduler
+   * Load các task từ Database và đăng ký với Scheduler (nếu có dynamic task).
+   * - Được gọi khi khởi động service.
    */
   private async loadTasksFromDatabase() {
     try {
@@ -78,6 +79,12 @@ export class ScheduleService {
     }
   }
 
+  /**
+   * Khởi tạo các task mặc định trong code (Hardcoded tasks).
+   * - Daily Task: Chạy mỗi ngày lúc nửa đêm.
+   * - Hourly Task: Chạy mỗi giờ.
+   * - Interval Task: Chạy mỗi 5 phút.
+   */
   private initializeTasksMap() {
     // Define all scheduled tasks with metadata
     this.tasks.set('dailyTask', {
@@ -127,14 +134,8 @@ export class ScheduleService {
   }
 
   /**
-   * This cronjob runs every day at midnight
-   * Format: * * * * * *
-   * second (0-59)
-   * minute (0-59)
-   * hour (0-23)
-   * day of month (1-31)
-   * month (1-12)
-   * day of week (0-6) (Sunday to Saturday)
+   * Cron Job: Chạy hàng ngày lúc 00:00.
+   * - Logic xử lý công việc hàng ngày (dọn dẹp, báo cáo...).
    */
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   handleDailyTask() {
@@ -151,7 +152,7 @@ export class ScheduleService {
   }
 
   /**
-   * This cronjob runs every hour
+   * Cron Job: Chạy mỗi giờ.
    */
   @Cron(CronExpression.EVERY_HOUR)
   handleHourlyTask() {
@@ -168,7 +169,10 @@ export class ScheduleService {
   }
 
   /**
-   * This cronjob runs every 3 hours
+   * Cron Job: Dọn dẹp quyền truy cập file hết hạn.
+   * - Chạy mỗi 10 phút.
+   * - Kiểm tra các đơn hàng có tempPermissionId và đã hết hạn.
+   * - Gọi DriveService để xóa quyền truy cập.
    */
   @Cron('0 */10 * * * *') // Run every 10 minutes
   async handleCleanupExpiredPermissions() {
@@ -224,56 +228,24 @@ export class ScheduleService {
     }
   }
 
-  // /**
-  //  * This method runs once after the application starts with a 10 second delay
-  //  */
-  // @Timeout(10000)
-  // handleOnceAfterAppStart() {
-  //   this.logger.debug('Task executed once after application start (10s delay)');
-  //   // Update task metadata
-  //   const task = this.tasks.get('startupTask');
-  //   if (task) {
-  //     task.lastRun = new Date();
-  //     task.status = 'inactive'; // One-time task is now inactive
-  //   }
-
-  //   // Add your startup task logic here
-  //   // For example: initialize caches, check system status, etc.
-  // }
-
-  // /**
-  //  * This method runs every 5 minutes (300000ms)
-  //  */
-  // @Interval(300000)
-  // handleIntervalTask() {
-  //   this.logger.debug('Task executed every 5 minutes');
-  //   // Update task metadata
-  //   const task = this.tasks.get('intervalTask');
-  //   if (task) {
-  //     task.lastRun = new Date();
-  //     task.nextRun = new Date(Date.now() + 300000);
-  //   }
-
-  //   // Add your interval task logic here
-  //   // For example: check for stale data, cleanup temporary files, etc.
-  // }
-
   /**
-   * Get all scheduled tasks with their metadata
+   * Lấy tất cả các task đang được quản lý (In-memory).
    */
   getAllTasks(): ScheduledTask[] {
     return Array.from(this.tasks.values());
   }
 
   /**
-   * Get a specific task by name
+   * Lấy thông tin task theo tên.
    */
   getTaskByName(name: string): ScheduledTask | undefined {
     return this.tasks.get(name);
   }
 
   /**
-   * Update task status (enable/disable)
+   * Cập nhật trạng thái Task (Active/Inactive).
+   * - Nếu là dynamic task (cron), start/stop job tương ứng.
+   * - Cập nhật database.
    */
   async updateTaskStatus(
     name: string,
@@ -310,10 +282,10 @@ export class ScheduleService {
   }
 
   /**
-   * Create a new custom task
-   * @param createTaskDto The task data
-   * @param saveToDb Whether to save the task to the database (default: true)
-   * @returns The created task
+   * Tạo task mới (Dynamic Task).
+   * - Hỗ trợ Cron, Interval, Timeout.
+   * - Đăng ký task với SchedulerRegistry của NestJS.
+   * - Lưu vào database nếu cần (saveToDb = true).
    */
   async createTask(
     createTaskDto: CreateTaskDto,
@@ -475,7 +447,7 @@ export class ScheduleService {
   }
 
   /**
-   * Save a task to the database
+   * Lưu task vào Database (Persistence).
    */
   private async saveTaskToDatabase(task: ScheduledTask): Promise<void> {
     try {
@@ -507,7 +479,7 @@ export class ScheduleService {
   }
 
   /**
-   * Update a task in the database
+   * Cập nhật thông tin Task trong Database.
    */
   async updateTaskInDatabase(name: string): Promise<void> {
     try {
@@ -541,7 +513,7 @@ export class ScheduleService {
   }
 
   /**
-   * Delete a task
+   * Xóa Task (KHỏi memory và Database).
    */
   async deleteTask(name: string): Promise<boolean> {
     const task = this.tasks.get(name);
@@ -578,7 +550,7 @@ export class ScheduleService {
   }
 
   /**
-   * Get all tasks from database
+   * Lấy danh sách task từ Database.
    */
   async getAllTasksFromDb(): Promise<ScheduleDto[]> {
     try {
@@ -607,42 +579,7 @@ export class ScheduleService {
   }
 
   /**
-   * Get a task from database by name
-   */
-  // async getTaskFromDb(name: string): Promise<ScheduleDto> {
-  //   try {
-  //     const task = await this.scheduleModel.findOne({ name }).exec();
-  //     if (!task) {
-  //       throw new NotFoundException(`Task ${name} not found in database`);
-  //     }
-
-  //     return {
-  //       _id: task._id.toString(),
-  //       name: task.name,
-  //       description: task.description,
-  //       type: task.type,
-  //       cronExpression: task.cronExpression,
-  //       interval: task.interval,
-  //       timeout: task.timeout,
-  //       handler: task.handler,
-  //       lastRun: task.lastRun,
-  //       nextRun: task.nextRun,
-  //       status: task.status,
-  //       createdAt: task.createdAt,
-  //       updatedAt: task.updatedAt,
-  //     };
-  //   } catch (error) {
-  //     if (error instanceof NotFoundException) {
-  //       throw error;
-  //     }
-  //     this.logger.error(`Failed to get task ${name} from database: ${error.message}`);
-  //     throw new BadRequestException(`Failed to get task from database: ${error.message}`);
-  //   }
-  // }
-
-  /**
-   * Execute a handler function by name
-   * This is a simple implementation that supports a few predefined handlers
+   * Thực thi Handler của Task (Dynamic Dispatch).
    */
   private async executeHandler(
     taskName: string,
@@ -683,15 +620,6 @@ export class ScheduleService {
       case 'handleHourlyTask':
         this.handleHourlyTask();
         break;
-      // case 'handleEvery3HoursTask':
-      //   this.handleEvery3HoursTask();
-      //   break;
-      // case 'handleIntervalTask':
-      //   this.handleIntervalTask();
-      //   break;
-      // case 'handleOnceAfterAppStart':
-      //   this.handleOnceAfterAppStart();
-      //   break;
       case 'handleCustomTask':
         this.handleCustomTask(taskName);
         break;
@@ -701,7 +629,7 @@ export class ScheduleService {
   }
 
   /**
-   * Example custom task handler
+   * Handler mẫu cho custom task.
    */
   private handleCustomTask(taskName: string): void {
     this.logger.debug(`Custom task ${taskName} executed`);
@@ -709,7 +637,7 @@ export class ScheduleService {
   }
 
   /**
-   * Helper methods to calculate next run times
+   * Helper: Tính toán thời gian chạy tiếp theo (Midnight).
    */
   private calculateNextMidnight(): Date {
     const now = new Date();
@@ -718,6 +646,9 @@ export class ScheduleService {
     return nextMidnight;
   }
 
+  /**
+   * Helper: Tính toán thời gian chạy tiếp theo (Next Hour).
+   */
   private calculateNextHour(): Date {
     const now = new Date();
     const nextHour = new Date(now);
@@ -725,6 +656,9 @@ export class ScheduleService {
     return nextHour;
   }
 
+  /**
+   * Helper: Tính toán thời gian chạy cho task 3 giờ/lần.
+   */
   private calculateNext3Hours(): Date {
     const now = new Date();
     const hours = now.getHours();

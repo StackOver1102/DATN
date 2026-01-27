@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
-import {  useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -57,11 +57,11 @@ function CheckEmailContent() {
       // Reset countdown
       setCountdown(60);
       // Show success message using browser alert (could be replaced with a toast)
-      alert("Verification email has been resent. Please check your inbox.");
+      alert("Email xác thực đã được gửi lại. Vui lòng kiểm tra hộp thư đến của bạn.");
     } catch (error) {
       // Handle error
       console.error("Failed to resend verification email:", error);
-      alert("Failed to resend verification email. Please try again later.");
+      alert("Gửi lại email xác thực thất bại. Vui lòng thử lại sau.");
     } finally {
       setIsResending(false);
     }
@@ -74,28 +74,26 @@ function CheckEmailContent() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50">
             <Mail className="h-8 w-8 text-blue-500" />
           </div>
-          <CardTitle className="text-2xl font-bold">Check Your Email</CardTitle>
+          <CardTitle className="text-2xl font-bold">Kiểm tra Email của bạn</CardTitle>
           <CardDescription>
-            We&apos;ve sent a verification link to{" "}
+            Chúng tôi đã gửi một liên kết xác thực đến{" "}
             <span className="font-medium text-black">{email}</span>
           </CardDescription>
         </CardHeader>
 
         <CardContent className="text-center space-y-4">
           <p className="text-gray-600">
-            Please check your email and click on the verification link to
-            activate your account.
+            Vui lòng kiểm tra email của bạn và nhấp vào liên kết xác thực để kích hoạt tài khoản.
           </p>
           <p className="text-gray-600">
-            If you don&apos;t see the email in your inbox, please check your spam folder.
-            folder.
+            Nếu bạn không thấy email trong hộp thư đến, vui lòng kiểm tra thư mục spam.
           </p>
 
           <div className="mt-8 p-4 bg-blue-50 rounded-lg">
             <div className="flex items-center justify-center">
               <Inbox className="h-5 w-5 text-blue-500 mr-2" />
               <p className="text-sm text-blue-700">
-                The verification link will expire in 24 hours.
+                Liên kết xác thực sẽ hết hạn trong 24 giờ.
               </p>
             </div>
           </div>
@@ -111,19 +109,19 @@ function CheckEmailContent() {
             {isResending ? (
               <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
             ) : countdown > 0 ? (
-              <>Resend email ({countdown}s)</>
+              <>Gửi lại email ({countdown}s)</>
             ) : (
-              <>Resend verification email</>
+              <>Gửi lại email xác thực</>
             )}
           </Button>
 
           <div className="flex justify-between w-full">
             <Button asChild variant="ghost" size="sm">
-              <Link href="/signin">Back to login</Link>
+              <Link href="/signin">Quay lại đăng nhập</Link>
             </Button>
 
             <Button asChild variant="ghost" size="sm">
-              <Link href="/">Go to homepage</Link>
+              <Link href="/">Về trang chủ</Link>
             </Button>
           </div>
         </CardFooter>

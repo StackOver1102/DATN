@@ -20,6 +20,10 @@ export class VqrService {
     private readonly transactionService: TransactionsService,
     private readonly configService: ConfigService,
   ) { }
+
+  /**
+   * Tạo tài khoản/đăng nhập thông qua VQR (ít dùng).
+   */
   async create(createVqrDto: CreateVqrDto) {
     const { username, password } = createVqrDto;
     const user = await this.authService.loginByVQR({
@@ -32,6 +36,11 @@ export class VqrService {
     return user;
   }
 
+  /**
+   * Đồng bộ giao dịch từ VQR (Webhook Handler).
+   * - Được gọi khi VQR báo về server là đã nhận được tiền.
+   * - Tìm đơn hàng/transaction tương ứng và cập nhật, cộng tiền cho Merchant.
+   */
   async transactionSync(body: TransactionSyncBody) {
     const { amount, orderId } = body;
     const transaction = await this.transactionService.findByOrderIdAndUpdate(
@@ -49,6 +58,10 @@ export class VqrService {
     };
   }
 
+  /**
+   * Lấy Token xác thực từ VQR Service.
+   * - Dùng Basic Auth với Username/Password trong config.
+   */
   async getToken() {
     //  basic auth
     const auth = Buffer.from(
@@ -68,6 +81,12 @@ export class VqrService {
     return data.access_token;
   }
 
+  /**
+   * Tạo mã QR thanh toán (VietQR).
+   * - Tạo giao dịch DEPOSIT (nạp tiền) status PENDING.
+   * - Gọi API VQR để sinh ảnh QR Code chứa thông tin chuyển khoản.
+   * - Trả về link ảnh QR và Transaction ID để frontend hiển thị.
+   */
   async generateQRCode(createVQRCodeDto: CreateVQRCodeDto, userId: string) {
     const amount = createVQRCodeDto.amount * 1000;
     const transactionCode =
@@ -101,13 +120,13 @@ export class VqrService {
           amount: amount,
           orderId: transaction._id,
           // content: '3dmodels',
-          bankAccount: '09838383856789',
-          bankCode: 'MB',
-          userBankName: 'TRUONG NGOC TOAN',
+          bankAccount: '09838383856789', // Số tài khoản mặc định (Fix cứng hoặc lấy từ config)
+          bankCode: 'MB',                 // Mã ngân hàng MB
+          userBankName: 'TRUONG NGOC TOAN', // Tên chủ tài khoản
           transType: 'C',
           qrType: '0',
           terminalCode: '9edRdt4RuB',
-          urlLink: `${this.configService.get('FRONTEND_URL')}/deposit/success?origin=vqr`,
+          urlLink: `${this.configService.get('FRONTEND_URL')}/deposit/success?origin=vqr`, // Link redirect sau khi thanh toán
         }),
       },
     );

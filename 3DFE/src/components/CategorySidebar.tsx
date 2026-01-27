@@ -20,23 +20,23 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
     categories.length > 0
       ? categories
       : [
-          // Default categories data...
-          {
-            title: "Architecture",
-            items: [
-              { name: "Barbecue and grill" },
-              { name: "Building" },
-              { name: "Environment elements" },
-              { name: "Facade element" },
-              { name: "Fence" },
-              { name: "Other" },
-              { name: "Paving" },
-              { name: "Playground" },
-              { name: "Urban environment" },
-            ],
-          },
-          // ... other default categories
-        ];
+        // Default categories data...
+        {
+          title: "Architecture",
+          items: [
+            { name: "Barbecue and grill" },
+            { name: "Building" },
+            { name: "Environment elements" },
+            { name: "Facade element" },
+            { name: "Fence" },
+            { name: "Other" },
+            { name: "Paving" },
+            { name: "Playground" },
+            { name: "Urban environment" },
+          ],
+        },
+        // ... other default categories
+      ];
 
   // Safely sort categories with proper error handling
   const sortedCategories = categoriesData.map((category) => {
@@ -87,7 +87,7 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
       {/* Header */}
       <div className="mb-8">
         <div className="bg-black text-white px-4 inline-flex items-center rounded-sm">
-          <span className="font-medium text-yellow-400">All Models</span>
+          <span className="font-medium text-yellow-400">Tất cả mô hình</span>
         </div>
         <div className="w-full h-px bg-gray-300 "></div>
       </div>
@@ -103,11 +103,10 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
               {/* Section Title */}
               <button
                 onClick={() => handleCategoryClick(section.title)}
-                className={`font-bold text-base text-left w-full hover:text-blue-600 transition-colors ${
-                  selectedCategory === section.title
+                className={`font-bold text-base text-left w-full hover:text-blue-600 transition-colors ${selectedCategory === section.title
                     ? "text-blue-600"
                     : "text-gray-900"
-                }`}
+                  }`}
               >
                 {section.title}
               </button>
@@ -121,11 +120,10 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
                       onClick={() =>
                         handleCategoryClick(section.title, item.name)
                       }
-                      className={`block text-sm text-left w-full hover:text-blue-600 transition-colors ${
-                        selectedCategory === item.name
+                      className={`block text-sm text-left w-full hover:text-blue-600 transition-colors ${selectedCategory === item.name
                           ? "text-blue-600"
                           : "text-gray-800"
-                      }`}
+                        }`}
                     >
                       {item.name}
                     </button>

@@ -32,12 +32,12 @@ const TermsOfUsePage = async () => {
   return (
     <Container className="py-10">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Terms of Use</h1>
+        <h1 className="text-3xl font-bold mb-6">Điều khoản sử dụng</h1>
 
         {content ? (
           <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: content }} />
         ) : (
-          <p>Terms of Use content is not available at this time.</p>
+          <p>Nội dung Điều khoản sử dụng chưa có sẵn vào lúc này.</p>
         )}
       </div>
     </Container>

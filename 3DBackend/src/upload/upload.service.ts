@@ -26,6 +26,11 @@ export class UploadService {
   private bucketName: string;
   private publicUrl: string;
 
+  /**
+   * Khởi tạo service Upload (sử dụng Cloudflare R2 - tương thích S3 API).
+   * - Cấu hình R2 credential từ biến môi trường.
+   * - Tạo S3 Client để giao tiếp với R2.
+   */
   constructor(private configService: ConfigService) {
     // Get config from .env
     const accessKeyId =
@@ -55,12 +60,12 @@ export class UploadService {
   }
 
   /**
-   * Upload a file from buffer to R2
-   * @param buffer File buffer
-   * @param originalname Original filename
-   * @param mimetype File mimetype
-   * @param folder Optional folder path
-   * @returns Upload result with key and URL
+   * Upload file từ buffer lên R2 (Thường dùng khi tải ảnh từ Drive về rồi upload lên R2).
+   * @param buffer Buffer chứa dữ liệu file.
+   * @param originalname Tên file gốc.
+   * @param mimetype Loại MIME của file.
+   * @param folder Thư mục đích trên R2 (tùy chọn).
+   * @returns Kết quả upload bao gồm key, url, size...
    */
   async uploadFile(
     buffer: Buffer,
@@ -69,6 +74,7 @@ export class UploadService {
     folder?: string,
   ): Promise<UploadResult> {
     const fileExt = path.extname(originalname);
+    // Tao unique filename
     const fileName = `${Date.now()}-${uuidv4()}${fileExt}`;
     const key = folder ? `${folder}/${fileName}` : fileName;
 
@@ -77,7 +83,7 @@ export class UploadService {
       Key: key,
       Body: buffer,
       ContentType: mimetype,
-      ACL: 'public-read' as ObjectCannedACL,
+      ACL: 'public-read' as ObjectCannedACL, // Set quyền public
     };
 
     await this.s3Client.send(new PutObjectCommand(params));
@@ -91,7 +97,9 @@ export class UploadService {
   }
 
   /**
-   * Get the R2 storage configuration for multer
+   * Cấu hình Storage engine cho Multer (Upload trực tiếp từ Form data).
+   * - Tự động tạo unique filename.
+   * - Tự động set Content type.
    */
   getR2Storage() {
     return multerS3({
@@ -116,7 +124,8 @@ export class UploadService {
   }
 
   /**
-   * Get the FileInterceptor configured for Cloudflare R2
+   * Helper tạo FileInterceptor cho NestJS Controller.
+   * - Tích hợp sẵn storage config, giới hạn file size (10MB) và filter ảnh.
    */
   getR2FileInterceptor(fieldName: string) {
     const storage = multerS3({
@@ -147,16 +156,16 @@ export class UploadService {
   }
 
   /**
-   * Get public URL for file
+   * Helper lấy Full URL từ tên file (Key).
    */
   getFileUrl(fileName: string): string {
     return `${this.publicUrl}/${fileName}`;
   }
 
   /**
-   * Xóa file từ Cloudflare R2 bucket
-   * @param key Key của file (thường là filename)
-   * @returns true nếu xóa thành công, false nếu có lỗi
+   * Xóa file từ Cloudflare R2 bucket.
+   * @param key Key của file (thường là filename).
+   * @returns true nếu xóa thành công, false nếu có lỗi.
    */
   async deleteFile(key: string): Promise<boolean> {
     try {
@@ -189,9 +198,7 @@ export class UploadService {
   }
 
   /**
-   * Lấy key của file từ URL
-   * @param url URL đầy đủ của file (có thể là Cloudflare Workers URL hoặc R2 URL)
-   * @returns Key của file hoặc null nếu không tìm thấy
+   * Helper trích xuất Key file từ Full URL.
    */
   getKeyFromUrl(url: string): string | null {
     try {
@@ -211,23 +218,27 @@ export class UploadService {
     }
   }
 
+  /**
+   * Upload file từ đường dẫn Local lên R2.
+   * - Sau khi upload thành công sẽ tự động xóa file local để dọn dẹp.
+   */
   async uploadLocalToR2(localPath: string) {
     try {
       // Read the file
       const buffer = fs.readFileSync(localPath);
       const generateKey = `${Date.now()}-${uuidv4()}`;
-      
-      // Upload to R2
+
+      // Upload to R2 (vào folder products)
       const result = await this.uploadFile(buffer, generateKey, 'image/jpeg', 'products');
-      
-      // Delete the local file after successful upload
+
+      // Delete the local file after successful upload (Dọn dẹp)
       try {
         fs.unlinkSync(localPath);
         console.log(`Successfully deleted local file: ${localPath}`);
       } catch (deleteError) {
         console.error(`Error deleting local file: ${localPath}`, deleteError);
       }
-      
+
       return result;
     } catch (error) {
       console.error(`Error uploading file ${localPath} to R2:`, error);

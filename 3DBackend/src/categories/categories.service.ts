@@ -9,8 +9,26 @@ import { Category, CategoryDocument } from './entities/category.entity';
 export class CategoriesService {
   constructor(
     @InjectModel(Category.name) private categoryModel: Model<CategoryDocument>,
-  ) {}
+  ) { }
 
+  /**
+   * Tạo danh mục mới.
+   * - Nếu có parentId, kiểm tra danh mục cha có tồn tại không.
+   * 
+   * @param {CreateCategoryDto} createCategoryDto - Thông tin danh mục.
+   * @param {string} createCategoryDto.name - Tên danh mục.
+   * @param {string} [createCategoryDto.parentId] - ID danh mục cha (optional, null = root).
+   * @param {string} [createCategoryDto.description] - Mô tả.
+   * @param {string} [createCategoryDto.image] - URL ảnh đại diện.
+   * @returns {Promise<Category>} - Danh mục đã tạo.
+   * 
+   * @example
+   * // Tạo danh mục gốc:
+   * const root = await categoriesService.create({ name: "Nội thất" });
+   * 
+   * // Tạo danh mục con:
+   * const child = await categoriesService.create({ name: "Ghế", parentId: root._id });
+   */
   async create(createCategoryDto: CreateCategoryDto): Promise<Category> {
     // Xử lý parentId nếu có
     if (createCategoryDto.parentId) {
@@ -29,10 +47,28 @@ export class CategoriesService {
     return createdCategory.save();
   }
 
+  /**
+   * Lấy tất cả danh mục.
+   * 
+   * @returns {Promise<Category[]>} - Mảng tất cả danh mục.
+   * 
+   * @example
+   * const allCategories = await categoriesService.findAll();
+   */
   async findAll(): Promise<Category[]> {
     return this.categoryModel.find().exec();
   }
 
+  /**
+   * Lấy chi tiết một danh mục.
+   * 
+   * @param {string} id - ID danh mục (MongoDB ObjectId).
+   * @returns {Promise<Category>}
+   * @throws {NotFoundException} - Nếu ID không hợp lệ hoặc không tìm thấy.
+   * 
+   * @example
+   * const category = await categoriesService.findOne("507f1f77bcf86cd799439011");
+   */
   async findOne(id: string): Promise<Category> {
     const isValidId = Types.ObjectId.isValid(id);
     if (!isValidId) {
@@ -46,6 +82,17 @@ export class CategoriesService {
     return category;
   }
 
+  /**
+   * Cập nhật danh mục.
+   * - Nếu cập nhật parentId, kiểm tra parentId mới có tồn tại không.
+   * 
+   * @param {string} id - ID danh mục cần cập nhật.
+   * @param {UpdateCategoryDto} updateCategoryDto - Các trường cần cập nhật.
+   * @returns {Promise<Category>}
+   * 
+   * @example
+   * const updated = await categoriesService.update("catId", { name: "Tên mới" });
+   */
   async update(
     id: string,
     updateCategoryDto: UpdateCategoryDto,
@@ -79,6 +126,15 @@ export class CategoriesService {
     return updatedCategory;
   }
 
+  /**
+   * Xóa danh mục.
+   * 
+   * @param {string} id - ID danh mục.
+   * @returns {Promise<Category>} - Danh mục đã xóa.
+   * 
+   * @example
+   * const deleted = await categoriesService.remove("catId");
+   */
   async remove(id: string): Promise<Category> {
     const isValidId = Types.ObjectId.isValid(id);
     if (!isValidId) {
@@ -94,23 +150,52 @@ export class CategoriesService {
     return deletedCategory;
   }
 
-  // Phương thức bổ sung: Tìm tất cả danh mục con
+  /**
+   * Tìm tất cả danh mục con của một danh mục cha.
+   * 
+   * @param {string} parentId - ID danh mục cha.
+   * @returns {Promise<Category[]>} - Mảng các danh mục con.
+   * 
+   * @example
+   * const children = await categoriesService.findChildren("parentCatId");
+   * // => [{ name: "Ghế sofa", ... }, { name: "Ghế ăn", ... }]
+   */
   async findChildren(parentId: string): Promise<Category[]> {
     return this.categoryModel.find({ parentId }).exec();
   }
 
-  // Phương thức bổ sung: Tìm tất cả danh mục gốc (không có danh mục cha)
+  /**
+   * Tìm tất cả danh mục gốc (không có danh mục cha - ParentID = null).
+   * 
+   * @returns {Promise<Category[]>} - Mảng các danh mục gốc.
+   * 
+   * @example
+   * const roots = await categoriesService.findRootCategories();
+   * // => [{ name: "Nội thất", parentId: null }, { name: "Ngoại thất", parentId: null }]
+   */
   async findRootCategories(): Promise<Category[]> {
     return this.categoryModel.find({ parentId: null }).exec();
   }
 
+  /**
+   * Lấy cấu trúc cây danh mục (GroupBy Parent).
+   * - Dùng cho menu frontend (Mega Menu).
+   * - Format: { title: "Parent Name", items: [{ name: "Child Name", _id: "..." }] }
+   * 
+   * @returns {Promise<Array<{title: string, _id: string, items: Array<{name: string, _id: string}>}>>}
+   * 
+   * @example
+   * const tree = await categoriesService.getAllCategoriesGroupByParentId();
+   * // => [
+   * //   { title: "Nội thất", _id: "...", items: [{ name: "Ghế", _id: "..." }, ...] },
+   * //   { title: "Ngoại thất", _id: "...", items: [...] }
+   * // ]
+   */
   async getAllCategoriesGroupByParentId(): Promise<any[]> {
     // First, get all root categories (those with parentId = null)
     const rootCategories = await this.categoryModel
       .find({ parentId: null })
       .exec();
-
-    console.log(rootCategories);
 
     // For each root category, find its children and format the result
     const result = await Promise.all(
@@ -138,11 +223,27 @@ export class CategoriesService {
     return result;
   }
 
+  /**
+   * Lấy danh sách danh mục cha (Parent Categories).
+   * 
+   * @returns {Promise<Category[]>}
+   * 
+   * @example
+   * const parents = await categoriesService.getCategoryParent();
+   */
   async getCategoryParent(): Promise<Category[]> {
     const category = await this.categoryModel.find({ parentId: null }).exec();
     return category;
   }
 
+  /**
+   * Lấy danh sách danh mục con (Sub Categories).
+   * 
+   * @returns {Promise<Category[]>}
+   * 
+   * @example
+   * const subs = await categoriesService.getCategorySub();
+   */
   async getCategorySub(): Promise<Category[]> {
     const category = await this.categoryModel.find({ parentId: { $ne: null } }).exec();
     return category;

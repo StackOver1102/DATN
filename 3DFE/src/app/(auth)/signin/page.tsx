@@ -9,13 +9,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loading } from "@/components/ui/loading";
 import { LoadingButton } from "@/components/ui/loading-button";
-import { Turnstile } from "@marsidev/react-turnstile";
+
 import { toast } from "sonner";
 
 // Define validation schema with Zod
 const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(1, "Password cannot be empty"),
+  email: z.string().email("Địa chỉ email không hợp lệ"),
+  password: z.string().min(1, "Mật khẩu không được để trống"),
   rememberMe: z.boolean().optional(),
 });
 
@@ -27,7 +27,7 @@ function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [isUnverified, setIsUnverified] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState<string>("");
+
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
   const message = searchParams.get("message");
@@ -48,11 +48,6 @@ function SignInForm() {
 
   // Handle login
   const onSubmit = async (data: LoginFormValues) => {
-    // Validate CAPTCHA
-    if (!captchaToken) {
-      toast.error("Please complete the CAPTCHA verification");
-      return;
-    }
 
     setLoading(true);
     setAuthError(null);
@@ -61,7 +56,7 @@ function SignInForm() {
       const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
-        captchaToken,
+        captchaToken: "",
         redirect: false, // Prevent automatic redirection
       });
 
@@ -76,7 +71,7 @@ function SignInForm() {
           // setUnverifiedEmail(data.email);
         } else if (result.error === "CredentialsSignin") {
           // Handle generic CredentialsSignin error
-          setAuthError("Invalid email or password. Please try again.");
+          setAuthError("Email hoặc mật khẩu không chính xác. Vui lòng thử lại.");
         }
       } else if (result?.ok) {
         // Manual redirect if login is successful
@@ -84,7 +79,7 @@ function SignInForm() {
       }
     } catch (error) {
       console.error("Sign in error:", error);
-      setAuthError("An error occurred during sign in. Please try again later.");
+      setAuthError("Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại sau.");
     } finally {
       setLoading(false);
     }
@@ -92,7 +87,7 @@ function SignInForm() {
 
   if (loading) {
     return (
-      <Loading variant="spinner" size="lg" text="Signing in..." fullScreen />
+      <Loading variant="spinner" size="lg" text="Đang đăng nhập..." fullScreen />
     );
   }
 
@@ -102,9 +97,9 @@ function SignInForm() {
       <div className="w-full flex items-center justify-center px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-md space-y-8 py-12 px-6 sm:px-8 bg-white rounded-lg shadow-md">
           <div className="text-center">
-            <h1 className="text-3xl font-medium mb-2">Welcome back!</h1>
+            <h1 className="text-3xl font-medium mb-2">Chào mừng trở lại!</h1>
             <p className="text-base text-gray-700">
-              Enter your credentials to access your account
+              Nhập thông tin đăng nhập để truy cập tài khoản của bạn
             </p>
           </div>
 
@@ -119,7 +114,7 @@ function SignInForm() {
               <span className="block sm:inline">
                 {authError ||
                   error ||
-                  "Authentication failed. Please try again."}
+                  "Xác thực thất bại. Vui lòng thử lại."}
               </span>
             </div>
           )}
@@ -127,10 +122,10 @@ function SignInForm() {
           {isUnverified && (
             <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded relative">
               <div className="flex flex-col space-y-2">
-                <span className="font-medium">Account not verified</span>
+                <span className="font-medium">Tài khoản chưa được xác minh</span>
                 <p className="text-sm">
-                  Your account has not been verified yet. Please check your
-                  email for a verification link.
+                  Tài khoản của bạn chưa được xác minh. Vui lòng kiểm tra
+                  email để tìm liên kết xác minh.
                 </p>
                 {/* <div className="flex justify-between items-center mt-2">
                     <button
@@ -152,7 +147,7 @@ function SignInForm() {
             {/* Email field */}
             <div className="space-y-2">
               <label htmlFor="email" className="block text-sm font-medium">
-                Email address
+                Địa chỉ email
               </label>
               <div className="relative">
                 <input
@@ -161,7 +156,7 @@ function SignInForm() {
                   autoComplete="email"
                   className={`appearance-none relative block w-full px-3 py-2 border ${errors.email ? "border-red-500" : "border-gray-300"
                     } placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-[#3A5B22] focus:border-[#3A5B22] focus:z-10 sm:text-sm`}
-                  placeholder="Enter your email"
+                  placeholder="Nhập email của bạn"
                   {...register("email")}
                 />
                 {errors.email && (
@@ -176,13 +171,13 @@ function SignInForm() {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <label htmlFor="password" className="block text-sm font-medium">
-                  Password
+                  Mật khẩu
                 </label>
                 <Link
                   href="/forgot-password"
                   className="text-xs text-black hover:underline hover:text-blue-600"
                 >
-                  forgot password
+                  Quên mật khẩu
                 </Link>
               </div>
               <div className="relative">
@@ -249,38 +244,21 @@ function SignInForm() {
                 htmlFor="rememberMe"
                 className="ml-2 block text-xs text-gray-900"
               >
-                Remember for 30 days
+                Ghi nhớ trong 30 ngày
               </label>
             </div>
 
-            {/* Cloudflare Turnstile CAPTCHA */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium">
-                Security Verification
-              </label>
-              <Turnstile
-                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
-                onSuccess={(token: string) => setCaptchaToken(token)}
-                onError={() => {
-                  setCaptchaToken("");
-                  toast.error("CAPTCHA verification failed. Please try again.");
-                }}
-                onExpire={() => {
-                  setCaptchaToken("");
-                  toast.warning("CAPTCHA expired. Please verify again.");
-                }}
-              />
-            </div>
+
 
             {/* Login button */}
             <div>
               <LoadingButton
                 type="submit"
                 isLoading={loading}
-                disabled={!captchaToken}
+                disabled={loading}
                 className="w-full py-2 px-4 border border-transparent text-sm font-bold rounded-lg text-yellow-400 bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3A5B22] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Login
+                Đăng nhập
               </LoadingButton>
             </div>
           </form >
@@ -291,18 +269,18 @@ function SignInForm() {
               <div className="w-full border-t border-gray-200"></div>
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="px-2 bg-white text-gray-500">Or</span>
+              <span className="px-2 bg-white text-gray-500">Hoặc</span>
             </div>
           </div >
 
           <div className="text-center mt-6">
             <p className="text-sm">
-              Don&apos;t have an account?{" "}
+              Bạn chưa có tài khoản?{" "}
               <Link
                 href="/signup"
                 className="font-medium text-black hover:underline hover:text-blue-600"
               >
-                Sign Up
+                Đăng ký
               </Link>
             </p>
           </div>
@@ -320,7 +298,7 @@ function SignInForm() {
               >
                 <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
               </svg>
-              Back to Home
+              Về trang chủ
             </Link>
           </div>
         </div >

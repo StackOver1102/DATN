@@ -34,7 +34,7 @@ import { UserRole } from 'src/enum/user.enum';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 
-// PayPal API response interfaces
+// Interface định nghĩa response từ PayPal API
 interface PayPalOrderResponse {
   id: string;
   status: string;
@@ -96,7 +96,7 @@ export class TransactionsService {
     private configService: ConfigService,
     private filterService: FilterService,
   ) {
-    // Khởi tạo các thông tin cấu hình PayPal
+    // Khởi tạo các thông tin cấu hình PayPal (Sandbox/Production)
     const isProd = configService.get<string>('NODE_ENV') === 'production';
     this.paypalBaseUrl = isProd
       ? 'https://api-m.paypal.com'
@@ -106,14 +106,23 @@ export class TransactionsService {
     this.paypalWebhookId = configService.get<string>('PAYPAL_WEBHOOK_ID') || '';
   }
 
+  /**
+   * Tạo mã giao dịch duy nhất.
+   * Format: TX + YYYYMMDD + SequenceNumber (6 digits)
+   * Ví dụ: TX20231025000001
+   */
   async generateTransactionCode(): Promise<string> {
-    // Get the count of existing transactions to generate sequential number
     const count = await this.transactionModel.countDocuments();
     const nextNumber = (count + 1).toString().padStart(6, '0');
     const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     return `TX${date}${nextNumber}`;
   }
 
+  /**
+   * Tạo giao dịch mới trong hệ thống.
+   * - Tự động tính toán số dư trước/sau giao dịch.
+   * - Cập nhật số dư User nếu giao dịch thành công (trừ Deposit).
+   */
   async create(
     createTransactionDto: CreateTransactionDto,
     userId: string,
@@ -132,9 +141,9 @@ export class TransactionsService {
     const balanceBefore = user.balance || 0;
     let balanceAfter = balanceBefore;
 
-    // Calculate new balance based on transaction type
+    // Calculate new balance based on transaction type (Tính toán số dư mới)
     switch (createTransactionDto.type) {
-      // case TransactionType.DEPOSIT:
+      // case TransactionType.DEPOSIT: (Nạp tiền thường xử lý qua gateway, handle riêng)
       //   balanceAfter = balanceBefore + createTransactionDto.amount;
       //   break;
       case TransactionType.WITHDRAWAL:
@@ -162,13 +171,17 @@ export class TransactionsService {
     const savedTransaction = await transaction.save();
 
     if (createTransactionDto.type !== TransactionType.DEPOSIT) {
-      // Update user balance
+      // Update user balance (Cập nhật số dư người dùng ngay lập tức với các lại giao dịch trừ tiền/hoàn tiền)
       await this.usersService.updateBalance(userId, balanceAfter);
     }
 
     return savedTransaction;
   }
 
+  /**
+   * Tạo giao dịch thanh toán cho đơn hàng (Order Payment).
+   * - Wrapper cho hàm create với loại PAYMENT.
+   */
   async createOrderPayment(
     createOrderPaymentDto: CreateOrderPaymentDto,
     userId: string,
@@ -187,7 +200,10 @@ export class TransactionsService {
   }
 
   /**
-   * Tạo đơn hàng PayPal cho việc nạp tiền
+   * Tạo đơn hàng trên PayPal (Bước 1 của quy trình nạp tiền PayPal).
+   * - Gọi API PayPal để tạo Order.
+   * - Tạo Transaction bản nháp trong DB (status: PENDING).
+   * - Trả về link approve để client redirect user sang PayPal.
    */
   async createPayPalOrder(
     createPayPalOrderDto: CreatePayPalOrderDto,
@@ -205,7 +221,7 @@ export class TransactionsService {
     approveUrl?: string;
   }> {
     try {
-      // Tạo mã giao dịch
+      // Tạo mã giao dịch hệ thống
       const transactionCode = await this.generateTransactionCode();
 
       // Lấy access token từ PayPal
@@ -229,7 +245,7 @@ export class TransactionsService {
             },
             description:
               createPayPalOrderDto.description || 'Deposit to account',
-            custom_id: transactionCode, // Sử dụng mã giao dịch để theo dõi
+            custom_id: transactionCode, // Gắn mã giao dịch hệ thống vào để tracking
           },
         ],
         application_context: {
@@ -258,6 +274,7 @@ export class TransactionsService {
       );
 
       // Tạo giao dịch trong hệ thống với trạng thái PENDING
+      // Lưu ý: Nhân 10 có thể là do tỷ giá giả định hoặc logic đặc thù (cần review lại business rule chỗ này)
       const transactionDto: CreateTransactionDto = {
         amount: createPayPalOrderDto.amount * 10,
         type: TransactionType.DEPOSIT,
@@ -296,6 +313,9 @@ export class TransactionsService {
     }
   }
 
+  /**
+   * Lấy danh sách giao dịch (Admin).
+   */
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   async findAll(type: string): Promise<Transaction[]> {
@@ -311,6 +331,9 @@ export class TransactionsService {
       .exec();
   }
 
+  /**
+   * Tìm giao dịch của User (có phân trang & filter).
+   */
   async findByUserId(
     userId: string,
     filterDto: FilterDto,
@@ -324,6 +347,9 @@ export class TransactionsService {
     );
   }
 
+  /**
+   * Lấy chi tiết một giao dịch.
+   */
   async findOne(id: string): Promise<Transaction> {
     const transaction = await this.transactionModel.findById(id).exec();
     if (!transaction) {
@@ -332,11 +358,14 @@ export class TransactionsService {
     return transaction;
   }
 
+  /**
+   * Cập nhật thông tin giao dịch (Admin).
+   */
   async update(
     id: string,
     updateTransactionDto: UpdateTransactionDto,
   ): Promise<Transaction> {
-    // Don't allow updating amounts or balance-affecting fields directly
+    // Don't allow updating amounts or balance-affecting fields directly via this method
     const { ...updateData } = updateTransactionDto;
 
     const updatedTransaction = await this.transactionModel
@@ -350,6 +379,12 @@ export class TransactionsService {
     return updatedTransaction;
   }
 
+  /**
+   * Cập nhật trạng thái giao dịch (QUAN TRỌNG).
+   * - Nếu chuyển sang SUCCESS (Thành công): Cập nhật cộng/trừ số dư user tương ứng.
+   * - DEPOSIT/REFUND -> Cộng tiền.
+   * - PAYMENT/WITHDRAWAL -> Trừ tiền.
+   */
   async updateStatus(
     id: string,
     status: TransactionStatus,
@@ -361,7 +396,7 @@ export class TransactionsService {
       status === TransactionStatus.SUCCESS &&
       transaction.status !== TransactionStatus.SUCCESS
     ) {
-      // For deposits and refunds, add to user balance
+      // For deposits and refunds, add to user balance (Cộng tiền)
       if (
         transaction.type === TransactionType.DEPOSIT ||
         transaction.type === TransactionType.REFUND
@@ -371,7 +406,7 @@ export class TransactionsService {
           transaction.balanceAfter || 0,
         );
       }
-      // For withdrawals and payments, subtract from user balance
+      // For withdrawals and payments, subtract from user balance (Trừ tiền)
       else if (
         transaction.type === TransactionType.WITHDRAWAL ||
         transaction.type === TransactionType.PAYMENT
@@ -401,6 +436,9 @@ export class TransactionsService {
     return updatedTransaction;
   }
 
+  /**
+   * Xóa giao dịch (Cẩn trọng khi dùng).
+   */
   async remove(id: string): Promise<Transaction> {
     const deletedTransaction = await this.transactionModel
       .findByIdAndDelete(id)
@@ -425,7 +463,7 @@ export class TransactionsService {
     return deletedTransaction;
   }
 
-  async findByTransactionCode(transactionCode: string): Promise<Transaction> {
+  async findByTransactionCode(transactionCode: string): Promise<TransactionDocument> {
     const transaction = await this.transactionModel
       .findOne({ transactionCode })
       .exec();
@@ -440,7 +478,9 @@ export class TransactionsService {
   }
 
   /**
-   * Xử lý webhook từ PayPal
+   * Xử lý Webhook từ PayPal (Tự động cập nhật trạng thái khi PayPal báo về server).
+   * - Xác thực chữ ký webhook.
+   * - Switch case theo loại event (COMPLETED, DENIED, PENDING, APPROVED).
    */
   async processPayPalWebhook(
     payload: Record<string, any>,
@@ -486,7 +526,7 @@ export class TransactionsService {
   }
 
   /**
-   * Xác thực webhook từ PayPal
+   * Xác thực webhook từ PayPal (kỹ thuật verify signature).
    */
   private async verifyPayPalWebhook(
     payload: Record<string, any>,
@@ -544,7 +584,7 @@ export class TransactionsService {
   }
 
   /**
-   * Lấy access token từ PayPal
+   * Lấy PayPal Access Token (OAuth client_credentials).
    */
   private async getPayPalAccessToken(): Promise<string> {
     try {
@@ -576,7 +616,9 @@ export class TransactionsService {
   }
 
   /**
-   * Xử lý sự kiện thanh toán hoàn tất
+   * Xử lý khi thanh toán THÀNH CÔNG (Capture Completed).
+   * - Cập nhật status transaction -> SUCCESS.
+   * - (Lưu ý: chưa cộng tiền ở đây, có thể đã được xử lý ở approvePayPalOrder hoặc cần trigger manual).
    */
   private async handlePaymentCompleted(
     payload: Record<string, any>,
@@ -602,7 +644,7 @@ export class TransactionsService {
     // Cập nhật trạng thái giao dịch
     transaction.status = TransactionStatus.SUCCESS;
 
-    // Lưu thông tin bổ sung từ PayPal
+    // Lưu thông tin bổ sung từ PayPal (check captured amount)
     if (resource.amount) {
       const amount = resource.amount as Record<string, any>;
       const capturedAmount = parseFloat(amount.value as string);
@@ -623,7 +665,8 @@ export class TransactionsService {
   }
 
   /**
-   * Xử lý sự kiện thanh toán bị từ chối
+   * Xử lý khi thanh toán bị TỪ CHỐI (Denied).
+   * - Cập nhật status -> FAILED.
    */
   private async handlePaymentDenied(
     payload: Record<string, any>,
@@ -653,7 +696,7 @@ export class TransactionsService {
   }
 
   /**
-   * Xử lý sự kiện thanh toán đang chờ xử lý
+   * Xử lý khi thanh toán đang PENDING.
    */
   private async handlePaymentPending(
     payload: Record<string, any>,
@@ -683,7 +726,7 @@ export class TransactionsService {
   }
 
   /**
-   * Xử lý sự kiện đơn hàng được chấp nhận
+   * Xử lý khi Order được Approved (nhưng chưa Capture).
    */
   private async handleOrderApproved(
     payload: Record<string, any>,
@@ -700,7 +743,11 @@ export class TransactionsService {
   }
 
   /**
-   * Xác minh và xử lý đơn hàng PayPal sau khi người dùng thanh toán
+   * Xác minh và hoàn tất đơn hàng PayPal (Capture Order).
+   * - Client gọi hàm này sau khi redirect về từ PayPal thành công.
+   * - Gọi API PayPal để lấy status / capture.
+   * - Cập nhật giao dịch thành công.
+   * - Cộng tiền vào tài khoản User.
    */
   async approvePayPalOrder(
     paypalOrderId: string,
@@ -845,6 +892,10 @@ export class TransactionsService {
     }
   }
 
+  /**
+   * Duyệt thủ công 1 giao dịch (Admin).
+   * - Cộng tiền cho user.
+   */
   async handleApprove(id: string): Promise<Transaction> {
     const transaction = await this.transactionModel.findById(id);
     if (!transaction) {
@@ -862,6 +913,11 @@ export class TransactionsService {
     return transaction.save();
   }
 
+  /**
+   * Lấy thống kê giao dịch theo thời gian (7d, 30d, 90d).
+   * - Trả về dữ liệu để vẽ biểu đồ Dashboard.
+   * - Group by Date và by Type (Deposit, Payment, Withdrawal, Refund).
+   */
   async getTransactionStats(period: string = '30d'): Promise<any> {
     // Calculate date range based on period
     const endDate = new Date();
@@ -987,6 +1043,9 @@ export class TransactionsService {
     return totalSpent;
   }
 
+  /**
+   * Hủy giao dịch theo Order ID.
+   */
   async cancelPayPalOrder(orderId: string): Promise<Transaction> {
     const transaction = await this.transactionModel.findOne({
       orderId: orderId,
@@ -1000,6 +1059,10 @@ export class TransactionsService {
     return transaction;
   }
 
+  /**
+   * Tìm giao dịch bằng OrderID và cập nhật thành công (cho VQR/Chuyển khoản).
+   * - Cập nhật cộng tiền cho Merchant (nếu áp dụng).
+   */
   async findByOrderIdAndUpdate(orderId: string, amount: number): Promise<TransactionDocument> {
     const transaction = await this.transactionModel.findOne({ _id: orderId });
     if (!transaction) {

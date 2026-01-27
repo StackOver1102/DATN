@@ -3,6 +3,7 @@ export enum TransactionMethod {
   MOMO = 'momo',
   BANK_TRANSFER = 'bank_transfer',
   VQR = 'vqr',
+  VNPAY = 'vnpay',
 }
 
 export enum TransactionStatus {
