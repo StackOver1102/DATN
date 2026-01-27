@@ -163,11 +163,11 @@ function OrdersPageContent() {
       header: "Sản phẩm",
       cell: ({ row }) => {
         const productId = row.getValue("productId") as Product;
-        const productName = productId.name;
+        const productName = productId?.name || "";
         return (
           <div className="flex items-center gap-2">
             <Link
-              href={`/dashboard/products/${productId._id}`}
+              href={`/dashboard/products/${productId?._id}`}
               className="hover:underline text-blue-500"
             >
               <span className="font-medium">{productName}</span>

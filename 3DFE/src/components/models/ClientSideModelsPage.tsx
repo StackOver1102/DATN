@@ -187,7 +187,7 @@ export default function ClientSideModelsPage({
       (apiParams as Record<string, string>)[key] = value;
     });
     apiParams.page = 1;
-    apiParams.limit = 30;
+    apiParams.limit = 60;
 
     fetchModels(apiParams);
 
@@ -305,7 +305,7 @@ export default function ClientSideModelsPage({
 
             // Get current page from URL (default to 1)
             const currentPage = parseInt(searchParams.get('page') || '1', 10);
-            const itemsPerPage = 30;
+            const itemsPerPage = 60;
 
             // Calculate pagination
             const totalPages = Math.ceil(allResults.length / itemsPerPage);
@@ -383,7 +383,7 @@ export default function ClientSideModelsPage({
       params.page = parseInt(params.page.toString(), 10);
     }
 
-    params.limit = params.limit ? parseInt(params.limit.toString(), 10) : 30;
+    params.limit = params.limit ? parseInt(params.limit.toString(), 10) : 60;
 
     // On initial mount, just set currentApiParams without fetching
     // since we already have initialModels from server
